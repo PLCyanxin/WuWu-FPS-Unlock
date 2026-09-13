@@ -43,3 +43,11 @@ Shipping is Client\Binaries\Win64\Client-Win64-Shipping.exe, x64, 976121112 byte
 Shipping directory already contains dxgi.dll, x64 ReShade 6.8.0.2155, SHA256 0cee63f9c9f13f3ac909c5b4903f4dbb4b719a7ab3b4f13b0deaf83c814b94f7, plus renodx-mfgunlock.addon64 matching local user material. ReShade.ini (2931 bytes) and empty ReShadePreset.ini exist. No AddonPath key was present in inspected path keys. No redirected path was traversed, and compatibility/loading was not tested.
 
 Delivery reports in isolated artifacts/real-game-candidate-map.json and .md; a durable JSON copy is in this knowledge directory. Runtime reuse/ownership and real game writes remain parent/user confirmation decisions. These reports are expressly titled candidate pending user confirmation.
+
+## Historical ReShade log follow-up
+
+Only the already-known Shipping directory ReShade.log was inspected (74,162 bytes, under 20MB). See real-game-historical-log.json/.md in knowledge and isolated artifacts for source hash, LastWrite, read time and exact line numbers. No extra scanning, game writes or EXE execution.
+
+Historical lines: L1 ReShade6.8.0.2155 via dxgi into Shipping at20:39:26; L46 addon loading; L167 provider310.9.1.0; L168 Streamline2.14.1.0; L225 runtime status0x0 OK; L227 Dynamic support; L235 Dynamic accepted target160FPS; L236–241 runtime reports2–6 actual presented frames. DriverStore provider warnings L146–150 and exit addon-loaded warning L471 are also retained. File LastWrite local2026-09-13 21:47:54, but lines contain time only, so do not infer exact session date solely from LastWrite.
+
+This is pre-existing historical self-reported runtime evidence, NOT this round's game test, independent FPS measurement, proof of current performance, or blanket compatibility success.
