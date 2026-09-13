@@ -28,3 +28,14 @@
 
 ## Native Win32 component evidence
 Before full SDK availability, PowerShell Add-Type compiled the exact `OwnedFileDeletion.cs` production file with only implicit-using equivalents prepended. Executed in this worktree's `artifacts/safety-tests` against inert files: mismatched hash retained, exclusive lock blocked deletion, matching file deleted by the verified handle. All three passed. Log: `knowledge/deployment/win32-delete.log`. This checks the real Windows deletion API path, not the full .NET 10 project build, installer, UI or game. Full console regression suite still pending.
+
+## Explicit user-material cleanup extension
+The parent/user explicitly requested removal of the existing replaced DLLs even where this tool did not perform their earlier manual installation. `UserMaterialRemoval` is therefore a separate confirmed-plan authority: validate every package source; scan only the 18 vendor names and the standard addon inside the selected root, without following links; include only matching sizes and SHA-256. The preview states that matching material is NOT evidence of tool installation. Full confirmation is required before execution. Unknown hashes, other addon names, ReShade/filters/EXEs remain untouched. No `ReplacedByTool` or fabricated installation ownership is assigned. Missing ownership means no INI edits are removed.
+
+`CleanPreviewAsync`/`CleanAsync` bind manifest hash, matched candidates, skipped entries, selected game and existing ownership receipt into the approval fingerprint. The elevated worker recomputes the same plan. Source or target changes fail before deletion. Per-file deletion retains the already-tested same-handle hash/delete implementation. Existing ownership cleanup protection tests remain unchanged.
+
+Deployment receipt now reports `SkippedVendorNames` and deployment logs state actual matched target count plus skipped material-name count/list, so an addon-only or partially matched deployment cannot imply all 18 DLLs were installed.
+
+Validation command (Windows native SDK 10.0.100): `E:\yanxin_ws\wuwa-fps-unlock\.tools\dotnet\dotnet.exe run --project tests/WuWaFpsUnlock.Tests/WuWaFpsUnlock.Tests.csproj -c Release`. Actual result: 91 passed, 0 failed, including six new user-material cleanup tests. `material-clean-tests.log` is the complete console output. These are filesystem fixtures and the existing fixture-process tests; no game or real material deletion was performed.
+
+WPF build attempted after restore: it reaches compilation with exactly one error, the intentionally changed async preview call still referenced by this isolated worktree's old VM (`CleanPreview` at AppViewModel.cs:197). Parent owns and updates that VM to `await CleanPreviewAsync`; no claim of full WPF build success is made here. `material-clean-build.log` preserves that actual result. Core/tests compilation and execution above succeeded.

@@ -84,6 +84,7 @@ public sealed class DeploymentReceipt
     public string ProxyPath { get; set; } = "";
     public DateTimeOffset Updated { get; set; } = DateTimeOffset.UtcNow;
     public List<FileReceipt> Files { get; set; } = [];
+    public List<string> SkippedVendorNames { get; set; } = [];
     public List<IniReceipt> IniEdits { get; set; } = [];
 }
 public static class JsonFiles

@@ -21,12 +21,40 @@ public sealed class DeploymentService(Action<string> log)
         lines.Add("仅替换现存同名 DLL，不备份原文件；游戏内效果仍待验证。");
         return string.Join(Environment.NewLine,lines);
     }
-    public string CleanPreview(UserSettings s)
+    private sealed record CleanPlan(DeploymentReceipt? Receipt, MaterialRemovalPlan? Materials);
+    private async Task<CleanPlan> PrepareCleanAsync(UserSettings s,CancellationToken token)
     {
         GameProcesses.ValidateExe(s);GameProcesses.RequireStopped(s.GameRoot);
-        var receipt=AppPaths.LoadReceipt(s)??throw new InvalidOperationException("没有本工具部署记录。");
-        ApprovalFingerprint=Fingerprint(receipt);
-        return "游戏根："+receipt.GameRoot+Environment.NewLine+string.Join(Environment.NewLine,receipt.Files.Where(f=>(f.Kind=="Vendor"&&f.ReplacedByTool)||(f.Kind=="Addon"&&f.CreatedByTool)).Select(f=>f.Path))+Environment.NewLine+"只删除当前哈希仍匹配的自有文件，并清理自有配置键；不恢复原版，不能保证游戏自动补齐。";
+        var receipt=AppPaths.LoadReceipt(s);
+        if(receipt is not null && (!receipt.GameRoot.Equals(Path.GetFullPath(s.GameRoot),StringComparison.OrdinalIgnoreCase)||!receipt.GameExe.Equals(Path.GetFullPath(s.GameExe),StringComparison.OrdinalIgnoreCase)))throw new InvalidDataException("部署记录与当前所选游戏不一致；没有清除任何文件。");
+        MaterialRemovalPlan? materials=null;
+        if(File.Exists(s.PackageManifest))
+        {
+            materials=await UserMaterialRemoval.PlanAsync(s.PackageManifest,s.GameRoot,token);
+            // Normal ownership remains a separate, narrower authority. Do not list a file twice.
+            materials=materials with { Candidates=materials.Candidates.Where(c=>receipt is null || !receipt.Files.Any(f=>f.Completed&&f.Path.Equals(c.Path,StringComparison.OrdinalIgnoreCase)&&f.InstalledHash.Equals(c.Sha256,StringComparison.OrdinalIgnoreCase)&&((f.Kind=="Vendor"&&f.ReplacedByTool)||(f.Kind=="Addon"&&f.CreatedByTool)))).ToList() };
+        }
+        else if(receipt is null)throw new InvalidOperationException("没有本工具部署记录，也没有可验证的用户材料清单；不能猜测清除对象。请先指定材料清单。");
+        return new(receipt,materials);
+    }
+    private static string CleanFingerprint(UserSettings s,CleanPlan plan)=>Fingerprint(new{GameRoot=Path.GetFullPath(s.GameRoot),GameExe=Path.GetFullPath(s.GameExe),Plan=plan});
+    public async Task<string> CleanPreviewAsync(UserSettings s,CancellationToken token=default)
+    {
+        var plan=await PrepareCleanAsync(s,token);ApprovalFingerprint=CleanFingerprint(s,plan);
+        var lines=new List<string>{"游戏根："+s.GameRoot,"原装 Shipping："+s.GameExe};
+        if(plan.Receipt is not null)
+        {
+            lines.Add("有本工具所有权登记（仅哈希仍匹配且登记完成时删除）：");
+            lines.AddRange(plan.Receipt.Files.Where(f=>(f.Kind=="Vendor"&&f.ReplacedByTool)||(f.Kind=="Addon"&&f.CreatedByTool)).Select(f=>f.Path));
+        }
+        if(plan.Materials is not null)
+        {
+            lines.Add("注意：以下为既有用户材料指纹匹配，不是本工具安装证明。只有确认本整份清单后才移除，不认领安装所有权：");
+            lines.AddRange(plan.Materials.Candidates.Select(f=>$"{f.Path}  SHA-256={f.Sha256}"));
+            lines.AddRange(plan.Materials.Preserved);
+        }
+        lines.Add("保留 ReShade 本体、滤镜、EXE、其他插件及未知来源文件；没有所有权的 INI 项保持不动。不恢复原版，也不保证游戏自动补齐。是否按以上完整清单清除？");
+        return string.Join(Environment.NewLine,lines);
     }
     public async Task DeployAsync(UserSettings s,bool upgradeApproved,CancellationToken token=default)
     {
@@ -45,6 +73,8 @@ public sealed class DeploymentService(Action<string> log)
         // Fully validate payload and ALL paths before running an external installer.
         var plan=await PackageReader.PlanAsync(manifest,s.PackageManifest,s.GameRoot,Path.GetDirectoryName(exe)!,before.AddonDirectory,token);
         if(string.IsNullOrEmpty(ApprovalFingerprint) || ApprovalFingerprint!=await PlanFingerprint(s,plan,before,token))throw new IOException("文件计划与确认时不同或未经预览，请重新预览并确认。");
+        var skippedVendors=manifest.Files.Where(f=>f.Kind==PayloadKind.Vendor&&!plan.Any(p=>p.Kind==PayloadKind.Vendor&&Path.GetFileName(p.Target).Equals(Path.GetFileName(f.Target),StringComparison.OrdinalIgnoreCase))).Select(f=>Path.GetFileName(f.Target)).ToList();
+        log($"DLL 同名映射：{plan.Count(f=>f.Kind==PayloadKind.Vendor)} 个实际目标；{skippedVendors.Count} 个材料名称无同名目标而跳过。"+(skippedVendors.Count>0?" 跳过："+string.Join("、",skippedVendors):""));
         foreach(var f in plan){WriteProbe.Check(f.Target);if(File.Exists(f.Target)){using var lockTest=new FileStream(f.Target,FileMode.Open,FileAccess.ReadWrite,FileShare.None);}}
         WriteProbe.Check(before.Ini);WriteProbe.Check(before.Proxy??Path.Combine(Path.GetDirectoryName(exe)!,manifest.ReShade.ProxyApi+".dll"));
         var previousReceipt=AppPaths.LoadReceipt(s);
@@ -52,6 +82,7 @@ public sealed class DeploymentService(Action<string> log)
         var receipt=previousReceipt is not null && !previousReceipt.Status.StartsWith("Cleaned",StringComparison.Ordinal)?previousReceipt:new(){GameRoot=Path.GetFullPath(s.GameRoot),GameExe=exe};
         if(!receipt.GameRoot.Equals(Path.GetFullPath(s.GameRoot),StringComparison.OrdinalIgnoreCase))throw new InvalidDataException("部署记录与当前游戏根目录不匹配。");
         ApprovalFingerprint="";
+        receipt.SkippedVendorNames=skippedVendors;
         receipt.PackageId=manifest.PackageId;receipt.Status="Installing";AppPaths.SaveReceipt(receipt);
         try
         {
@@ -75,7 +106,7 @@ public sealed class DeploymentService(Action<string> log)
             AppPaths.SaveReceipt(receipt);ini.Save(ready.Ini);
             receipt.Status="Deployed";AppPaths.SaveReceipt(receipt);
             if(!await DeploymentFiles.IsIntactAsync(receipt,token))throw new IOException("最终文件或配置校验失败。");
-            log("部署完成，文件与配置已校验；MFG 的实际启用状态仍需启动游戏确认。");
+            log($"匹配项部署完成：{plan.Count(f=>f.Kind==PayloadKind.Vendor)} 个 DLL 目标与 addon/配置已校验，{skippedVendors.Count} 个材料名称因无同名目标未部署；MFG 实际启用仍待游戏内确认。");
         }
         catch
         {
@@ -85,12 +116,24 @@ public sealed class DeploymentService(Action<string> log)
     }
     public async Task CleanAsync(UserSettings s,CancellationToken token=default)
     {
-        GameProcesses.ValidateExe(s);GameProcesses.RequireStopped(s.GameRoot);
-        var receipt=AppPaths.LoadReceipt(s)??throw new InvalidOperationException("没有本工具的部署记录，拒绝猜测或批量删除插件。");
-        if(!receipt.GameRoot.Equals(Path.GetFullPath(s.GameRoot),StringComparison.OrdinalIgnoreCase)||!receipt.GameExe.Equals(Path.GetFullPath(s.GameExe),StringComparison.OrdinalIgnoreCase))throw new InvalidDataException("部署记录与当前所选游戏不一致；没有清除任何文件。");
-        if(ApprovalFingerprint!=Fingerprint(receipt))throw new IOException("清除记录与确认时不同或未经预览，请重新确认。");
+        var plan=await PrepareCleanAsync(s,token);
+        if(string.IsNullOrEmpty(ApprovalFingerprint)||ApprovalFingerprint!=CleanFingerprint(s,plan))throw new IOException("清除材料、文件或记录与确认时不同，请重新预览并确认；没有扩大清除范围。");
+        var receipt=plan.Receipt??new DeploymentReceipt{GameRoot=Path.GetFullPath(s.GameRoot),GameExe=Path.GetFullPath(s.GameExe)};
         foreach(var f in receipt.Files.Where(f=>(f.Kind=="Addon"&&f.CreatedByTool)||(f.Kind=="Vendor"&&f.ReplacedByTool)))WriteProbe.Check(f.Path);
+        if(plan.Materials is not null)foreach(var f in plan.Materials.Candidates)WriteProbe.Check(f.Path);
         if(!string.IsNullOrWhiteSpace(receipt.IniPath))WriteProbe.Check(receipt.IniPath);
-        await DeploymentFiles.CleanOwnedAddonsAsync(receipt,()=>AppPaths.SaveReceipt(receipt),log,token);
+        ApprovalFingerprint="";
+        // Persist operation status, never manufacture ownership over existing material files.
+        receipt.Status="PartialClean";AppPaths.SaveReceipt(receipt);
+        try
+        {
+            MaterialRemovalResult? materialResult=null;
+            if(plan.Materials is not null)materialResult=await UserMaterialRemoval.ExecuteAsync(plan.Materials,log,token);
+            await DeploymentFiles.CleanOwnedAddonsAsync(receipt,()=>AppPaths.SaveReceipt(receipt),log,token);
+            if(materialResult?.Failed>0)throw new IOException("部分既有用户材料移除失败；详情见逐文件日志，可重新预览后重试。");
+            if(materialResult?.Preserved>0){receipt.Status="CleanedWithSkips";AppPaths.SaveReceipt(receipt);}
+            log($"既有用户材料清除结果：移除 {materialResult?.Removed??0}，变化保留 {materialResult?.Preserved??0}；没有把材料相同当成本工具安装证明。");
+        }
+        catch{receipt.Status="PartialClean";AppPaths.SaveReceipt(receipt);throw;}
     }
 }

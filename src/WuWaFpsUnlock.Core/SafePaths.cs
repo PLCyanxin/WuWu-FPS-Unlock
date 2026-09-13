@@ -108,6 +108,11 @@ public static class PackageReader
     public static List<string> FindExistingVendorTargets(string gameRoot, string name)
     {
         if (!VendorNames.Contains(name)) throw new InvalidDataException("拒绝未知运行库：" + name);
+        return FindExistingMaterialTargets(gameRoot, name);
+    }
+    public static List<string> FindExistingMaterialTargets(string gameRoot, string name)
+    {
+        if (!VendorNames.Contains(name) && !name.Equals("renodx-mfgunlock.addon64", StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("拒绝未知材料：" + name);
         gameRoot = SafePaths.GameRoot(gameRoot);
         var found = new List<string>(); var pending = new Stack<string>(); pending.Push(gameRoot);
         while (pending.Count > 0)
