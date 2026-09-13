@@ -29,9 +29,26 @@ public sealed class ExternalUnlockerService(Action<string> log)
         token.ThrowIfCancellationRequested();
         status(plan.FpsEnabled ? "正在启动外部解锁器…" : "正在启动原装 Shipping…");
         var info = new ProcessStartInfo(plan.Executable) { UseShellExecute = true, WorkingDirectory = plan.WorkingDirectory };
+        string localRuntime=Path.Combine(AppPaths.Base,"components","dotnet8");
+        if(plan.FpsEnabled && Directory.Exists(Path.Combine(localRuntime,"host","fxr")))
+        {
+            info.UseShellExecute=false;
+            info.Environment["DOTNET_ROOT_X64"]=localRuntime;
+            log("解锁器优先使用便携 .NET 8 运行库："+localRuntime);
+        }
         foreach (var argument in plan.Arguments) info.ArgumentList.Add(argument);
         var startedAt = DateTime.UtcNow;
-        using var initial = Process.Start(info) ?? throw new IOException("系统没有返回启动进程：" + plan.Executable);
+        using var initial = Start(info);
+        Process Start(ProcessStartInfo start)
+        {
+            try { return Process.Start(start) ?? throw new IOException("系统没有返回启动进程："+start.FileName); }
+            catch(System.ComponentModel.Win32Exception e) when(e.NativeErrorCode==740 && !start.UseShellExecute)
+            {
+                log("系统要求提升权限，交给标准 UAC；此分支由系统解析 .NET 8 运行库。");
+                start.UseShellExecute=true;
+                return Process.Start(start) ?? throw new IOException("UAC 后未返回启动进程。");
+            }
+        }
         log($"启动请求已提交：{plan.Executable}；PID={initial.Id}；工作目录={plan.WorkingDirectory}。等待目标 Shipping，不视为 FPS 已生效。");
         if (plan.FpsEnabled) log("用户解锁器可显示自己的窗口、托盘或 UAC；未验证无窗口行为，未接入实时 FPS 接口。");
         status("等待游戏渲染窗口…");

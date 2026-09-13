@@ -19,9 +19,8 @@ public sealed class AppViewModel:INotifyPropertyChanged
     private string _status="请先在设置中确认游戏路径。",_logs="",_fpsInput="240",_reShade="未设置游戏路径",_deployState="未检测",_packageState="";
     private readonly Dispatcher _dispatcher=Application.Current.Dispatcher;
     private readonly DispatcherTimer _monitor=new(){Interval=TimeSpan.FromSeconds(1)};
-    private FpsSession? _session;
     private Process? _game;
-    private CancellationTokenSource? _fpsChangeCts;
+    private readonly CancellationTokenSource _lifetime=new();
     private readonly string _logFile;
     private readonly object _logLock=new();
     public AppViewModel()
@@ -45,14 +44,14 @@ public sealed class AppViewModel:INotifyPropertyChanged
         CleanCommand=new(CleanAsync,()=>!Busy&&!IsGameRunning,ReportError);
         StartCommand=new(StartAsync,()=>!Busy&&!IsGameRunning&&_validFps,ReportError);
         _monitor.Tick+=Monitor;_monitor.Start();
-        Log("鸣潮 FPS Unlock 0.9-dev1 启动。状态来自真实检测，不使用示意图中的硬编码硬件信息。");
+        Log("鸣潮 FPS Unlock 0.9-dev2 启动。状态来自真实检测，不使用示意图中的硬编码硬件信息。");
     }
     public bool Busy {get=>_busy;private set{_busy=value;NotifyAll();}}
     public bool IsGameRunning {get=>_running;private set{_running=value;NotifyAll();}}
-    public bool CanChangeFpsMode=>!Busy&&!IsGameRunning;
-    public bool CanEditFps=>!Busy&&FpsEnabled&&(!IsGameRunning||_session?.Connected==true);
+    public bool CanChangeFpsMode=>!Busy;
+    public bool CanEditFps=>!Busy&&FpsEnabled;
     public bool CanEditSettings=>!Busy&&!IsGameRunning;
-    public bool FpsEnabled {get=>_settings.FpsEnabled;set{if(!CanChangeFpsMode)return;_settings.FpsEnabled=value;Save();NotifyAll();}}
+    public bool FpsEnabled {get=>_settings.FpsEnabled;set{if(!CanChangeFpsMode)return;_settings.FpsEnabled=value;Save();Status="FPS 开关下次启动生效";NotifyAll();}}
     public bool MfgSelected {get=>_settings.MfgSelected;set{if(!CanEditSettings)return;_settings.MfgSelected=value;Save();NotifyAll();}}
     public int TargetFps
     {
@@ -60,7 +59,7 @@ public sealed class AppViewModel:INotifyPropertyChanged
         set
         {
             value=Math.Clamp(value,30,420);if(_settings.TargetFps==value&&_validFps)return;
-            _settings.TargetFps=value;_fpsInput=value.ToString(CultureInfo.InvariantCulture);_validFps=true;Save();NotifyAll();_ =SendFpsDebounced();
+            _settings.TargetFps=value;_fpsInput=value.ToString(CultureInfo.InvariantCulture);_validFps=true;Save();NotifyAll();Status="FPS 设置已保存 · 下次启动生效";
         }
     }
     public string FpsInput
@@ -69,8 +68,8 @@ public sealed class AppViewModel:INotifyPropertyChanged
         set
         {
             _fpsInput=value;
-            if(int.TryParse(value,NumberStyles.Integer,CultureInfo.InvariantCulture,out int fps)&&fps is >=30 and <=420){_settings.TargetFps=fps;_validFps=true;Save();_ =SendFpsDebounced();}
-            else{_validFps=false;Status="目标 FPS 必须是 30–420 的整数；无效值没有发送到游戏。";}
+            if(int.TryParse(value,NumberStyles.Integer,CultureInfo.InvariantCulture,out int fps)&&fps is >=30 and <=420){_settings.TargetFps=fps;_validFps=true;Save();Status="FPS 设置已保存 · 下次启动生效";}
+            else{_validFps=false;Status="目标 FPS 必须是 30–420 的整数；无效值没有保存。";}
             NotifyAll();
         }
     }
@@ -211,7 +210,8 @@ public sealed class AppViewModel:INotifyPropertyChanged
     private async Task StartAsync()
     {
         if(string.IsNullOrWhiteSpace(GameRoot)||string.IsNullOrWhiteSpace(GameExe)){Status="请在设置中先选择鸣潮目录和真正游戏 EXE。";SettingsRequested?.Invoke();return;}
-        string exe=GameProcesses.ValidateExe(_settings);if(FpsEnabled&&!ConfirmRisk())return;
+        GameProcesses.ValidateExe(_settings);
+        var plan=LaunchPlanBuilder.Build(_settings.Clone(),AppPaths.Unlocker);
         var receipt=AppPaths.LoadReceipt(_settings);
         if(receipt?.Status=="PartialFailure"){Status="上次部署未完成，请先在设置中处理。";SettingsRequested?.Invoke();return;}
         if(MfgSelected && (receipt is null || receipt.Status=="Cleaned"))
@@ -224,60 +224,29 @@ public sealed class AppViewModel:INotifyPropertyChanged
             var answer=MessageBox.Show(Application.Current.MainWindow,"MFG 组件与上次部署记录不一致，可能由游戏更新或官方文件校验导致。不会自动把旧文件覆盖到新游戏版本。\n\n是：打开设置检查\n否：保持当前文件，继续启动\n取消：不启动","组件发生变化",MessageBoxButton.YesNoCancel,MessageBoxImage.Warning);
             if(answer==MessageBoxResult.Yes){SettingsRequested?.Invoke();return;}if(answer!=MessageBoxResult.No)return;
         }
-        Busy=true;Status="正在启动游戏…";
+        if(Busy)return;
+        GameProcesses.RequireStopped(GameRoot);
+        string details=plan.FpsEnabled
+            ? $"执行用户解锁器：{plan.Executable}\n工作目录：{plan.WorkingDirectory}\n更新运行配置：{plan.ConfigPath}\nINI PathValue：{plan.UnlockerGamePath}\n自动启动模式 GameLaunchExe=1，目标 FPS={plan.TargetFps}\n由外部工具启动并管理：{plan.ShippingExePath}\n\n它可能显示 UAC、窗口和托盘，内部会加载其自带插件；本工具不再注入。"
+            : $"直接运行原装 Shipping：{plan.ShippingExePath}\n工作目录：{plan.WorkingDirectory}\n保留现有 MFG / ReShade。";
+        if(MessageBox.Show(Application.Current.MainWindow,details+"\n\n是否按以上路径开始？","启动确认",MessageBoxButton.YesNo,MessageBoxImage.Question)!=MessageBoxResult.Yes){Status="已取消启动。";return;}
+        Busy=true;
         try
         {
-            if(FpsEnabled&&(!File.Exists(AppPaths.Plugin)||await SafePaths.HashAsync(AppPaths.Plugin)!=FpsSession.PluginHash))throw new InvalidDataException("FPS 插件缺失或校验失败。没有启动或注入。");
-            var running=GameProcesses.Find(GameRoot);Process target;
-            if(running.Count>0)
-            {
-                if(running.Count!=1||!GameProcesses.HasUnrealWindow(running[0].Id)){foreach(var p in running)p.Dispose();throw new IOException("存在游戏进程但渲染目标不唯一或未就绪；请关闭后重试。");}
-                target=running[0];
-                if(FpsEnabled&&MessageBox.Show(Application.Current.MainWindow,"鸣潮已经运行。是否仅为这次运行加载 FPS 基础插件？不会重复启动游戏。","连接当前游戏",MessageBoxButton.YesNo,MessageBoxImage.Question)!=MessageBoxResult.Yes){target.Dispose();return;}
-            }
-            else
-            {
-                var launchedAt=DateTime.UtcNow;
-                using var initial=Process.Start(new ProcessStartInfo(exe){UseShellExecute=true,WorkingDirectory=Path.GetDirectoryName(exe)!})??throw new IOException("游戏没有启动。");
-                Status="等待鸣潮渲染窗口…";
-                target=await GameProcesses.WaitForRenderer(GameRoot,launchedAt,CancellationToken.None);
-            }
-            _game=target;
-            if(FpsEnabled)
-            {
-                Status="正在连接 FPS 基础插件…";_session=new();await _session.ConnectAsync(target,AppPaths.Plugin,Log,CancellationToken.None);
-                await _session.SetFpsAsync(TargetFps);Log($"已发送 FPS 上限：{TargetFps}。收到管道连接不等于已测得实际帧率。");
-                Status=$"游戏已启动 · FPS {TargetFps} 指令已发送";
-            }
-            else Status="游戏已启动 · 未加载 FPS 插件";
+            _game=await new ExternalUnlockerService(Log).LaunchAsync(plan,value=>Status=value,_lifetime.Token);
             IsGameRunning=true;
-        }
-        catch
-        {
-            if(_game is not null){try{IsGameRunning=!_game.HasExited;}catch{}}
-            throw;
+            Status=plan.FpsEnabled?"游戏运行中 · 外部 FPS 实际效果待确认":"游戏运行中 · 原装 Shipping 直接启动";
+            Log($"已确认渲染窗口：{plan.ShippingExePath}；PID={_game.Id}。"+Status);
         }
         finally{Busy=false;}
     }
-    private async Task SendFpsDebounced()
-    {
-        _fpsChangeCts?.Cancel();_fpsChangeCts?.Dispose();_fpsChangeCts=new();var token=_fpsChangeCts.Token;
-        try
-        {
-            await Task.Delay(200,token);
-            if(IsGameRunning&&_session?.Connected==true)
-            {await _session.SetFpsAsync(TargetFps,token);Status=$"已发送 FPS 上限 {TargetFps} · 游戏内实际结果待确认";}
-        }
-        catch(OperationCanceledException){}
-        catch(Exception e){Log("FPS 更新失败："+e.Message);Status="FPS 通信中断；最后设置可能仍在游戏中生效。";NotifyAll();}
-    }
-    private async void Monitor(object? sender,EventArgs e)
+    private void Monitor(object? sender,EventArgs e)
     {
         if(_game is null||!IsGameRunning||Busy)return;
         bool exited;try{exited=_game.HasExited;}catch{exited=true;}
-        if(!exited){Notify(nameof(CanEditFps));return;}
-        IsGameRunning=false;if(_session is not null){await _session.DisposeAsync();_session=null;}else _game.Dispose();_game=null;
-        Status="游戏已退出，可再次开始游戏。";Log(Status);
+        if(!exited)return;
+        IsGameRunning=false;_game.Dispose();_game=null;
+        Status="游戏已退出，可再次开始游戏；外部解锁器若仍在托盘请先自行退出。";Log(Status);
     }
-    public async Task CloseAsync(){_monitor.Stop();_fpsChangeCts?.Cancel();if(_session is not null)await _session.DisposeAsync();else _game?.Dispose();}
+    public Task CloseAsync(){_monitor.Stop();_lifetime.Cancel();_game?.Dispose();return Task.CompletedTask;}
 }
