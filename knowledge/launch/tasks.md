@@ -33,3 +33,7 @@ No Window.Show, Application.Run, desktop automation or game execution. The produ
 Found real template defect: PART_ContentHost had Margin bound to TextBox.Padding while its default template already applies Padding. Text viewport was6DIPs high inside40DIP FPS field. Removed only the duplicate Margin in App.xaml; viewport now22DIPs, verified >=1.15×font size in all editable native inputs. Deployment/clean buttons measured258.67DIPs each and filled their529.33DIP row with12DIP gap. No redesign.
 
 Offscreen raster DPI100/150/200% is not an actual monitor-DPI test or desktop screenshot. Desktop interaction/settings-single-instance activation and game effects remain unverified pending unlock/approval.
+
+## Exact UAC manifest follow-up
+
+Read UAC_MANIFEST_AUDIT.md before any further FPS launch work. Exact native RT_MANIFEST is requireAdministrator. Current false+customEnvironment -> same-object shell=true fallback is invalid under .NET10. Standard-UAC self-contained launch-worker proposal documented; no production code changes or unlocker execution made for this audit.

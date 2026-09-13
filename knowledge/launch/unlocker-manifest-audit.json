@@ -1,0 +1,69 @@
+{
+  "path": "E:\\yanxin_ws\\wuwa-fps-unlock\\components\\unlocker\\unlock.exe",
+  "sha256": "5b9cba854357a4d9ce9c56676e22e397be8d5dbd2dc10de9393155e378050fae",
+  "pe_header_offset": 224,
+  "resource_rva": 167936,
+  "sections": [
+    [
+      ".text",
+      4096,
+      90748,
+      1024,
+      91136
+    ],
+    [
+      ".rdata",
+      98304,
+      48414,
+      92160,
+      48640
+    ],
+    [
+      ".data",
+      147456,
+      6200,
+      140800,
+      2560
+    ],
+    [
+      ".pdata",
+      155648,
+      5148,
+      143360,
+      5632
+    ],
+    [
+      ".reloc",
+      163840,
+      824,
+      148992,
+      1024
+    ],
+    [
+      ".rsrc",
+      167936,
+      155016,
+      150016,
+      155136
+    ]
+  ],
+  "manifests": [
+    {
+      "resource_path": [
+        24,
+        1,
+        0
+      ],
+      "rva": 319572,
+      "file_offset": 301652,
+      "size": 3315,
+      "sha256": "c19a59850d35fe750f0c8ad2391c9709f555298daf746b9ad9df4b31a77c4db9",
+      "active_requestedExecutionLevel": [
+        {
+          "level": "requireAdministrator",
+          "uiAccess": "false"
+        }
+      ]
+    }
+  ]
+}
