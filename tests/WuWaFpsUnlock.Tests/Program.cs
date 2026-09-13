@@ -1,7 +1,8 @@
 using System.Text;
 using WuWaFpsUnlock.Core;
 
-// Real filesystem-only regression tests; never starts a game, an installer, or a plugin.
+if (await LaunchProcessTests.HandleFixtureAsync(args)) return 0;
+// Real filesystem and self-built child-process tests; never starts a game or unlocker.
 string root=Path.GetFullPath(Path.Combine("artifacts","test-work",Guid.NewGuid().ToString("N")));
 Directory.CreateDirectory(root);
 int passed=0,failed=0;
@@ -72,6 +73,7 @@ await Test("out-of-root receipt refuses deletion",async()=>{var x=await Fixture(
 await Test("unmatched material still receives full hash validation",async()=>{var x=await Fixture();File.Delete(x.plan[0].Target);File.WriteAllText(x.plan[0].Source,"corrupt unmatched material");await Throws<InvalidDataException>(()=>PackageReader.PlanAsync(x.m,x.file,x.game,x.exe,x.exe));Check(!File.Exists(x.plan[1].Target));});
 await Test("incomplete journal ownership cannot delete later file",async()=>{var x=await Fixture();var r=new DeploymentReceipt{GameRoot=x.game,Files=[new(){Path=x.plan[0].Target,Kind="Vendor",ReplacedByTool=true,Completed=false,InstalledHash=await SafePaths.HashAsync(x.plan[0].Target)}]};await DeploymentFiles.CleanOwnedAddonsAsync(r,()=>{},_=>{});Check(File.Exists(x.plan[0].Target)&&r.Status=="CleanedWithSkips");});
 await LaunchTests.RunAsync(Test);
+await LaunchProcessTests.RunAsync(Test);
 Console.WriteLine($"RESULT: {passed} passed, {failed} failed. No Windows/game integration was exercised.");
 try{Directory.Delete(root,true);}catch{}
 return failed==0?0:1;

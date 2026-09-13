@@ -145,7 +145,7 @@ public sealed class AppViewModel:INotifyPropertyChanged
             {
                 var info=await Task.Run(()=>new ReShadeService(Log).Inspect(_settings.Clone()));_reShade=info.Description;
                 var receipt=AppPaths.LoadReceipt(_settings);
-                _deployState=receipt is null?"未部署":receipt.Status=="PartialFailure"?"上次部署未完成":receipt.Status=="Cleaned"?"已清除本工具插件":await DeploymentFiles.IsIntactAsync(receipt)?"已部署 · 文件校验通过":"文件已变化 · 需重新检查";
+                _deployState=receipt is null?"未部署":receipt.Status=="PartialFailure"?"上次部署未完成":receipt.Status=="Cleaned"?"已清除本工具插件":receipt.Status=="CleanedWithSkips"?"清除结束 · 部分已变化项目保留":await DeploymentFiles.IsIntactAsync(receipt)?"已部署 · 文件校验通过":"文件已变化 · 需重新检查";
             }
             else{_reShade="未设置游戏路径";_deployState="请先选择路径";}
         }
@@ -153,57 +153,56 @@ public sealed class AppViewModel:INotifyPropertyChanged
         _packageState=File.Exists(_settings.PackageManifest)?"文件包："+Path.GetFileName(Path.GetDirectoryName(_settings.PackageManifest)):"尚未导入 MFG 文件包；点击开始部署时选择清单。";
         NotifyAll();
     }
-    private bool ConfirmRisk()
-    {
-        if(_settings.RiskAccepted)return true;
-        var answer=MessageBox.Show(Application.Current.MainWindow,"本工具会使用第三方插件。FPS 功能会在游戏进程中加载你提供的 FPS 基础 DLL；MFG 使用 ReShade Full Add-on。\n\n这些改动不是鸣潮官方功能，无法保证不触发反作弊或账号风险。不会关闭安全软件、修改反作弊或尝试绕过其限制。\n\n是否继续？","首次使用确认",MessageBoxButton.YesNo,MessageBoxImage.Warning);
-        if(answer!=MessageBoxResult.Yes)return false;_settings.RiskAccepted=true;Save();return true;
-    }
     private async Task DeployAsync()
     {
         GameProcesses.ValidateExe(_settings);
-        if(!_validFps)throw new InvalidDataException("请先修正目标 FPS。");
-        if(!FpsEnabled&&!MfgSelected)throw new InvalidOperationException("没有选择要部署的功能。");
-        if(!ConfirmRisk())return;
-        if(MfgSelected&&!File.Exists(_settings.PackageManifest))
+        if(!MfgSelected){Status="未选择多帧生成部署。FPS 开关仅决定下次启动方式。";return;}
+        if(!File.Exists(_settings.PackageManifest))
         {
-            var choose=new OpenFileDialog{Title="选择你整理好的 MFG 文件包 manifest.json",Filter="部署清单 (manifest.json)|manifest.json|JSON 清单 (*.json)|*.json",CheckFileExists=true};
-            if(choose.ShowDialog()!=true)return;PackageReader.Load(choose.FileName);_settings.PackageManifest=choose.FileName;Save();
+            var choose=new OpenFileDialog{Title="选择用户材料 manifest.json",Filter="部署清单 (manifest.json)|manifest.json",CheckFileExists=true};
+            if(choose.ShowDialog()!=true)return;
+            PackageReader.Load(choose.FileName);_settings.PackageManifest=choose.FileName;Save();
         }
-        bool upgrade=false;
-        if(MfgSelected)
-        {
-            var existing=new ReShadeService(Log).Inspect(_settings);
-            if(existing.State=="UpgradeRequired")
-            {
-                upgrade=MessageBox.Show(Application.Current.MainWindow,existing.Description+"\n\n只更新官方运行库并保留原配置、滤镜和其他插件。是否允许？","ReShade 更新确认",MessageBoxButton.YesNo,MessageBoxImage.Question)==MessageBoxResult.Yes;
-                if(!upgrade)return;
-            }
-        }
-        Busy=true;Status="正在预检查并部署；请保持游戏关闭。";
+        Busy=true;Status="正在校验材料并搜索同名目标…";
         try
         {
             var snapshot=_settings.Clone();var service=new DeploymentService(Log);
-            try{await service.DeployAsync(snapshot,upgrade);}
-            catch(NeedsElevationException)
+            string preview=await service.PreviewAsync(snapshot);
+            var manifest=PackageReader.Load(snapshot.PackageManifest);
+            var existing=new ReShadeService(Log).Inspect(snapshot,manifest.ReShade);
+            bool upgrade=existing.State=="UpgradeRequired";
+            if(existing.State!="Reusable")
             {
-                if(MessageBox.Show(Application.Current.MainWindow,"目标目录需要管理员写入权限。仅部署工作进程将请求 UAC，主窗口保持普通权限。","授权部署",MessageBoxButton.OKCancel,MessageBoxImage.Information)!=MessageBoxResult.OK)return;
-                await ElevatedWorker.RunFromUi("deploy",snapshot,upgrade,Log);
+                string setup=await new ReShadeService(Log).ResolveLocalSetupAsync(snapshot.PackageManifest,manifest.ReShade);
+                preview+=$"\n本地安装器：{setup}\nReShade 目标：{existing.Proxy??Path.Combine(Path.GetDirectoryName(snapshot.GameExe)!,manifest.ReShade.ProxyApi+".dll")}\n";
             }
-            Status="部署完成。关闭设置后可点击开始游戏；实际 MFG 能力需在游戏内确认。";await RefreshCore();
+            preview+=upgrade?"\n本次需要升级已有 ReShade 本体，保留配置、滤镜及其他 addon。":"\n已有兼容 ReShade 优先复用。";
+            preview+="\n第三方插件的游戏内兼容性仍待验证。安装器可能访问官方兼容表，不下载额外滤镜。";
+            Log(preview);
+            if(!OperationReview.Show("确认部署",preview)){Status="已取消部署，未写入游戏。";return;}
+            Status="正在部署；请保持游戏关闭。";
+            try{await service.DeployAsync(snapshot,upgrade);}
+            catch(NeedsElevationException){await ElevatedWorker.RunFromUi("deploy",snapshot,upgrade,Log,service.ApprovalFingerprint);}
+            Status="文件部署及校验完成；MFG 游戏内实际效果待确认。";await RefreshCore();
         }
         finally{Busy=false;}
     }
     private async Task CleanAsync()
     {
         GameProcesses.ValidateExe(_settings);GameProcesses.RequireStopped(GameRoot);
-        if(MessageBox.Show(Application.Current.MainWindow,"仅清除有本工具所有权记录的 MFG 插件，并撤销本工具自己的 INI 键修改。\n\n保留用户原有 ReShade、滤镜、其他插件及 NVIDIA DLL，不恢复游戏官方文件。被他人修改的文件也会保留。\n\n是否清除？","清除插件",MessageBoxButton.YesNo,MessageBoxImage.Warning)!=MessageBoxResult.Yes)return;
-        Busy=true;Status="正在核对所有权并清除插件…";
+        Busy=true;
         try
         {
-            try{await new DeploymentService(Log).CleanAsync(_settings.Clone());}
-            catch(NeedsElevationException){await ElevatedWorker.RunFromUi("clean",_settings.Clone(),false,Log);}
-            _settings.MfgSelected=false;Save();Status="清除完成；ReShade 与 NVIDIA 运行库已保留。";await RefreshCore();
+            var snapshot=_settings.Clone();var service=new DeploymentService(Log);
+            string preview=service.CleanPreview(snapshot)+"\n保留 ReShade 本体、滤镜、其他插件。无原 DLL 备份；清除后是否自动补齐需由游戏验证，必要时使用官方校验。";
+            Log(preview);
+            if(!OperationReview.Show("确认清除插件",preview)){Status="已取消清除。";return;}
+            Status="正在核对部署记录并清除…";
+            try{await service.CleanAsync(snapshot);}
+            catch(NeedsElevationException){await ElevatedWorker.RunFromUi("clean",snapshot,false,Log,service.ApprovalFingerprint);}
+            _settings.MfgSelected=false;Save();
+            Status=AppPaths.LoadReceipt(snapshot)?.Status=="CleanedWithSkips"?"清除结束，已变化文件或配置已跳过；请查看日志。":"已移除登记且未变化的替换 DLL 和自有插件；ReShade 已保留。";
+            await RefreshCore();
         }
         finally{Busy=false;}
     }

@@ -1,6 +1,6 @@
 using System.Diagnostics;
-using System.Net;
-using System.Net.Http;
+
+
 using WuWaFpsUnlock.Core;
 namespace WuWaFpsUnlock.Services;
 public sealed record ReShadeInfo(string State,string? Proxy,string Ini,string AddonDirectory,string Description);
@@ -10,12 +10,13 @@ public sealed class ReShadeService(Action<string> log)
     {
         string exe=GameProcesses.ValidateExe(s),dir=Path.GetDirectoryName(exe)!;
         var hits=new List<(string path,string state)>();
-        foreach(string name in new[]{"dxgi.dll","d3d12.dll","d3d11.dll","d3d10.dll","d3d9.dll"})
+        foreach(string name in new[]{"dxgi.dll","d3d12.dll","d3d11.dll","d3d10.dll","d3d9.dll","opengl32.dll"})
         {
             string path=Path.Combine(dir,name);if(!File.Exists(path))continue;
+            SafePaths.EnsureNoLinks(s.GameRoot,path);
             string state;
             try {state=PeInspector.AddonBuild(path);}catch{state="Unknown";}
-            if(state=="Unknown" && name is "dxgi.dll" or "d3d12.dll")
+            if(state=="Unknown")
                 return new("Conflict",path,Path.Combine(dir,"ReShade.ini"),dir,"存在未知图形代理："+name+"；不会覆盖。");
             if(state!="Unknown")hits.Add((path,state));
         }
@@ -28,6 +29,8 @@ public sealed class ReShadeService(Action<string> log)
         string addon=dir;
         if(File.Exists(ini))
         {
+            if(!string.IsNullOrWhiteSpace(IniDocument.Load(ini).Get("INSTALL","BasePath")))
+                return new("Conflict",proxy,ini,dir,"ReShade 配置含安装重定向 BasePath；保留原安装并停止自动写入。");
             string? custom=IniDocument.Load(ini).Get("ADDON","AddonPath");
             if(!string.IsNullOrWhiteSpace(custom))
             {
@@ -41,19 +44,21 @@ public sealed class ReShadeService(Action<string> log)
         string stateHit=hits[0].state,version=PeInspector.Version(proxy);
         var versionInfo=FileVersionInfo.GetVersionInfo(proxy);
         if(versionInfo.FileMajorPart>6)return new("Conflict",proxy,ini,addon,$"ReShade {version} 超出本版已适配的主版本范围；保留原安装并停止。");
-        if(stateHit=="FullCandidate" && versionInfo.FileMajorPart==6 && versionInfo.FileMinorPart>=8)
+        if(stateHit=="FullCandidate" && PeInspector.IsAmd64(proxy) && versionInfo.FileMajorPart==6 && versionInfo.FileMinorPart>=8)
             return new("Reusable",proxy,ini,addon,$"ReShade {version} / 完整 Add-on 特征匹配");
         return new("UpgradeRequired",proxy,ini,addon,$"ReShade {version}：需确认升级至 Full Add-on");
     }
     public async Task<ReShadeInfo> EnsureAsync(UserSettings s,ReShadeSpec spec,DeploymentReceipt receipt,bool upgradeApproved,CancellationToken token)
     {
+        foreach(var candidate in Process.GetProcessesByName("ReShade_Setup_6.8.0_Addon"))
+        { using(candidate) { if(!candidate.HasExited)throw new IOException("ReShade Setup 仍在运行；请等待该安装结束后重试。"); } }
         var info=Inspect(s,spec);if(info.State=="Conflict")throw new IOException(info.Description);
         if(info.State=="Reusable") {log("复用已有 "+info.Description+"；不覆盖 ReShade DLL。");return info;}
         if(info.State=="UpgradeRequired"&&!upgradeApproved)throw new InvalidOperationException("需要确认升级现有 ReShade。未改动运行库。");
         string api=info.Proxy is null?spec.ProxyApi:Path.GetFileNameWithoutExtension(info.Proxy);
         string expected=info.Proxy??Path.Combine(Path.GetDirectoryName(s.GameExe)!,api+".dll");
         WriteProbe.Check(expected);WriteProbe.Check(info.Ini);
-        string setup=await DownloadSetupAsync(spec,token);
+        string setup=await ResolveLocalSetupAsync(s.PackageManifest,spec,token);
         GameProcesses.RequireStopped(s.GameRoot);
         bool wasMissing=!File.Exists(expected);
         byte[]? originalIni=File.Exists(info.Ini)?File.ReadAllBytes(info.Ini):null; // Transient preservation, no backup file.
@@ -64,8 +69,13 @@ public sealed class ReShadeService(Action<string> log)
         log(info.Proxy is null?"正在静默安装官方 ReShade Full Add-on…":"正在更新 ReShade 本体，保留原有配置…");
         using var process=Process.Start(psi)??throw new IOException("无法启动 ReShade Setup。");
         // Do not kill Setup midway or imply it is rolled back. UI stays in a real busy state.
-        await process.WaitForExitAsync();
-        if(originalIni is not null)File.WriteAllBytes(info.Ini,originalIni);
+        // Keep the operation busy until Setup exits, including its compatibility-list network wait.
+        // Do not allow retry/cleanup to race an installer still writing the same directory.
+        var exit=process.WaitForExitAsync();
+        if(await Task.WhenAny(exit,Task.Delay(TimeSpan.FromSeconds(60)))!=exit)
+            log($"ReShade Setup 仍在运行（PID {process.Id}），可能正在等待官方兼容表。继续等待真实退出；未报告成功。");
+        try { await exit; }
+        finally { if(originalIni is not null)File.WriteAllBytes(info.Ini,originalIni); }
         if(process.ExitCode!=0)throw new IOException($"ReShade Setup 退出码 {process.ExitCode}，未将部署标记成功。");
         var after=Inspect(s,spec);
         if(after.State!="Reusable"||after.Proxy is null||!File.Exists(expected)||!after.Proxy.Equals(expected,StringComparison.OrdinalIgnoreCase))throw new IOException("ReShade Setup 已退出，但代理文件/完整 Add-on 特征/目标布局未通过检查。");
@@ -76,52 +86,19 @@ public sealed class ReShadeService(Action<string> log)
         entry.InstalledHash=hash;entry.Completed=true;AppPaths.SaveReceipt(receipt);
         log("ReShade 本体检查完成。没有安装滤镜包。");return after;
     }
-    private async Task<string> DownloadSetupAsync(ReShadeSpec spec,CancellationToken token)
+    public async Task<string> ResolveLocalSetupAsync(string manifestPath, ReShadeSpec spec, CancellationToken token=default)
     {
         if(spec.Version!="6.8.0")throw new InvalidDataException("未适配的 ReShade Setup 版本。");
-        string name=$"ReShade_Setup_{spec.Version}_Addon.exe",dir=Path.Combine(AppPaths.Data,"cache"),path=Path.Combine(dir,name),receipt=path+".json";
-        Directory.CreateDirectory(dir);
-        string url="https://reshade.me/downloads/"+name;
-        if(File.Exists(path)&&File.Exists(receipt))
-        {
-            var cached=JsonFiles.Read<Dictionary<string,string>>(receipt);string hash=await SafePaths.HashAsync(path,token);
-            if(cached.GetValueOrDefault("url")==url&&cached.GetValueOrDefault("sha256")==hash&&(string.IsNullOrEmpty(spec.SetupSha256)||spec.SetupSha256.Equals(hash,StringComparison.OrdinalIgnoreCase)))return path;
-        }
-        log("从 ReShade 官方 HTTPS 地址获取 Full Add-on 安装器…");
-        using var client=new HttpClient(new HttpClientHandler{AllowAutoRedirect=false}){Timeout=TimeSpan.FromMinutes(3)};
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("WuWaFPSUnlock/0.9");
-        Uri location=new(url);HttpResponseMessage? response=null;
-        try
-        {
-            for(int i=0;i<4;i++)
-            {
-                response=await client.GetAsync(location,HttpCompletionOption.ResponseHeadersRead,token);
-                if((int)response.StatusCode is >=300 and <400)
-                {
-                    var next=response.Headers.Location??throw new HttpRequestException("重定向没有目标。");location=next.IsAbsoluteUri?next:new Uri(location,next);response.Dispose();response=null;
-                    if(location.Scheme!="https" || location.Host is not ("reshade.me" or "www.reshade.me"))throw new HttpRequestException("拒绝非 ReShade 官方 HTTPS 重定向。");continue;
-                }
-                break;
-            }
-            if(response is null)throw new HttpRequestException("重定向过多。");response.EnsureSuccessStatusCode();
-            string temp=path+".download";
-            try
-            {
-                await using(var src=await response.Content.ReadAsStreamAsync(token))
-                await using(var dst=new FileStream(temp,FileMode.Create,FileAccess.Write,FileShare.None,131072,true))
-                {
-                    byte[] buf=new byte[131072];long total=0;int read;
-                    while((read=await src.ReadAsync(buf,token))>0){total+=read;if(total>100*1024*1024)throw new InvalidDataException("安装器大小异常。");await dst.WriteAsync(buf.AsMemory(0,read),token);}
-                }
-                string hash=await SafePaths.HashAsync(temp,token);
-                if(!string.IsNullOrEmpty(spec.SetupSha256)&&!hash.Equals(spec.SetupSha256,StringComparison.OrdinalIgnoreCase))throw new InvalidDataException("ReShade Setup 校验失败。");
-                var v=FileVersionInfo.GetVersionInfo(temp);
-                if(!((v.ProductName??"")+(v.FileDescription??"")).Contains("ReShade",StringComparison.OrdinalIgnoreCase))throw new InvalidDataException("下载文件不是可识别的 ReShade 安装器。");
-                File.Move(temp,path,true);JsonFiles.Save(receipt,new Dictionary<string,string>{{"url",url},{"sha256",hash}});
-                log("官方安装器已缓存；"+(string.IsNullOrEmpty(spec.SetupSha256)?"来源校验为官方 HTTPS，包内未提供预设哈希。":"已通过包内 SHA-256 校验。"));return path;
-            }
-            finally{if(File.Exists(temp))File.Delete(temp);}
-        }
-        finally{response?.Dispose();}
+        if(string.IsNullOrWhiteSpace(spec.LocalSetupPath))throw new FileNotFoundException("未提供用户本地 ReShade Setup；请重新导入桌面材料。");
+        string sourceRoot=Path.GetDirectoryName(Path.GetFullPath(manifestPath))!;
+        string path=SafePaths.Under(sourceRoot,spec.LocalSetupPath);
+        if(!File.Exists(path))throw new FileNotFoundException("本地 ReShade Setup 缺失。",path);
+        if(!System.Text.RegularExpressions.Regex.IsMatch(spec.SetupSha256,"^[a-fA-F0-9]{64}$"))throw new InvalidDataException("本地 Setup 必须有导入时登记的 SHA-256。");
+        string hash=await SafePaths.HashAsync(path,token);
+        if(!hash.Equals(spec.SetupSha256,StringComparison.OrdinalIgnoreCase))throw new InvalidDataException("用户本地 ReShade Setup SHA-256 不匹配；未运行安装器。");
+        var version=FileVersionInfo.GetVersionInfo(path);
+        if(version.FileMajorPart!=6||version.FileMinorPart!=8||version.FileBuildPart!=0||!((version.ProductName??"")+(version.FileDescription??"")).Contains("ReShade",StringComparison.OrdinalIgnoreCase))throw new InvalidDataException("本地文件不是可识别的 ReShade 6.8.0 安装器。");
+        log("使用用户本地 ReShade 6.8.0 Full Add-on Setup；SHA-256："+hash+"。该哈希证明副本一致，不代表官方签名信任。");
+        return path;
     }
 }
