@@ -1,0 +1,2357 @@
+[
+  {
+    "path": "dotnet.exe",
+    "length": 157480,
+    "sha256": "111DA7B604CD196B49167CFEECDAEF4034B58CC7DE71A91CBF9E162C9E8B0931"
+  },
+  {
+    "path": "LICENSE.txt",
+    "length": 9519,
+    "sha256": "7F6839A61CE892B79C6549E2DC5A81FDBD240A0B260F8881216B45B7FDA8B45D"
+  },
+  {
+    "path": "PROVENANCE.json",
+    "length": 2057,
+    "sha256": "A83814E9DACBB2A6E348217589240E0AD59DA8F811E448BB0F71FCF5BA805BC1"
+  },
+  {
+    "path": "ThirdPartyNotices.txt",
+    "length": 96177,
+    "sha256": "1271701F435F7FE4AA81DC7E273CA80B6391B73580EE20B35A956052C95DE4CF"
+  },
+  {
+    "path": "host\\fxr\\8.0.31\\hostfxr.dll",
+    "length": 366376,
+    "sha256": "4F5A0500CD2A2439B0D5EDBF242950233AEC4539EC9A5E7BA9B8A9B0079F63AF"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\.version",
+    "length": 50,
+    "sha256": "AE69C6BA26912CE07EE64B1FB02BB21FC0B921E97ABBA95C47291FF495640726"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\clretwrc.dll",
+    "length": 310568,
+    "sha256": "BC233572D7702EC8D8763C143EC62687C38ABC3AAD26336FB45C26657BF3A5E7"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\clrgc.dll",
+    "length": 667944,
+    "sha256": "B09898E142791EA3B96FD1B432D0E5C8AD51C81CD99B608ACCD2981E78A93CDF"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\clrjit.dll",
+    "length": 1777960,
+    "sha256": "697C09AC310B8FB8118863971955DA135AEE348116816E3B511BF5957DC6253A"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\coreclr.dll",
+    "length": 4995880,
+    "sha256": "BBBCAEDB369617695280CAAA60CDA1ABA4FA3C5B557532A89D9F4A9174A5B692"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\createdump.exe",
+    "length": 71512,
+    "sha256": "BEBA75FFCD188A0CE594C304C737CAF16681E1AF19BDD7BB47B3F0EB8636C320"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\hostpolicy.dll",
+    "length": 406824,
+    "sha256": "24F18CCB306D5E614932478471AD276E2B041A723A45E571073DB383B37C5120"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\Microsoft.CSharp.dll",
+    "length": 1005392,
+    "sha256": "30704C86C4C052AC630E5B5BF9E04AEB1EB0677FE3C5CF8A7DF36C8AB78D0B56"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\Microsoft.DiaSymReader.Native.amd64.dll",
+    "length": 2377016,
+    "sha256": "70E4B89978CE57EF87B28F4921F3140C383B04AA96E7F3BDB3C4EBB898FD8A72"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\Microsoft.NETCore.App.deps.json",
+    "length": 28700,
+    "sha256": "9A29FC464FE7E971A48FB8E608B17C105B7040C982AEB3FCB10D880CEF0B59B6"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\Microsoft.NETCore.App.runtimeconfig.json",
+    "length": 53,
+    "sha256": "AC377253F9F7CF9D6127D684369DE36DA123D992CDC2E17950E3C8BF9688DF76"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\Microsoft.VisualBasic.Core.dll",
+    "length": 1247056,
+    "sha256": "BDCDD4BD2B6E2C0EEC9A93187CD57CE9437C9A2324A6C6C20C55A2D1A27823BE"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\Microsoft.VisualBasic.dll",
+    "length": 17192,
+    "sha256": "A172FAD5B53A27D32B21BA3B18E27046C1DAF7451C46BEA4F57F515D0EEF756A"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\Microsoft.Win32.Primitives.dll",
+    "length": 15184,
+    "sha256": "596160C8491D2110A36CE4CB93C736905B2C83B9B50496369F32E32AD28D2A20"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\Microsoft.Win32.Registry.dll",
+    "length": 120656,
+    "sha256": "A8CC5503BBBA36472D1DD3A8EEBC3A8B26F0B2882E770851AAB486690B23EAD9"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\mscordaccore_amd64_amd64_8.0.3126.42015.dll",
+    "length": 1348960,
+    "sha256": "A277F63F5722E1ED59A791FC5D30C53ED263ABEF4ADF12D0BF494897D796C3E0"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\mscordaccore.dll",
+    "length": 1348960,
+    "sha256": "A277F63F5722E1ED59A791FC5D30C53ED263ABEF4ADF12D0BF494897D796C3E0"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\mscordbi.dll",
+    "length": 1233800,
+    "sha256": "20140E71ED6DD59E6736E455B7BE2784D7AC0B3F43839148A134AEC3E7622DE0"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\mscorlib.dll",
+    "length": 59216,
+    "sha256": "EE4983E136AB524F29D2F43D01D1DEB978F4948EB5CA05B5D6E40BE37EC43023"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\mscorrc.dll",
+    "length": 136488,
+    "sha256": "C0FC4C625CE2C62887A86A5E1D93895836E7C998A3C95169505F8515266160FC"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\msquic.dll",
+    "length": 536344,
+    "sha256": "B7158D427B01C70483BB3D80C5211E387DD98E9471C8A70E4484D449DE9157E8"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\netstandard.dll",
+    "length": 100648,
+    "sha256": "53D854D33C3F0E1BBCCFF4B5C4B89420DAA66FA5F6603F6E5DF20D6BBB7E00F4"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.AppContext.dll",
+    "length": 15144,
+    "sha256": "C3D2CB89EC473B55FCBF6F0ED601139E46159E0D2834D9D92ED74ED89E2A2879"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Buffers.dll",
+    "length": 15184,
+    "sha256": "8CADBC77368593547381F18EAFA12DD58216D7B35A60B487B66CA51A2EE3C406"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Collections.Concurrent.dll",
+    "length": 276264,
+    "sha256": "ED653CCB5DC40D0BB4EA3429165A0825705F2935A65C584CA67CBA45671884C1"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Collections.dll",
+    "length": 259880,
+    "sha256": "C6BB79B8FB32504B6327B516E6FF32017A073669AB749D3C86ED49CD5F2F0C45"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Collections.Immutable.dll",
+    "length": 837456,
+    "sha256": "6E41C8BA23968F6A9B910E3C33F66761A588F24084C4E3599214805716D6D259"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Collections.NonGeneric.dll",
+    "length": 104232,
+    "sha256": "B40CDF234652B31B443164350F73E25F98C5EDECFD30698789D6DBF9CA456E44"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Collections.Specialized.dll",
+    "length": 104272,
+    "sha256": "24022887037BFAAD8C89C26642712C920DCC0ABABD3396D80D8B2BE16637673B"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.ComponentModel.Annotations.dll",
+    "length": 198480,
+    "sha256": "97060D253527BDDE94022AC6D22AE4C0474CF67F40BFE8342E9420B7888B3AFF"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.ComponentModel.DataAnnotations.dll",
+    "length": 16720,
+    "sha256": "E5B872CF98BF9F3F565877B21FDEE61B569ECC586E6DC48C9199AE5E0CD100B3"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.ComponentModel.dll",
+    "length": 30504,
+    "sha256": "4D9E2E21ED5C16C100221433D1AAB01409EC199C9F617E48B9FE1617989BBAA6"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.ComponentModel.EventBasedAsync.dll",
+    "length": 46928,
+    "sha256": "CE813A7CDE09EBA1BDD7D6661FA39C09057BEDDC78F554C5476C43766D763ED0"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.ComponentModel.Primitives.dll",
+    "length": 79696,
+    "sha256": "D981AF410D4ED7939FDEE47A1EE58E3DB472C05F17C2B0D48E4B1EBFB2FEA0E5"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.ComponentModel.TypeConverter.dll",
+    "length": 747304,
+    "sha256": "DB04940603C749719E133BB567D142D46AF3A6F2F37597DB398955A3896B84C2"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Configuration.dll",
+    "length": 19240,
+    "sha256": "39ECA0E98D4B206CBFF6243A04494F79EC8B19903D3427B44D64D88097D77F65"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Console.dll",
+    "length": 173864,
+    "sha256": "D38105C5C790FC76AC6E4D99FE9B6C2672E4E250E191BD43593E55AE7D3B2AFE"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Core.dll",
+    "length": 23336,
+    "sha256": "F7414ECFD958FDFB2B4BCDD2F7778A7B26968EB453CA2C03FDF53BA4BB21674F"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Data.Common.dll",
+    "length": 2860840,
+    "sha256": "089A74A39DCEB113BEA92522B227E24C881A618C5EB1E2ABB166A6E8C12BE0CB"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Data.DataSetExtensions.dll",
+    "length": 15696,
+    "sha256": "D425011A475BB44E6B9ACD4C48E8F3B428312A05CA3A649ABBCD871F7102DECF"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Data.dll",
+    "length": 24912,
+    "sha256": "1EFE79C9F164CE5DA6542DE89DC7F10D1FEB1F38216B68F9A6B6A8CA5E3D2AC3"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Diagnostics.Contracts.dll",
+    "length": 16168,
+    "sha256": "A670F39C589BD9D4A994E75ABC2385839649ED91A831A4CA7D9FE4F87834B492"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Diagnostics.Debug.dll",
+    "length": 15656,
+    "sha256": "E122BD1046864476252765E356C54D2454E72A6E11BF546907DE1468CA0B0CB5"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Diagnostics.DiagnosticSource.dll",
+    "length": 415568,
+    "sha256": "25C3BF229337A485CEACB82C00F47F2E98DE68A279EB5A450550526F9CBF0448"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Diagnostics.FileVersionInfo.dll",
+    "length": 46888,
+    "sha256": "24B0E8ED2EA93B84FF2A26CB1F69F7D6E331F6162EAE4FAE4446A5556B8A8EEE"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Diagnostics.Process.dll",
+    "length": 337744,
+    "sha256": "7083C7046AC4CBED1068B6AE7A777D421EEAF180E5697283FC1C6AF731C32A3D"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Diagnostics.StackTrace.dll",
+    "length": 46888,
+    "sha256": "7B26B1C48D500576994B3153B88FEFD1E516680AE4B52CDE608B8E869544B37D"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Diagnostics.TextWriterTraceListener.dll",
+    "length": 67368,
+    "sha256": "0279BBA2AB8C1E023D043D802B0B3BBBF8483DD082E305391C6229382452B1C2"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Diagnostics.Tools.dll",
+    "length": 15184,
+    "sha256": "CA4CC511A2204AF2A5652C7CF870A6A5EFF109F98ACC72A8E2A0498F72665507"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Diagnostics.TraceSource.dll",
+    "length": 145232,
+    "sha256": "2B5489BC5A6D65E109DBED6557DC2AF3BA9DFB549EFD18A64F37FD64255CB756"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Diagnostics.Tracing.dll",
+    "length": 16168,
+    "sha256": "6857ED7CA2C17D38F74639BACC59942599935593F9A0B33B246161C57DB27EB3"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.dll",
+    "length": 49960,
+    "sha256": "173DD55A6D19794FB6EB8C4E4E73510EBF3A7928AFFE43C21E721861A4250E51"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Drawing.dll",
+    "length": 20304,
+    "sha256": "97562444D2DAF928CD78404156665DDE55AA5EC71C6FCAD705284338E4A36EBE"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Drawing.Primitives.dll",
+    "length": 132944,
+    "sha256": "02BD1F5644DD73789B82C3A52C8F86EF726BAA1D4CCE2A0C64D9DC1C29B9CB02"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Dynamic.Runtime.dll",
+    "length": 16208,
+    "sha256": "F6A93AD11464C19F720D34B92043DCC289885BF959B32549EE3CA24537E8B65A"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Formats.Asn1.dll",
+    "length": 243496,
+    "sha256": "61F505F140E2C6417640A5AA47A86D148D4F6DC5317A66A7BFA2266A3AC975BF"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Formats.Tar.dll",
+    "length": 276304,
+    "sha256": "EE3132A84CF9FD170F3AE0899A996ADC120A899C51DBC5534B22E8870B5AA137"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Globalization.Calendars.dll",
+    "length": 15696,
+    "sha256": "E0974066E338D22097F5C77E47D086BD9C5826C256034A31F21B34C4392FBB7B"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Globalization.dll",
+    "length": 15656,
+    "sha256": "88A4C4517972878AEBD264AC5150A3822D14AB3F5B9577C8372E1724B0CA8D88"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Globalization.Extensions.dll",
+    "length": 15144,
+    "sha256": "9D57E781AFD06F3C6D0A54842467B29079BA2932827A76D9047A327490F1F836"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.IO.Compression.Brotli.dll",
+    "length": 83752,
+    "sha256": "46D228E5EA0E3D25B15E95D6A97A3B80E86DDE2660589462F30853EB5A0C40B5"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.IO.Compression.dll",
+    "length": 263976,
+    "sha256": "1F7E0CE87B7859C81D793750EA8FC58DB6D1FA1B81D3CEA1E73C614F66439C3C"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.IO.Compression.FileSystem.dll",
+    "length": 15144,
+    "sha256": "75972527F5C874893F0515FBE6F8D1D484354AC421CCF31AF346738AA74CBC07"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.IO.Compression.Native.dll",
+    "length": 828240,
+    "sha256": "4F892A1F3BDF970E662435BB044B5C5E4D8F7241BCE981237F57165AE12CB171"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.IO.Compression.ZipFile.dll",
+    "length": 55080,
+    "sha256": "A8624A7C7359C1EB6767C50513A33EB9F09125089044EF0CAF9D4D225B33A230"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.IO.dll",
+    "length": 15656,
+    "sha256": "1EE3349F15C3A20A7394341D8D4EDE2AC3D7DDBE4462F43DAE828F407F84FF1D"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.IO.FileSystem.AccessControl.dll",
+    "length": 104232,
+    "sha256": "6C384EE8C0613A469F9894209F39F154D2E6E8796F9B9C02E3686A42E15D94A6"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.IO.FileSystem.dll",
+    "length": 15656,
+    "sha256": "6005E3AC5CBEE19D172CC29E48CA84DB8E62DFF34CFF95E56C3600A0A95CB170"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.IO.FileSystem.DriveInfo.dll",
+    "length": 55080,
+    "sha256": "3EEA221AAA9E6066BFFB63218EE292FE499BBB5DB434A57225AAC1B8531C0B90"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.IO.FileSystem.Primitives.dll",
+    "length": 15184,
+    "sha256": "FB2F15CF3356987E0120D265B7B4FBCCC11DCCFBAE08B334A17B4E830EDDC54E"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.IO.FileSystem.Watcher.dll",
+    "length": 87888,
+    "sha256": "21C97F58651EA238A7018ECFA4BB4B3B6B4E682F97163AE14F8D4D145547F3F0"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.IO.IsolatedStorage.dll",
+    "length": 91984,
+    "sha256": "AF7C75423C9EFDF88850A7197C57E19D588A326678BBE07AA7F0B5DDB3049F59"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.IO.MemoryMappedFiles.dll",
+    "length": 83752,
+    "sha256": "E3136D19090F173D2AB75C392486A1427060BD149D966CFD58F3DF3308546DFD"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.IO.Pipes.AccessControl.dll",
+    "length": 16168,
+    "sha256": "FB206A579C16F5750CE10026913A7F16AD686FB37AF1FC9BC997F611362B2F2E"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.IO.Pipes.dll",
+    "length": 165672,
+    "sha256": "35030C28374B6FFA6393C2AB8AE80CF712A2F88E92A16DBBDBF6AE03F0E0D452"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.IO.UnmanagedMemoryStream.dll",
+    "length": 15144,
+    "sha256": "9442D9391FF037CF388A9E15C171845E5436B093E3C928C60350957555393FD0"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Linq.dll",
+    "length": 542504,
+    "sha256": "2B375E90FC687967BD95A0F47DBCBA44D396923F3C98B7FE5754E34C8E4BEFAA"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Linq.Expressions.dll",
+    "length": 3675984,
+    "sha256": "0F99977BEDDC9272D56A2E16B2581CDE37F2AFD43E77C8209827197C098DEDEB"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Linq.Parallel.dll",
+    "length": 804648,
+    "sha256": "4BA87321EA950874380628879C3C25332281F7F9A920A090DE930570AE8AF0EA"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Linq.Queryable.dll",
+    "length": 173864,
+    "sha256": "5E14D4AB3BB2711B0CC4B197F973E9C74955A1E4C77041D5CAD65E759C304232"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Memory.dll",
+    "length": 157480,
+    "sha256": "84242CCE5EACC6963A77163986066BD0A1C2EB698B5F26DBDD5E6706E002FBC7"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Net.dll",
+    "length": 17232,
+    "sha256": "C2DDCDFF66BBB2595E5BCACA342D600A81C9A2E618AC9B9B1C6977FC4E1D17FC"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Net.Http.dll",
+    "length": 1734440,
+    "sha256": "5102639C2037D77949340D94761C9A4C5053B940B8AE4BA2FBBE3507B8A5EC43"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Net.Http.Json.dll",
+    "length": 128808,
+    "sha256": "7C4B39865655DD3B695A305527B8D11092C5DCF1B786D747CD45E6C00CCE5249"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Net.HttpListener.dll",
+    "length": 550696,
+    "sha256": "AD612AE83E313EB7FC2AFA59B829533C8E8F36FB76D1D398262A610E85AF1CCC"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Net.Mail.dll",
+    "length": 431952,
+    "sha256": "8830477BB6B18B181A2495C77038AB8A7C941897C9E46FEB06F61B2013ED1C8E"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Net.NameResolution.dll",
+    "length": 112424,
+    "sha256": "E8CC6C2F0D59FB018FDC4A66057E3A56A3AA5ED82FEDE17B2398CDA88DA407CD"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Net.NetworkInformation.dll",
+    "length": 157480,
+    "sha256": "DB21F0C5659D925741F7A08B0B50FC297248B0155F375F0FD7F970DD2E4CD3F0"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Net.Ping.dll",
+    "length": 96040,
+    "sha256": "3A9AAB851FFF6116DEE3524177859E051512FADF7E209372E2D2342B51845474"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Net.Primitives.dll",
+    "length": 231248,
+    "sha256": "0F929E8581F09FE85275DF7B38549BC51415CD110AADFD89EADE53943174511A"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Net.Quic.dll",
+    "length": 284456,
+    "sha256": "58F5E4C6F2BBD5320C9797FBEAD001A99E4D334FA936D5469DF82262AC8069DA"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Net.Requests.dll",
+    "length": 345896,
+    "sha256": "60B7C1595CECC53767C3EFCDAE74DDD37350AC51F377CAC8D7E95428B1F231AF"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Net.Security.dll",
+    "length": 669520,
+    "sha256": "C957641BE9192E7812F209E2120E56A71DA0D99B1A8443CA5F7947F38EA4376D"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Net.ServicePoint.dll",
+    "length": 46888,
+    "sha256": "8969D0EA32B01B7198030AFE6258D85A3021655B4F7E2291CB5521BBA1F7E29F"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Net.Sockets.dll",
+    "length": 546600,
+    "sha256": "49E95C5A59172D80941992016EB35C965D8FB4BC05B745F85E793B6C010BDC6B"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Net.WebClient.dll",
+    "length": 169768,
+    "sha256": "2C8AD06A15AEE44E700CBFF2BDF1DA0000FCAA4E8BA5524E9DB1B07C3ADD099E"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Net.WebHeaderCollection.dll",
+    "length": 67368,
+    "sha256": "8DB64DD40A80422673F81EC67EE9DF921795B0579E5BA6CEF09BFFCE7FEF1294"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Net.WebProxy.dll",
+    "length": 42792,
+    "sha256": "CFD65E84A782DB8180C9BB3BF6EB739F250901E1006D941D66F08D6B6EDB0B0E"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Net.WebSockets.Client.dll",
+    "length": 100136,
+    "sha256": "41836162542928AD88AC7A0176CBDC753F63DA986D668688F7FB049B2EF0AEE9"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Net.WebSockets.dll",
+    "length": 190288,
+    "sha256": "1250D5F182A8C3655A81B1E11955D904FD147D7F770191DE4004619247178629"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Numerics.dll",
+    "length": 15184,
+    "sha256": "ADB2DDA9BBFC24D694B77E1700F2DF0706FF077DE8F40DD09ABABC92459F2E2B"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Numerics.Vectors.dll",
+    "length": 15656,
+    "sha256": "6E45388834E11D4A8E460F97DA371D6889CDF98D7B65B300079C2F2B69EA3FAF"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.ObjectModel.dll",
+    "length": 79656,
+    "sha256": "35187A8D7F9DC8896894D1A0A496FBABCD567F2AC0F047632F7178C308FF72F5"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Private.CoreLib.dll",
+    "length": 13174608,
+    "sha256": "99B168B84597A4F31FDA8281EFCE7D42A14E2DF0F4694194735E049DBC0F6418"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Private.DataContractSerialization.dll",
+    "length": 2082600,
+    "sha256": "F3D2ACD4D5ADEABB40991CD1C757D05640B64CDD89F59874CFFE7BBD6ED38B97"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Private.Uri.dll",
+    "length": 259920,
+    "sha256": "F2A695DCD4073EABA43B4EE26F006C0174BFF42673E17B38914450CA7D2547F5"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Private.Xml.dll",
+    "length": 7997264,
+    "sha256": "F7285C6A22E221784F1D81F884283E9DCD02AA7BFD17C428943D29E00170D749"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Private.Xml.Linq.dll",
+    "length": 403240,
+    "sha256": "5DE081135173DD027BDC3F6285BEAA31D184CFF8D217D681D405E038D1819721"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Reflection.DispatchProxy.dll",
+    "length": 75560,
+    "sha256": "2F926A9F911D11B98C71E67B7E91F883C58B3B095794A8AC69A5CDBFD37C60C4"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Reflection.dll",
+    "length": 16168,
+    "sha256": "558837B6BCAF55FDBB3E7D8F565F0C04D9B415823D0ABE382AC31643DB3639DE"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Reflection.Emit.dll",
+    "length": 128808,
+    "sha256": "51742F48054D452DE444DA58D4AC69B879A23BBC8841B4B08FC337745D50CB07"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Reflection.Emit.ILGeneration.dll",
+    "length": 15656,
+    "sha256": "ED892838C6ED6649AB57A436128845EC195329CDF568C99D9CB8E6F4B92C7A01"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Reflection.Emit.Lightweight.dll",
+    "length": 15656,
+    "sha256": "39CF409E3B41B813C9E715EC4F38BC02748499D62E89F71FD8F4DAD6EBBA80BB"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Reflection.Extensions.dll",
+    "length": 15144,
+    "sha256": "3ADAAF6F0DCD0208AB0282A774801486444AF53118015AC12E0C6F8623D3F3CE"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Reflection.Metadata.dll",
+    "length": 1115944,
+    "sha256": "1795022B24DDF1E4DB47F63035B685F2A9F3E4468FB277158BB909D3B6EC00A0"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Reflection.Primitives.dll",
+    "length": 15656,
+    "sha256": "B15B177125F391D1CAEE193167CAFFBEC4AC2586447F822AC655ACE9A6BDFF41"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Reflection.TypeExtensions.dll",
+    "length": 42792,
+    "sha256": "191C401D245FBBE8D6E0105A53DB610122871168E21AC849BE6FBC86BB786048"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Resources.Reader.dll",
+    "length": 15184,
+    "sha256": "34B31E5093FF2564FCCDE4B43C31330BC4CBC6CF24C38CB929D34F1FFB46D0FB"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Resources.ResourceManager.dll",
+    "length": 15656,
+    "sha256": "D0DB07A7E954EDBEF7D586907574068EA2764E28ACB7F5A64FD6006EE8889D93"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Resources.Writer.dll",
+    "length": 50984,
+    "sha256": "A09C234E643B0391367F975241592002270EB9BD5516F0D75B31F82BE6426DD6"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.CompilerServices.Unsafe.dll",
+    "length": 15144,
+    "sha256": "69EDF8CB4BFE291FF998F2AB0CEA2F3B7F32664C53E9B9171A35F0664FC047CF"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.CompilerServices.VisualC.dll",
+    "length": 30544,
+    "sha256": "B0216C72F28E06BF4EE3C7561B5C483224847E5F40DF6D939D2AFBE731E2CFD2"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.dll",
+    "length": 43304,
+    "sha256": "E8FB5B78DC75B0650520042936FCA2165A060CB4AFA4B8CCE90524C9C9FC3563"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.Extensions.dll",
+    "length": 17704,
+    "sha256": "7E7A6460090CF9170B336CA12511EA8D793C281A79CCFF9F96DB88DB74B97FF6"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.Handles.dll",
+    "length": 15144,
+    "sha256": "9B193371A3E739F81E601E343C60D6214E0B3966833F4EAEBDCFB49F8217E97F"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.InteropServices.dll",
+    "length": 96080,
+    "sha256": "1930AEA4D91654A4DAF13BF95B2DAFF023D3104A9B3794059EA139E550BCFB5F"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.InteropServices.JavaScript.dll",
+    "length": 50984,
+    "sha256": "7CEFE89E6502602A7E0256960F5F587046016CDB9B822A104E0BF961178DCF2A"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.InteropServices.RuntimeInformation.dll",
+    "length": 15144,
+    "sha256": "C7FDCD989C4732AF5D8C5C00A5CE68D48FA6F500DEE37AA3FD716FB260B01338"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.Intrinsics.dll",
+    "length": 16720,
+    "sha256": "8679A62575619CAA282D3FB1A1EAD4680417B0384FFED8B73A2C4F7DC102C32B"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.Loader.dll",
+    "length": 15696,
+    "sha256": "64AC3644E7FD9279B5410E9C8D31DF01F763B4A362E626E6DD96416A9F6755B3"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.Numerics.dll",
+    "length": 329552,
+    "sha256": "D845C2A3D8EDC282D5C32FD8020C2233FBEED3EB02B5064AB8637506049CFB70"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.Serialization.dll",
+    "length": 16680,
+    "sha256": "A4A2CD5A396A851E444C5E6AB82C6353A1D83906B65968A15CD8D57540B4F9C3"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.Serialization.Formatters.dll",
+    "length": 309032,
+    "sha256": "10C352DBA07E5DE49FE362EDD9D8A44CFC60CD0136A48EB1A5104DA30D2333E5"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.Serialization.Json.dll",
+    "length": 15656,
+    "sha256": "70D7013DCD8AA116954F6EFB1643C4DB01927F75E362C5807F795E443D1EAA9A"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.Serialization.Primitives.dll",
+    "length": 38736,
+    "sha256": "65B4FDCA2B36D551FA88C1CB8D7646EF9F29097B96487AB08FCF31F5DC9AFE86"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Runtime.Serialization.Xml.dll",
+    "length": 16680,
+    "sha256": "875EF1FE60647F5BB00A756AD9E7BB0C4A579D35ACEAD8386F27F8C7479AE5E0"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Security.AccessControl.dll",
+    "length": 231248,
+    "sha256": "149888FD2B8F15B37BA115E2BB3C0577C8DB9AED6F91221902AD6C9A61A69A49"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Security.Claims.dll",
+    "length": 100176,
+    "sha256": "45171F0AD174047CBF511E7761D7ABB2D44988E899F690C36FF3C5BCFBCB2467"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Security.Cryptography.Algorithms.dll",
+    "length": 17192,
+    "sha256": "E1BDF2D837D0C8C582B1F98992511421C3E5130B42603F868EF0B5C8C2609F92"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Security.Cryptography.Cng.dll",
+    "length": 16168,
+    "sha256": "7B6DEB57BD6A2F0123527F04BE5CCCA9A8B30F4F09A97E6F32519B651496A7F6"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Security.Cryptography.Csp.dll",
+    "length": 15656,
+    "sha256": "8689E9D5EA215C4E92D8229DA7DBC3FABEE8997083876FED1927C4D643AEF3F9"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Security.Cryptography.dll",
+    "length": 2049872,
+    "sha256": "1E4C4CE04A46E2A2DA8221BF583EBD4F6B5149D4B32792CACC5C33978D0BB121"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Security.Cryptography.Encoding.dll",
+    "length": 15696,
+    "sha256": "BAD69FAE75CC6EA5C8CF0A953489B323857A3C8CBA80418F09E98535380A6B8D"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Security.Cryptography.OpenSsl.dll",
+    "length": 15144,
+    "sha256": "5D580C0CAFC4492DAC0C4FA11AE46DD1309835AB12671B326F0B74428539D4B5"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Security.Cryptography.Primitives.dll",
+    "length": 15696,
+    "sha256": "A214418A0B70A48772E274CCDA284D3CFC2392ABF4ABA55718C70324FB78A239"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Security.Cryptography.X509Certificates.dll",
+    "length": 16680,
+    "sha256": "07643C4B239DD2A9326C0A62491995BE666A47D2C85D0455CA7379A1692FA284"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Security.dll",
+    "length": 18256,
+    "sha256": "EDE7D28DE4BFEC4192915FB98B35F8979ED1E4A20A7333A7D2AEA45E733A9495"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Security.Principal.dll",
+    "length": 15144,
+    "sha256": "AEE0A10EDCF634876126B0DE882D01F432DE3EB7CBFCA0565E330EFE336D6DC0"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Security.Principal.Windows.dll",
+    "length": 186152,
+    "sha256": "AACE487981F8C9077620ABF9C9D236CE5EF98241CF4222FBB49C717286F2CD0F"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Security.SecureString.dll",
+    "length": 15184,
+    "sha256": "A8C666CCE29278836FEE40D1058EBB55B56631056A26117176FCE6ADB793187F"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.ServiceModel.Web.dll",
+    "length": 16720,
+    "sha256": "059D12D427D2CF95F90F5CA817C30D12D504DB13A031CF5DCE53BAFCEACD3800"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.ServiceProcess.dll",
+    "length": 15656,
+    "sha256": "41A80E894C84CC938193A95A0C37FC0D3351D3B090E4FC2FE903CC384D55AF2A"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Text.Encoding.CodePages.dll",
+    "length": 861992,
+    "sha256": "A597E456AC579A3814D4C11CD649CB188DF0D4DC27FF9AE59E36664CCA0927A9"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Text.Encoding.dll",
+    "length": 15656,
+    "sha256": "C0DDA0DA1AEADBA8A3BAA8D4704C5E4D9DADC715F72FA11C6A25899A5FA6A35B"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Text.Encoding.Extensions.dll",
+    "length": 15656,
+    "sha256": "9AD4679A4005EADC13AF6AE025534F22648DED33AB7C1A796C70C8813EE51977"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Text.Encodings.Web.dll",
+    "length": 132904,
+    "sha256": "94AFAD93DFDD00E132467753615BFB4BC3FA6633701082A9553D6CB4EACCF2AC"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Text.Json.dll",
+    "length": 1501008,
+    "sha256": "9CF2E2AE44376DBEA191925E571AF703C6D7B53A5C138A0F0F13CD6B8AF2C904"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Text.RegularExpressions.dll",
+    "length": 1021736,
+    "sha256": "8B3AF9E3E0215B46C2DCEF1F11C4CDC7AD477140883BCB5C778D04CC051BB0DC"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Threading.Channels.dll",
+    "length": 132944,
+    "sha256": "AB05F710069580165C588789E0623E84D213C35594E3E12AE762A6C8265740B6"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Threading.dll",
+    "length": 83752,
+    "sha256": "435C110B598D30F118D0E673068B535B693C5A77FAE17398AD46821CE1261ABA"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Threading.Overlapped.dll",
+    "length": 15656,
+    "sha256": "739BFB326810706F497DF3B66901E5657B9835AD945FDC6728A27BF932CBAFAA"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Threading.Tasks.Dataflow.dll",
+    "length": 489256,
+    "sha256": "39DEF3E572CF7E4BBF11F6565B0A25DB2540D8041C2950E48029E24C14E06342"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Threading.Tasks.dll",
+    "length": 16680,
+    "sha256": "D965E3057DCA46B1E8D56012E623A4772AB5AB009231450FDB0F4D2F3875C374"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Threading.Tasks.Extensions.dll",
+    "length": 15656,
+    "sha256": "336E8D8F0E79BFFF0C6C38D4A7677384B7951FF66394664BF4FB866ED0BBA982"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Threading.Tasks.Parallel.dll",
+    "length": 132904,
+    "sha256": "08FFB9101534E1644C203427BD22B3BEECAAB021F4CE40F4B162B898E2FA66F7"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Threading.Thread.dll",
+    "length": 15656,
+    "sha256": "34ED4D7D03BF9A5A5DF7ADDC37A5B75759956FC0D949E25DF61D878238BC560A"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Threading.ThreadPool.dll",
+    "length": 15656,
+    "sha256": "5758D73199750AF708EDCA8456EED908B0BFDAACCD7CB2083A6C95DAD4006FDB"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Threading.Timer.dll",
+    "length": 15144,
+    "sha256": "39E1B46A16BA5D4A4D7687DCDA0B8838E45198544417D227C7F174C8E15DF56D"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Transactions.dll",
+    "length": 16168,
+    "sha256": "2203532BF5483E00686B4F26610A6B9070E59DA55F5218D4294C2C069C6FDFB9"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Transactions.Local.dll",
+    "length": 661328,
+    "sha256": "5428F4BCAE83612694E1BEC71849FFFFE7EF34F62AA46DAF3F01250ADB019BD8"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.ValueTuple.dll",
+    "length": 15144,
+    "sha256": "2079AD867339BD4E2DC4D0E1C9250D9F78E4016DA472C25FEF3C78756244AC5B"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Web.dll",
+    "length": 15144,
+    "sha256": "FC90F7D949615646B8D5AF798CFB2BD37FBFE21B1C790B6A2E049BEA36758E2D"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Web.HttpUtility.dll",
+    "length": 59216,
+    "sha256": "351125823B848B8CD9E2541B1E0F13ADD351B6DD3C34A6ACB8C243565E5C6251"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Windows.dll",
+    "length": 15656,
+    "sha256": "113A298C5E1887F9CC2371376E6AEADF631958C1C255EBAC18282DA7829D3C49"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Xml.dll",
+    "length": 23376,
+    "sha256": "0D13174940CBD34CCDB350B2F33037CFF214420850CBF5755D9C407BA8A42407"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Xml.Linq.dll",
+    "length": 15656,
+    "sha256": "64CAB6D274DE20FB8EC0D080B96091E85AF0DDFC9619869169E8C41D5C1B02C0"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Xml.ReaderWriter.dll",
+    "length": 21800,
+    "sha256": "7CBF62BEA50B44B1350FC241281B8C5BF1373CB9AD03304B10F5B0D4805EDB47"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Xml.Serialization.dll",
+    "length": 16168,
+    "sha256": "7823BBFDCB819BD585488ADEB6612CAB2357DC2DF5E4A85E0F2A02079C2EC736"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Xml.XDocument.dll",
+    "length": 15656,
+    "sha256": "E5A4EF2A7F8C927DC5C587EEB4B5BF1A7264A89825C3D7313082447D3446A11B"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Xml.XmlDocument.dll",
+    "length": 15656,
+    "sha256": "48781BEA76DDCE3732F316BCC01BB375910B18B4D83DE62B6570835E09DAB363"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Xml.XmlSerializer.dll",
+    "length": 17744,
+    "sha256": "EA1EB8DA8A46BAFE8EE7A8628900E5C4A3FE23CABC7D63D5BE5EB5EDD3FB76FB"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Xml.XPath.dll",
+    "length": 15696,
+    "sha256": "CD0B232B8B161A4167B77387885B13E6BF938DFCE4ADDFD68A646FA2E5471FCF"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\System.Xml.XPath.XDocument.dll",
+    "length": 30544,
+    "sha256": "01F4F51C85B1533EEF9EF35FCEC4C281565E661A415F7CB10422C3840C5973F7"
+  },
+  {
+    "path": "shared\\Microsoft.NETCore.App\\8.0.31\\WindowsBase.dll",
+    "length": 16208,
+    "sha256": "D2B82FD6347B45B6BC3FF23C60D215A8431906D25B68BF84A2FF6A0B2C46AE9E"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\Accessibility.dll",
+    "length": 20776,
+    "sha256": "3FD907CE1CE091289C981BBE858C6CEB027BF987F802485F72ADCDBFAB0954D2"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\D3DCompiler_47_cor3.dll",
+    "length": 4741488,
+    "sha256": "A05F99734F7C4822FEFC12B367AF21FD0976ED6608752FB1E1E80B6ECE7ECBBB"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\DirectWriteForwarder.dll",
+    "length": 522024,
+    "sha256": "483F79762B4D7CC558A5319E83D91A8BAE6B9F1036B6E3E7430D4DCF1A8D66D0"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\Microsoft.VisualBasic.dll",
+    "length": 18768,
+    "sha256": "B5AA66FB96AF7BCE8AB888DB70629FC85D562065AD7CAA6CED40313BEFA0E936"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\Microsoft.VisualBasic.Forms.dll",
+    "length": 247592,
+    "sha256": "90D3DAC5C82AFEF4369AD3036369561BCEA926B0E259883052B6465A3DECD32B"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\Microsoft.Win32.Registry.AccessControl.dll",
+    "length": 34640,
+    "sha256": "0C64BB6A840FFD8E84A8C0327903E6E36856F0F3B0393506AF2C57A8F3D1FFEF"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\Microsoft.Win32.SystemEvents.dll",
+    "length": 96080,
+    "sha256": "EE167EB734016FB3B29360EEEF2A022B0684411E53367DD85C7D67B0263C5208"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\Microsoft.WindowsDesktop.App.deps.json",
+    "length": 31122,
+    "sha256": "9B9635214A4FDBFBBAADB9707B557E36F648127CBA906D0329C1F7C61A1E5D96"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\Microsoft.WindowsDesktop.App.runtimeconfig.json",
+    "length": 183,
+    "sha256": "05CE0908D3F7E477C01EEE2346A55393C18DFE05AC66B1F6397230750E2DCC1C"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\PenImc_cor3.dll",
+    "length": 157992,
+    "sha256": "BA07D326314BB8EE5BCF7AE5F325DC12AD7BC2F7907B34CB97E4E70D5DD0FED7"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\PresentationCore.dll",
+    "length": 8558376,
+    "sha256": "4AF3C9D7B0B5DB738DD3B3A2D7A8A8A72EF142BD952E2862DDF7F5261FD5BE9A"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\PresentationFramework-SystemCore.dll",
+    "length": 38696,
+    "sha256": "1BF5AF5A110243B543B8931440B2E7866C8DF0DCFCDA377EDF3217063114A773"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\PresentationFramework-SystemData.dll",
+    "length": 34600,
+    "sha256": "ED53BC869F57D246208C6B034C08BFFABDA555CEF417B5EDB45EB737D353351E"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\PresentationFramework-SystemDrawing.dll",
+    "length": 34640,
+    "sha256": "99A84AD7164009FE20CACBB3CEEEDE05A590103A872F859DFC9A9C2286FFBE1F"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\PresentationFramework-SystemXml.dll",
+    "length": 34600,
+    "sha256": "175E80DB91FFA6F316EC8234CBC9FD7E03ACCF87CAA6E2099F3274DAF44A2B6A"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\PresentationFramework-SystemXmlLinq.dll",
+    "length": 30544,
+    "sha256": "A908FBB97EF042CC9F94A286C6823420DEE5CA881B97AA67162CBF2D96C3B83A"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\PresentationFramework.Aero.dll",
+    "length": 444240,
+    "sha256": "7EE4E07F352B84D27415CC794550EED5334D96BDBE87FA2558E45729F2D6F5A5"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\PresentationFramework.Aero2.dll",
+    "length": 448336,
+    "sha256": "2C9E9A5B2E641FC30ACFF2645C92BB4DE60B6CCB161ADA2FF0DDB057CCE6130E"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\PresentationFramework.AeroLite.dll",
+    "length": 239400,
+    "sha256": "00A3E4C9B7833A42332840381974D7A388D5A60A27E064EDDC67D5A703260E55"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\PresentationFramework.Classic.dll",
+    "length": 272168,
+    "sha256": "8165D5C99FDD85AC36F6CA34C56E181B2DB244A3AE7A60620001F40BDC2961DB"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\PresentationFramework.dll",
+    "length": 16127824,
+    "sha256": "F7881946BF2615343BB8A7EA1E2E5D8751BB0E2829DD41AF5F687133CC111500"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\PresentationFramework.Luna.dll",
+    "length": 669480,
+    "sha256": "DFE8F6F89C614D1C312A67D8038E2A396E1A79C1EAFF4D3FCF617A94663CB02E"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\PresentationFramework.Royale.dll",
+    "length": 333648,
+    "sha256": "811784358C0CD936494A07308C36E0B85FFC274FD195A0C57786D2E3454F918D"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\PresentationNative_cor3.dll",
+    "length": 1235280,
+    "sha256": "3FB36EDAA2C4FE4AC8BE075A3A4E903DA159BBE38FB77E51C32B58E2ADECB2D6"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\PresentationUI.dll",
+    "length": 1287976,
+    "sha256": "A58019BA29AED4057BDB4E9A150D8E7A3F0B5AF2429E8FBE6220DD3864C771FC"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ReachFramework.dll",
+    "length": 1603368,
+    "sha256": "72A3C1FAB5945AFE969E16FC096A993BEAD826B661DB295E1811A240069830CE"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.CodeDom.dll",
+    "length": 489256,
+    "sha256": "30280ED140FEE3D15028B9827AC0C8C71E1113353339736AB32448A4615B45CE"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Configuration.ConfigurationManager.dll",
+    "length": 1074984,
+    "sha256": "FB6E77044250692D7020CE2966D88209AEECABB265AF4A7CC8D44DD23357873F"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Design.dll",
+    "length": 21800,
+    "sha256": "0CDAA70A38F3FB5D33AABD5831CD53A576757881E07604BB278BAD723E86AD3E"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Diagnostics.EventLog.dll",
+    "length": 386856,
+    "sha256": "90FB3ED4FBD77C24DA5F30989E94C3F043C931E63266E79A5466CCFE12E1EC26"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Diagnostics.EventLog.Messages.dll",
+    "length": 800552,
+    "sha256": "127EF9F1015F493C5EBC3CF3EE4107134873A257F228601507EB85C3A6AE1C5A"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Diagnostics.PerformanceCounter.dll",
+    "length": 288552,
+    "sha256": "8758D0209396B90C9054A93C87BAB6AA9EC72D7F1924750D2B2AFBDF5F2A64E5"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.DirectoryServices.dll",
+    "length": 1046352,
+    "sha256": "CF04BBF8B399DB790656FF9766B3ABFD893502DF42E6F521B14F518990893AD3"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Drawing.Common.dll",
+    "length": 1529640,
+    "sha256": "DD17BFF899C655E78CED0BFCFBD4C48D3545DFEB90DC9FB6FE07D315DD0BC2CA"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Drawing.Design.dll",
+    "length": 15144,
+    "sha256": "B1D2E30E0D69BAB4D56C70FE92BB885A11FF8FDB96738045F190E4F4A18E6163"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Drawing.dll",
+    "length": 21288,
+    "sha256": "6848A95E26992F5B9231F92D9AE68645BBC649FDF7E8253FD21DBBC7D9789DE2"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.IO.Packaging.dll",
+    "length": 292688,
+    "sha256": "69ADFBB47AA85CD2DEAFA1A26CB7C630AB7D6C9639DD8C9F53B508C24CB7B305"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Printing.dll",
+    "length": 980816,
+    "sha256": "E05877ED67B6CBC59D43DDDBC20DDC15414705FAA6603D9CC7C33EAB9660ACFC"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Resources.Extensions.dll",
+    "length": 137040,
+    "sha256": "687BA24E8507233C542B9CE97B27495AA5D360889EB2BAE9C4FC25F5942BA0D4"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Security.Cryptography.Pkcs.dll",
+    "length": 759592,
+    "sha256": "8CA6117E32A23EF168133DA28A40C175B82B956DAA58CC82ABC93212686C7ECB"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Security.Cryptography.ProtectedData.dll",
+    "length": 55080,
+    "sha256": "C91AE6BC51482AB917ED80F9318E71AD2AF816950E4A1691BD6012DE96F40146"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Security.Cryptography.Xml.dll",
+    "length": 464680,
+    "sha256": "4FD447AB6F2A4CAC0333C261CD2CDE8CCFDCA212CE3CC3FD71B242D9A6D31E1B"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Security.Permissions.dll",
+    "length": 186152,
+    "sha256": "2ED1DAF0B5BC3F4857D86FABBFBF4A565EAB8BF7B7121A0F9080F2F518049DED"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Threading.AccessControl.dll",
+    "length": 83792,
+    "sha256": "73F845A36FD2C91399A11591665E864BF7FD0BFE18FC7C67576F29B10462904C"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Windows.Controls.Ribbon.dll",
+    "length": 1451816,
+    "sha256": "9AEB0BD27B0031A2C53240D12E8BFDA791D4561F0925AC0F4F5A46E2AA9D9273"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Windows.Extensions.dll",
+    "length": 116520,
+    "sha256": "60C65B4DB1D38BB2816CFF23688BD6F8BEE99154D35419A818A8CDA3F2F7ABF1"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Windows.Forms.Design.dll",
+    "length": 5564200,
+    "sha256": "6DABACA07BEAAF5E7F14A5362C0361C81F515CDA71999D7E7627A553A2CB2E38"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Windows.Forms.Design.Editors.dll",
+    "length": 16168,
+    "sha256": "D92D5034D3996C053F46ED90CE5C5B89934E5558934615DDB840480C2563895D"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Windows.Forms.dll",
+    "length": 13563688,
+    "sha256": "2F06C91958C240FB4ED07265DD886D259457642CC151E9620DDB4641FDBC404F"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Windows.Forms.Primitives.dll",
+    "length": 3012392,
+    "sha256": "E73D093D04473648A70CE7A072B56CD2A2C084364D173773BBB4D8D401851FD9"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Windows.Input.Manipulations.dll",
+    "length": 137000,
+    "sha256": "18C5337BFBBD93E8A7E650EF949E6BC22D3081774D5EE15B0827F69B1945E21D"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Windows.Presentation.dll",
+    "length": 30544,
+    "sha256": "9599440D7542954ACC313478A38236D856305F6CAC68A645FE02FA23F6E83AB7"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\System.Xaml.dll",
+    "length": 1423184,
+    "sha256": "8EDFF033463B13688CD22F6DA144AA4E9F1EC6FF810A3A358DC076170921728B"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\UIAutomationClient.dll",
+    "length": 415528,
+    "sha256": "A5941DAF5D7423572258265CE9F08E9D753D8FE366A040B6AAD69EFCAFC740BB"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\UIAutomationClientSideProviders.dll",
+    "length": 870184,
+    "sha256": "DD0EB5D8283F7CFD94C7AC805A10CCE38389CE3FD4EE976AF406C6C429D024C0"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\UIAutomationProvider.dll",
+    "length": 59216,
+    "sha256": "49E393C86EDC953D2FE1F3955DDFF50D3BC3840C80963BA3F1F6AE3EEE996AC9"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\UIAutomationTypes.dll",
+    "length": 313128,
+    "sha256": "6118C3D4753B033294B216ABCF234A90F46DFAB92FC4E267D9061670BB3684C4"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\vcruntime140_cor3.dll",
+    "length": 124544,
+    "sha256": "D5E4D9A3E835FA679450145D6A7D94E36573A509317111904D9B3712C30D9066"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\WindowsBase.dll",
+    "length": 2254632,
+    "sha256": "BB72BFDC7E163E7D0C6DC984A73856B9A3DF218D247342680E9B5DBB9D326FA5"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\WindowsFormsIntegration.dll",
+    "length": 210728,
+    "sha256": "E4245AEC6CC209A22E503DDEE7414FD4D1826D646100D4968F1C72F70BD97BC9"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\wpfgfx_cor3.dll",
+    "length": 1955624,
+    "sha256": "4B4FDBD1A77AC91A348D3D83A06BC103C6617FDD11445E327B7B6019BCFC1A6D"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\cs\\Microsoft.VisualBasic.Forms.resources.dll",
+    "length": 25384,
+    "sha256": "8DB58BC39CB87A2F4C985111D26D187568F5CC138CAC47394E47003073C91980"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\cs\\PresentationCore.resources.dll",
+    "length": 108368,
+    "sha256": "E32FF73EB3AB078466631D9AEF32E2E20C9B5F058F97FB5B02A0D05D0FB40169"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\cs\\PresentationFramework.resources.dll",
+    "length": 196904,
+    "sha256": "BE53D4B5AEA2E6B00B43C7F1DEE791DCC2C6B6924AA556590DE72A98FE0C9F67"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\cs\\PresentationUI.resources.dll",
+    "length": 45352,
+    "sha256": "40B74D99101C81896C39470697659AB0382A0438B23B9CBE6FF9B4780E800B15"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\cs\\ReachFramework.resources.dll",
+    "length": 38696,
+    "sha256": "AC436EF6318F5334FC3C1C7EAAF93811F9DC6D25DA345194B75C07C6FDE4D038"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\cs\\System.Windows.Controls.Ribbon.resources.dll",
+    "length": 18256,
+    "sha256": "576CBEE5F336D8827352A57CFD88301A39287C10EBD49613145B1C8A9F5A2082"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\cs\\System.Windows.Forms.Design.resources.dll",
+    "length": 148776,
+    "sha256": "C4DC5D6EC4E9B7D5C7B480E8D0E26598B1DB93CE62DDE651C58CCC1802990794"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\cs\\System.Windows.Forms.Primitives.resources.dll",
+    "length": 15656,
+    "sha256": "A6F96B8F85EEB89670A643CD4DA2F4D72F75F66E1C161BFD2403B0154BC569A3"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\cs\\System.Windows.Forms.resources.dll",
+    "length": 365352,
+    "sha256": "401E01B05153A5A24F1B1E281C8E03F44D938095766AD58BCABF56756F5369EA"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\cs\\System.Windows.Input.Manipulations.resources.dll",
+    "length": 16168,
+    "sha256": "17160F25973AC8059F5DCEF4144ABE48DE40FBA627F079B90954D0733470A2C6"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\cs\\System.Xaml.resources.dll",
+    "length": 64848,
+    "sha256": "DC34235F19AF6FC57097FBD72922ACE73BA84928237358646A9FEA8A0E766965"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\cs\\UIAutomationClient.resources.dll",
+    "length": 19792,
+    "sha256": "E7592456D56EE098930AF2DCC23F08E1491A499CC5B36E68940ADB5E27D0A1D0"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\cs\\UIAutomationClientSideProviders.resources.dll",
+    "length": 20776,
+    "sha256": "169459D19EDBBB50E854812FC6253132DC5386555B66FBBEBC3EE01DBE60FAFE"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\cs\\UIAutomationProvider.resources.dll",
+    "length": 15144,
+    "sha256": "D94D4D272978AC9029B5E137E610CB14AAC5F3CA4204EDD4448A16A090422376"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\cs\\UIAutomationTypes.resources.dll",
+    "length": 18216,
+    "sha256": "26FF0D277A5195AEC71F61AE5BF81ADCEDF6633DA63DD63D7A0F9D5647FB0765"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\cs\\WindowsBase.resources.dll",
+    "length": 86312,
+    "sha256": "CD84971F7D1D4221F64B170532E427BC6E419215D139116ACEAFBE9950E91768"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\cs\\WindowsFormsIntegration.resources.dll",
+    "length": 15656,
+    "sha256": "E8DA464F43BE403CEA6044DB61E326BCF4025235CDEB59F35A2630523F2F4D60"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\de\\Microsoft.VisualBasic.Forms.resources.dll",
+    "length": 25384,
+    "sha256": "8BEB9FBFDF89EF8BC8E818CC7C2DE48965DAD7E4D2F5357956C3C87BFED99EFA"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\de\\PresentationCore.resources.dll",
+    "length": 114000,
+    "sha256": "CEF8E7C00E09004A931C0FB3E4C325EC7690FE0C7D5C168840104767D59EBD83"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\de\\PresentationFramework.resources.dll",
+    "length": 213288,
+    "sha256": "FA1F29A8C39BF92C9D5981C431BE299F986270D6D453DD245267286A0FD5D4EC"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\de\\PresentationUI.resources.dll",
+    "length": 46888,
+    "sha256": "73CFD6EE2481E624D1CF30973C0F17162A1B5AEF5EA85B8676462EEC332BB629"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\de\\ReachFramework.resources.dll",
+    "length": 39208,
+    "sha256": "AD0D6DC83BB51C0C4A57F6878749DBC1157611096DE28FC29E0DDA772D832791"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\de\\System.Windows.Controls.Ribbon.resources.dll",
+    "length": 18256,
+    "sha256": "AD4D631170CAEFEFF4CD4123BE5DB58A71FC7B25804B9DB5990763EDF2357620"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\de\\System.Windows.Forms.Design.resources.dll",
+    "length": 149328,
+    "sha256": "6465EB1AB847109689A9C61E0BF1B49584C55EB2C6C8437CDB3E774EABFCB7B5"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\de\\System.Windows.Forms.Primitives.resources.dll",
+    "length": 15656,
+    "sha256": "ED2D18C5C50401BB221757536F686251BC8C4C3ADB18DF68E1966B6CD97034A5"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\de\\System.Windows.Forms.resources.dll",
+    "length": 373544,
+    "sha256": "947F7A3FEA7C158ABD32AAE7FF1CD98BC2525FFDC8E162FFB8F7F1ADC045A6AC"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\de\\System.Windows.Input.Manipulations.resources.dll",
+    "length": 16208,
+    "sha256": "50C455E71CF5E3073ADBE5CDB863C95AE895FC6793559BC31B466C340B55B94D"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\de\\System.Xaml.resources.dll",
+    "length": 68944,
+    "sha256": "9D8C452DCB7C51554CCC5BC28C479A087E6178DB3B1FC2B41EB758F1F8F43E3C"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\de\\UIAutomationClient.resources.dll",
+    "length": 19792,
+    "sha256": "40685D44DF1C6B19ED01A5323E2674B689BF477D7B1ECEDD8BBBDA9B96C92321"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\de\\UIAutomationClientSideProviders.resources.dll",
+    "length": 20776,
+    "sha256": "875B380E8E376A8E1A80DD8959AEC81BBC061D9EBA28C7B898C7FF529B4AB60F"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\de\\UIAutomationProvider.resources.dll",
+    "length": 15144,
+    "sha256": "70F960CFBC4321F28B408B9922A95C987F54B61EED8DCC7E7AF7173690E8A86D"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\de\\UIAutomationTypes.resources.dll",
+    "length": 18216,
+    "sha256": "95B494A20F5B883192E7DC63FD0E0B53C8E15DC550089B5A7856BA72821AF2C0"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\de\\WindowsBase.resources.dll",
+    "length": 90920,
+    "sha256": "CA5A3C0002EDC6B7505FBACDA0B064BBD01099BDC590148CD38B7F626FD6394B"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\de\\WindowsFormsIntegration.resources.dll",
+    "length": 15656,
+    "sha256": "0DB763807B223493213DE3C3554984EF6F5CDCDA60F9E8D30764DF7B7595BD16"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\es\\Microsoft.VisualBasic.Forms.resources.dll",
+    "length": 25424,
+    "sha256": "3FA6F7F70B9580B09FDA1C98BCE515F4F46E8FB588F60F7F4695576C2E4CD00F"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\es\\PresentationCore.resources.dll",
+    "length": 109864,
+    "sha256": "577BE20B94B95B1B9026D40DBDE8F89F3E7EDA0814BFE60E2C75B8D9BD7914BC"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\es\\PresentationFramework.resources.dll",
+    "length": 203048,
+    "sha256": "DB1EFB8482CE7B1EE1F4D694D38FD7139C76F56B564D6475B2086BE57B42F761"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\es\\PresentationUI.resources.dll",
+    "length": 45352,
+    "sha256": "CAD03B2295817E445DADA67AC29EE1455ABCAFCE28DAC09ABF23C913C024F6D2"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\es\\ReachFramework.resources.dll",
+    "length": 39208,
+    "sha256": "C6F7CA821BEA3FC052B63B142FA065B9018DD856F3B82C9C96CA3416B8B06A07"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\es\\System.Windows.Controls.Ribbon.resources.dll",
+    "length": 18256,
+    "sha256": "3B93DC14EBB4F434E5E39F8ABF71665AE7450F002793DEFFFE01F04B4A2C6547"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\es\\System.Windows.Forms.Design.resources.dll",
+    "length": 149288,
+    "sha256": "B5772664A16008BF044B665B8A15E9DFD8C2797DC733BC3F17C746CB58B31C95"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\es\\System.Windows.Forms.Primitives.resources.dll",
+    "length": 15656,
+    "sha256": "E27FC922BC252704B252B9A75E450ADFEA0413E63B5CB831EB35528D102E1984"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\es\\System.Windows.Forms.resources.dll",
+    "length": 365904,
+    "sha256": "21C4575C3D4AAE3E691C0BA3D6706BB33336A777E2D9E20C260ED318311861C3"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\es\\System.Windows.Input.Manipulations.resources.dll",
+    "length": 16168,
+    "sha256": "5D571B7199A19E82A48F88DD967A758D6715A71E066D0B4B6878C53B9DA571B9"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\es\\System.Xaml.resources.dll",
+    "length": 65832,
+    "sha256": "10F451215657A565952C02BD4DD1DEC2B7AF4BAF00B3FAAAFBF33C073D36CD12"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\es\\UIAutomationClient.resources.dll",
+    "length": 19752,
+    "sha256": "B7A56BBD6C2A6A22DFDFD18B376D481820B0A7156795CFD3E7842C942929C285"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\es\\UIAutomationClientSideProviders.resources.dll",
+    "length": 20776,
+    "sha256": "AAF3DFA486526AD8C50667270F4476D3963669D59A3D4279B10A71293F41D8B3"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\es\\UIAutomationProvider.resources.dll",
+    "length": 15144,
+    "sha256": "11F3D85BEACD4CCDAF547EE155B014DF20A9107C4994667BF7176C29710EED5D"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\es\\UIAutomationTypes.resources.dll",
+    "length": 18216,
+    "sha256": "FCC45409D3957D5129DC1BFCF8C8ACF4BB01821B93B926528895DCE5FA3D0B61"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\es\\WindowsBase.resources.dll",
+    "length": 89424,
+    "sha256": "104C63D7B9AB27140F36D818232660A361E9BE68A00F5F551283EDE8865DC18A"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\es\\WindowsFormsIntegration.resources.dll",
+    "length": 15696,
+    "sha256": "52380885D0F9F9D1AF7C2791D0748E8B409E06D249A255B83F2ADBDDA8EAA2CC"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\fr\\Microsoft.VisualBasic.Forms.resources.dll",
+    "length": 25424,
+    "sha256": "7EECC31AEEC113F994EB24DEAFF5FC6201D86EAA4F67D06DD884D221CBFB7CA4"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\fr\\PresentationCore.resources.dll",
+    "length": 112976,
+    "sha256": "DA50B50EB15920332D3CB69806FBA8D29F977E0AF6D41AF8D1B85476D0A574C9"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\fr\\PresentationFramework.resources.dll",
+    "length": 206632,
+    "sha256": "7D44BC5A0E8F3BD2C9826DBB8868600AD3F3CE4B03EA1EC072A70AE49B20B1D3"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\fr\\PresentationUI.resources.dll",
+    "length": 46376,
+    "sha256": "15DF030067EEB764005E7949E1A4575C326BD3806155AEE4113BF4236A421AEB"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\fr\\ReachFramework.resources.dll",
+    "length": 39720,
+    "sha256": "C55618443720A45FB494F34C4C5326E2F11EF37E7205C34228F397ED36418196"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\fr\\System.Windows.Controls.Ribbon.resources.dll",
+    "length": 18216,
+    "sha256": "D51E8788A1D7EA3D956EFFF01AF5FC270136B56CB927ED7F3EA094910134E0BD"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\fr\\System.Windows.Forms.Design.resources.dll",
+    "length": 149800,
+    "sha256": "F6142A500A1B48BCBE5505547A683A55C74120FD1A3C4C3E1B1BC6073F3CEC4F"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\fr\\System.Windows.Forms.Primitives.resources.dll",
+    "length": 15656,
+    "sha256": "4133F7E628103316003DA54FFBC30161B9B0293F730792FA42B49BB9CCD9B3A5"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\fr\\System.Windows.Forms.resources.dll",
+    "length": 372560,
+    "sha256": "75BE9E6FE540404670917F4AD46CBF4BF2E1A51B6B74DFD508E90F4C72A849CC"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\fr\\System.Windows.Input.Manipulations.resources.dll",
+    "length": 16168,
+    "sha256": "22051444A9473EF908E7123100D38BB361439F13912C9C3C3CE63CDE6C6A6ABD"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\fr\\System.Xaml.resources.dll",
+    "length": 67368,
+    "sha256": "EF48EC449549E267DBA8C7C1E599936AD3C9288008B10FDBB5208C45A17477AA"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\fr\\UIAutomationClient.resources.dll",
+    "length": 19752,
+    "sha256": "EF16A6C03CE7FDD664C64A9A6445BF97AE5DFF20F276367C066496DB0D4E5568"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\fr\\UIAutomationClientSideProviders.resources.dll",
+    "length": 20776,
+    "sha256": "348136852C0C9AC89B383FE8FFCF8D407145CAB4D2090237D6DE46E2DE406A04"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\fr\\UIAutomationProvider.resources.dll",
+    "length": 15144,
+    "sha256": "F6873AD182A92A122E9043C648650B9109615BF4002D3DBC4CFB6C5CE88E85A2"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\fr\\UIAutomationTypes.resources.dll",
+    "length": 18256,
+    "sha256": "62399B75CFA4846110313434F8EEF223C1E674DD849C6AB0D51A88550973E0ED"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\fr\\WindowsBase.resources.dll",
+    "length": 90448,
+    "sha256": "8C4ABF96147A23B6CEC5DD55BFA5E32DCBC4B6621DCB95F4FCCD0800EF28EB3C"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\fr\\WindowsFormsIntegration.resources.dll",
+    "length": 15656,
+    "sha256": "F58084C1A096F54D4E1FBE06EBFE75680818127EBE8FC91B82A947C72D72B9B0"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\it\\Microsoft.VisualBasic.Forms.resources.dll",
+    "length": 25384,
+    "sha256": "F48E278DC9A04B0204C2C439D08A4F4B5CAB29F08C527D53B592E112732BB249"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\it\\PresentationCore.resources.dll",
+    "length": 111440,
+    "sha256": "5D174DADC2D8C8D6C9CCC0BAB4CFDC298BD9976E79FC91B8A77AC4CB33DC942C"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\it\\PresentationFramework.resources.dll",
+    "length": 205648,
+    "sha256": "BE750F5132F26E61D7EA764F69A1A9D1003A4DC9348CE7696E22059390CB2515"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\it\\PresentationUI.resources.dll",
+    "length": 45352,
+    "sha256": "785224A39E5F6EC314EC0EB2E16BD67D97E903FAFFE56A3CA53D891CC87E499B"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\it\\ReachFramework.resources.dll",
+    "length": 39208,
+    "sha256": "5DAA410AC596C7A7BD1090F2173A7919391C5157EB7062B81224F907F28F277B"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\it\\System.Windows.Controls.Ribbon.resources.dll",
+    "length": 18216,
+    "sha256": "EE718EC2CCF4F4D7068BCEBF5302FDDE8E844DCD1EBF67897A5184880E18E359"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\it\\System.Windows.Forms.Design.resources.dll",
+    "length": 150352,
+    "sha256": "8045A3DDC2F096045ACD8A27AA2900AAF41C696001FAC990198892BF67BBEC6B"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\it\\System.Windows.Forms.Primitives.resources.dll",
+    "length": 15656,
+    "sha256": "6910C33AB86D20A21DD6E2E5B8F48D8AB2A5BDC15EC2221E696C58CB6AB1BC45"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\it\\System.Windows.Forms.resources.dll",
+    "length": 368424,
+    "sha256": "5CEE299F4D8EA67B9F09FC1049DAB0F4843A87B41592C1E396162DAEEB11A9F8"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\it\\System.Windows.Input.Manipulations.resources.dll",
+    "length": 16168,
+    "sha256": "BADDC56234632EABDC9B9B5BCE7256E9BA4AAAC99A8688D798DDCB314B588753"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\it\\System.Xaml.resources.dll",
+    "length": 66344,
+    "sha256": "83EFE4398DA3E69818A6B67E81C65F0CD88139EC78C87EF3F41D5216ACD44649"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\it\\UIAutomationClient.resources.dll",
+    "length": 19752,
+    "sha256": "1DB79C2DD5DAF2739368E1AC2B40772EE20EC9ABE6042820F4006259CF5913B2"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\it\\UIAutomationClientSideProviders.resources.dll",
+    "length": 20776,
+    "sha256": "FAA8E755D2DD2BCE36DDC0CF6E236B85B54E4AD730CFDB370ADDE4EC1D30D306"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\it\\UIAutomationProvider.resources.dll",
+    "length": 15144,
+    "sha256": "D41447650B72BC9BCE973E7D2D93FFF407E627470027C128D3DCB89A4D35527B"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\it\\UIAutomationTypes.resources.dll",
+    "length": 18216,
+    "sha256": "25423FDE13194CFB1D34A523FBA4FF42D0C1910BC2D9EE1ED1BBB35E0F46F1A6"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\it\\WindowsBase.resources.dll",
+    "length": 90920,
+    "sha256": "96FF7F1920B243F0B14F942DB65DCCBCF550285583806623EF42FAA90BC77CDD"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\it\\WindowsFormsIntegration.resources.dll",
+    "length": 15656,
+    "sha256": "44D468E993359E5E2EE048633DF0ECF2F463258BE45E5D751B2FDB528D9BA85F"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ja\\Microsoft.VisualBasic.Forms.resources.dll",
+    "length": 25896,
+    "sha256": "E0B8CFBD9E30C3A633A0DE7EE1844D4719A7A7FDE783CF3BEA5501B3AF0BDB19"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ja\\PresentationCore.resources.dll",
+    "length": 122664,
+    "sha256": "AB7EF15D6ADA3F28799402D8A091E2EABB3CFD07B1FA26859E54EA8ED765EBE4"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ja\\PresentationFramework.resources.dll",
+    "length": 226088,
+    "sha256": "80CD0B747CF827B8B92EB431089051E23B864982D81C4FD6B10EAF5F39B0B738"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ja\\PresentationUI.resources.dll",
+    "length": 48976,
+    "sha256": "BA53B70E0FD8FCD9DFDDBA1366B98CD4409CCC3B2BC0E31E4E286284736A347F"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ja\\ReachFramework.resources.dll",
+    "length": 41808,
+    "sha256": "5FC2134C5D90A496863B82468E6904416145FF8168FAD7B28A16CDBF0E6F3A18"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ja\\System.Windows.Controls.Ribbon.resources.dll",
+    "length": 18768,
+    "sha256": "41B5EF6BB28A1E3A63EB509C90E665C50051DEF60CF1A72A0D5BA2C0143B3891"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ja\\System.Windows.Forms.Design.resources.dll",
+    "length": 155432,
+    "sha256": "35DC4E460EC0DE502BB175B74AA6B23E1D07494719BE3A4C7D2945E5779C40D6"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ja\\System.Windows.Forms.Primitives.resources.dll",
+    "length": 16168,
+    "sha256": "24CE5BA34417866E63DD1A81AF3C1C8D7AEA6BAB7F2941AA938B63A55DC22D17"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ja\\System.Windows.Forms.resources.dll",
+    "length": 408872,
+    "sha256": "3827C4CD6AC0A631EAB7C85AEEAA412A61D0F095AFA951894E295A15C27A83A7"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ja\\System.Windows.Input.Manipulations.resources.dll",
+    "length": 16168,
+    "sha256": "284DC91515DD0DEC5226002A6608FCA1A12BA8322ECB85470221DE8819DE169E"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ja\\System.Xaml.resources.dll",
+    "length": 74576,
+    "sha256": "0C9FF2D5E73978EA9989579F66782F5991B2849D8742D542C4E5948909DA314E"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ja\\UIAutomationClient.resources.dll",
+    "length": 20304,
+    "sha256": "22920DBC94F4A3C986A59FF59126B04E544958250D56BDC2402E9237A9920BBA"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ja\\UIAutomationClientSideProviders.resources.dll",
+    "length": 21288,
+    "sha256": "6581A032F858996ACE09CBDD572B64E638656E08F1315EE8FDF1CE9EB7F5A568"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ja\\UIAutomationProvider.resources.dll",
+    "length": 15144,
+    "sha256": "B9AE509D9453A035F02C1492481D8B80BC01E53EC787360A5AA565EE94A552D0"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ja\\UIAutomationTypes.resources.dll",
+    "length": 18216,
+    "sha256": "C7DDDEF753F2B6718D9F96626F6A050D6878AC45D0DE77265EE3B67CE75CC420"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ja\\WindowsBase.resources.dll",
+    "length": 99112,
+    "sha256": "58656C2B423128D9983B760F07674A2E0770F2177C7AACB92A8A5C34F9EE8628"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ja\\WindowsFormsIntegration.resources.dll",
+    "length": 16168,
+    "sha256": "7FBA2EBF575FE075D187450F6A09CC8C793672460F37680F20AF7B6178878506"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ko\\Microsoft.VisualBasic.Forms.resources.dll",
+    "length": 25424,
+    "sha256": "71913772952FE030481A9813E0F297C07CDED03EA93F268ECDB2BF9A32BE20E0"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ko\\PresentationCore.resources.dll",
+    "length": 114472,
+    "sha256": "842E28A34FBC1261DCA6EC6C65C1759B57C50D2207FE8723D3DB8103DEF4D620"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ko\\PresentationFramework.resources.dll",
+    "length": 211240,
+    "sha256": "A83B671802C5B32A82DE487B300BC18FD98D7CC63D651465EC4720E641814AA3"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ko\\PresentationUI.resources.dll",
+    "length": 45864,
+    "sha256": "648DEEB5D17F8BFA9AEFB7B614DE23056AB274200827608237FCE0D27318F2D0"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ko\\ReachFramework.resources.dll",
+    "length": 40272,
+    "sha256": "2CFA3A7E90DE7F3B7ACE7D4A5C2BA4A91C996A7A456D5EC8C0C6FD1F1E1D3C60"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ko\\System.Windows.Controls.Ribbon.resources.dll",
+    "length": 18256,
+    "sha256": "FD5B0E1A396FC2F461393EC32719CC675995196DFD1A7739C8C26CA7F41B2864"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ko\\System.Windows.Forms.Design.resources.dll",
+    "length": 150824,
+    "sha256": "411DA762D4A49AC79774B1F1F8DABBD5A823A7F7EE1856FEF376D6BB1AEDFE90"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ko\\System.Windows.Forms.Primitives.resources.dll",
+    "length": 15696,
+    "sha256": "C20A2BAE07D65DAC43CEA651EFBFF86C649502351D456AEF4154AD9F8753B92C"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ko\\System.Windows.Forms.resources.dll",
+    "length": 370472,
+    "sha256": "02DE3771988736282ED53C10CF6F7B8D544EDFD4AD62E4A9A4FBAB8AFF4D7C79"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ko\\System.Windows.Input.Manipulations.resources.dll",
+    "length": 16168,
+    "sha256": "39FB851CEF9A15F3EC1F7A6D7FD6B8942942DDFEE9C75103F19B259AF5AA2ACA"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ko\\System.Xaml.resources.dll",
+    "length": 69416,
+    "sha256": "4E1AA261A1A2A10DEC2707045A1BE27FD30BA967A9F24A58CD5788E83EB927DF"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ko\\UIAutomationClient.resources.dll",
+    "length": 19752,
+    "sha256": "08EE214B85AB51E2A9145A4E0CAC311B99563716AF6E6A9E48D15067DD3B8B9F"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ko\\UIAutomationClientSideProviders.resources.dll",
+    "length": 20816,
+    "sha256": "40D53AE77AB1FD55340A885189A44035A378EBB8054740A11EEB0BC83C7008D3"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ko\\UIAutomationProvider.resources.dll",
+    "length": 15144,
+    "sha256": "9A69000C9EB4B7DF483A7EA5672D3121EA2FE5731FC773EEA8A617AE2F93DCCE"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ko\\UIAutomationTypes.resources.dll",
+    "length": 18256,
+    "sha256": "CB61491FBD32222B235D32890A73ED2999C9A662FAF37AD934EAD891BCCC627E"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ko\\WindowsBase.resources.dll",
+    "length": 91944,
+    "sha256": "DC65920ADE01322E21FD4FA7EEC5B648AE3D2D545A3D28B13C32E06BFE137D12"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ko\\WindowsFormsIntegration.resources.dll",
+    "length": 15656,
+    "sha256": "E650FAD848B9DD350449D8BBC443A57246B9B813C25A74A370089543DADC0094"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pl\\Microsoft.VisualBasic.Forms.resources.dll",
+    "length": 25384,
+    "sha256": "5BDD623785D64A3B20C6BF8929E0B2C7665C483ADF5A74AE33699C8BF6180BD8"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pl\\PresentationCore.resources.dll",
+    "length": 113488,
+    "sha256": "8E55E5428B49009A5BA7F8400E636B1BFB0ACEFAC9C8815EB3F33D26008825D1"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pl\\PresentationFramework.resources.dll",
+    "length": 209232,
+    "sha256": "839860BCEAC19E76C335975D8A7ECC71AFAB3BFE9B231E1BBD3797DB4488432A"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pl\\PresentationUI.resources.dll",
+    "length": 45864,
+    "sha256": "FEC6D6E690077DC815B5C31FB3BEC3D2B4A2AC07A23295A62303E5261AC3D03E"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pl\\ReachFramework.resources.dll",
+    "length": 39720,
+    "sha256": "C981C6FA5886DC5285007EBF61A586A0D62504B9DECE67A033AAE16F4BFE1C96"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pl\\System.Windows.Controls.Ribbon.resources.dll",
+    "length": 18256,
+    "sha256": "046B578ECB8C28896DCC245232557F65986C82545789B44608B2E67FF2E97A85"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pl\\System.Windows.Forms.Design.resources.dll",
+    "length": 148776,
+    "sha256": "C9A86610475FCD38C45485831BA81A4D65857AE168FE4F8DB68C6134EFF51B3C"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pl\\System.Windows.Forms.Primitives.resources.dll",
+    "length": 15696,
+    "sha256": "F263716923AF5503938B8B5466EF151C901A5FF4ACE357C06E1D703D4ACC29B0"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pl\\System.Windows.Forms.resources.dll",
+    "length": 365904,
+    "sha256": "D3F26B72C099E28B3CC46CF380894BCB583ED9D8BB7961D406983A6B3D80BF6C"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pl\\System.Windows.Input.Manipulations.resources.dll",
+    "length": 16168,
+    "sha256": "A727711996C36E1EA4718ACFB0455AA19C9A10AA66B5D05D919F24F0D9B9D047"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pl\\System.Xaml.resources.dll",
+    "length": 69456,
+    "sha256": "891E4C19515EE1E74588FFCE28284F3ACE18B6A06B1E7942E16D320EFAC92BD4"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pl\\UIAutomationClient.resources.dll",
+    "length": 19752,
+    "sha256": "7B1CDCBD7F0C2ABEA8F9B50694C61E96226A76C2AD5B94B503007E2A476A1562"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pl\\UIAutomationClientSideProviders.resources.dll",
+    "length": 20776,
+    "sha256": "3457CE292BF194552B36BAB00DC891614B65469CD272222108DB02FFCC23B31B"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pl\\UIAutomationProvider.resources.dll",
+    "length": 15184,
+    "sha256": "6563FDF6C905E2F0991F4A56844713968526F172874B4EDAE7A2F28085344CBA"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pl\\UIAutomationTypes.resources.dll",
+    "length": 18256,
+    "sha256": "F67BF4B12613E9CDE1E760836FA833C9D61A1C16140DD2C03A19F1CEF3A39D6F"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pl\\WindowsBase.resources.dll",
+    "length": 90408,
+    "sha256": "E5AFDAEC8F3412B22877F29801D8A2273FB460F0538CDAE00AB406CFAEE36BD4"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pl\\WindowsFormsIntegration.resources.dll",
+    "length": 15656,
+    "sha256": "AF8A55BF744AB447A4908AA0809B50173887F19055811D93E56202329E261F72"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pt-BR\\Microsoft.VisualBasic.Forms.resources.dll",
+    "length": 25384,
+    "sha256": "A37ACB0B644296C373D26501DA37101BF2AE62A0BD629DE8F046180A08F28E99"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pt-BR\\PresentationCore.resources.dll",
+    "length": 109864,
+    "sha256": "228127514DBE3DF4F12BAF24B70BAE93E7EEEBB4CF42563C6FCB0DAE9AD5D96B"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pt-BR\\PresentationFramework.resources.dll",
+    "length": 202536,
+    "sha256": "4B7B38A0B6D07782CB014300EA6E3CB6AE05155D74B7155B7AE9A13DFF631B94"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pt-BR\\PresentationUI.resources.dll",
+    "length": 45392,
+    "sha256": "7B1F63BA5D1E05697C8DEC31FACA5DBBF03D6151E509203758D361A81F6B03CE"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pt-BR\\ReachFramework.resources.dll",
+    "length": 38696,
+    "sha256": "0E723216C8FA47E072A4DC1EE0997B0BD1B02A6B8C2C8C7ACF07635BEE75EB47"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pt-BR\\System.Windows.Controls.Ribbon.resources.dll",
+    "length": 18256,
+    "sha256": "B948F0B7DA05178AED47342CFD5ED99437B3D688638F30BEA206EC40E1B0A929"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pt-BR\\System.Windows.Forms.Design.resources.dll",
+    "length": 148776,
+    "sha256": "B5202A8A362D27B8B1E839BF01FDB07F6AB2553A9E8802B29478581DB158E2A7"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pt-BR\\System.Windows.Forms.Primitives.resources.dll",
+    "length": 15696,
+    "sha256": "E66F12760CD43E6D7FAC062CF157A213D38E347D7198C34B9F401A54F70CA615"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pt-BR\\System.Windows.Forms.resources.dll",
+    "length": 358736,
+    "sha256": "42B25B83708C926CE8077BE659997EF95BEECFD89FB036BDC55C89C86038409E"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pt-BR\\System.Windows.Input.Manipulations.resources.dll",
+    "length": 16168,
+    "sha256": "10227361B6AB9E62B52C5C7611ACF4C1BF4BA766A610E8195DF5F1F3CBB2AEEB"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pt-BR\\System.Xaml.resources.dll",
+    "length": 65320,
+    "sha256": "6B71C24A400BF56B4C012E40A3B1910ACD3FECFC6459448DB4FF0C61F8689215"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pt-BR\\UIAutomationClient.resources.dll",
+    "length": 19752,
+    "sha256": "ECD45846A515175B8FBEA276CB55133D7EF953303DD5A91594210E539D5FD569"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pt-BR\\UIAutomationClientSideProviders.resources.dll",
+    "length": 20776,
+    "sha256": "C798115F82D276A33AEBF97B3539DE1E2362BF35B825D25614FE1DCA1D753418"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pt-BR\\UIAutomationProvider.resources.dll",
+    "length": 15144,
+    "sha256": "C4D278E7B8E01C4C4548FF737F2903DE95ADB3A1CEE798573C2752BC7B287838"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pt-BR\\UIAutomationTypes.resources.dll",
+    "length": 18216,
+    "sha256": "7405089CBBF3AF91269BFA491D4097A6D675AEC00E2A3D43929541F132043226"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pt-BR\\WindowsBase.resources.dll",
+    "length": 88912,
+    "sha256": "9F9C61510036AA030F76FD6A83B5B3C5C21CBF3375E0C9FA01A69585F529F393"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\pt-BR\\WindowsFormsIntegration.resources.dll",
+    "length": 15696,
+    "sha256": "FC47B16F7357E6815FBCD584004CD64CB42DA76E5B92F76E5750614B82BB6994"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ru\\Microsoft.VisualBasic.Forms.resources.dll",
+    "length": 26408,
+    "sha256": "2029614EB3DB1041458D37E3BA04328D7CB6AE7BC7EAD11D68A980A61EBCA569"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ru\\PresentationCore.resources.dll",
+    "length": 138536,
+    "sha256": "37F5C3D79BEDFA57F6E7C0FDE4AB5EE0BB9EDA16C2A83002A1D1EBB7530A6D83"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ru\\PresentationFramework.resources.dll",
+    "length": 257320,
+    "sha256": "B4784DF2B1CCE7F3610C2966BFA6D053B403106EEF3D7F713498A9B506E19AAE"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ru\\PresentationUI.resources.dll",
+    "length": 54056,
+    "sha256": "24B8977015922A1467E91CC013406BEBE0BB7394E63715B3EF7DFB73F996DC7B"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ru\\ReachFramework.resources.dll",
+    "length": 43856,
+    "sha256": "F45A9BCB0ECD78C4EB2FED21610209982A2CC1684D93129B272376E0769825FB"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ru\\System.Windows.Controls.Ribbon.resources.dll",
+    "length": 19280,
+    "sha256": "B95FB6644668881ABC259D2D65D7A3D20F5E9BB69C855D0E26EFEE01F482846E"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ru\\System.Windows.Forms.Design.resources.dll",
+    "length": 162600,
+    "sha256": "689012EAEFC9B7BC7661C61DACB181D27D69F6E8AFFCA62915E6A30E75BC4FA0"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ru\\System.Windows.Forms.Primitives.resources.dll",
+    "length": 16168,
+    "sha256": "6DA7FAD09F5636E4BC5426FCF3C78AC2E192080D34B6879D021F5BB450F4DE72"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ru\\System.Windows.Forms.resources.dll",
+    "length": 476496,
+    "sha256": "7721D18B6D2C23EF08DDD57F6F8FA9B4EEAD2C3BD38E1717C8072AFEA8C0FE30"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ru\\System.Windows.Input.Manipulations.resources.dll",
+    "length": 16680,
+    "sha256": "378B5DA649BDE973D2EE56AF4CBB168D7047E1A0CF281B4E53AFFE8E4D26BC42"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ru\\System.Xaml.resources.dll",
+    "length": 84776,
+    "sha256": "F628E09401F94B6A11354498C95328EEA25F3161CDDD6A41E73F4B9AFDF54E41"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ru\\UIAutomationClient.resources.dll",
+    "length": 21288,
+    "sha256": "BD9748A263663B50D72B5EB61A571765136964E2F204DA4A3B95CD81D8767C68"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ru\\UIAutomationClientSideProviders.resources.dll",
+    "length": 21800,
+    "sha256": "B9A1F3C09CC73275844D8FAC0DFA35744808714F9A6DA09C32F01A5694B88616"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ru\\UIAutomationProvider.resources.dll",
+    "length": 15184,
+    "sha256": "E57043140CC5CE96C3AD4B57378503EFEBE801A48A2F25DE6DB8E13D40AD20A4"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ru\\UIAutomationTypes.resources.dll",
+    "length": 18728,
+    "sha256": "F4822DB87075F3EA522D461AE0D411E08955543F12563A358E5B582320705003"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ru\\WindowsBase.resources.dll",
+    "length": 111400,
+    "sha256": "F8D796B4980F3401D804F050DADFF6FAF0C3E3EF875379F1E3E19F5BD85646C0"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\ru\\WindowsFormsIntegration.resources.dll",
+    "length": 16208,
+    "sha256": "9DF191FD6931D3E9EB5C0D3FB0E5F05788522325FB19E8682FC0344FAFB00B8D"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\tr\\Microsoft.VisualBasic.Forms.resources.dll",
+    "length": 24872,
+    "sha256": "F751EC730A28459343B015FE2AF6E2003864F40E4BCAFFCF3F88059F12ABE273"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\tr\\PresentationCore.resources.dll",
+    "length": 107304,
+    "sha256": "D72A6884FE97B98233A5505B521E9923F4A2EE003CEC1E0FD13CB0A53F020658"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\tr\\PresentationFramework.resources.dll",
+    "length": 195880,
+    "sha256": "520B7B86B39BF22EB78869822C7623F95B94C5E211E0CC80A69C94089062117E"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\tr\\PresentationUI.resources.dll",
+    "length": 44368,
+    "sha256": "0141D221E80A7FADC8898F8DE716F88D310B9757A8F9A7B1CC1E1F0051030F52"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\tr\\ReachFramework.resources.dll",
+    "length": 38184,
+    "sha256": "5BCC5EAAE7D4BFFC290941C7B3FA05EFEF5766B9A6AC64E07BBF2B61BD3FF7E0"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\tr\\System.Windows.Controls.Ribbon.resources.dll",
+    "length": 18216,
+    "sha256": "41D8631596523F0CB735EC2136408932F54DA43C24F4290D5FBAA0E87281DDD8"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\tr\\System.Windows.Forms.Design.resources.dll",
+    "length": 148264,
+    "sha256": "E1B37A861E5984B914D8516A341E175B51EAEC98CF6A8372211356F47D39CA8E"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\tr\\System.Windows.Forms.Primitives.resources.dll",
+    "length": 15656,
+    "sha256": "62273220A542C313E924235F70D67714F0D957623566E9D9D240A463DD58FF36"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\tr\\System.Windows.Forms.resources.dll",
+    "length": 361256,
+    "sha256": "CC5B52FB9AC265450C398DE3D340AD755C189F8B599D5F73E080331B547243AE"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\tr\\System.Windows.Input.Manipulations.resources.dll",
+    "length": 16168,
+    "sha256": "2B42205C907E87C81C5A26A0FD8A57C312B1331E6B0FA6F1E08E6AC52911280C"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\tr\\System.Xaml.resources.dll",
+    "length": 65320,
+    "sha256": "24C5ACD16FDB63D65381FB0E7F0FF9417BD483CAC561E7D76AAA5AA008E052D9"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\tr\\UIAutomationClient.resources.dll",
+    "length": 19752,
+    "sha256": "E49B8EC444FC580BE7EFE64282F2F2B1B7EB55156280A44938A1DD10CE8690BD"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\tr\\UIAutomationClientSideProviders.resources.dll",
+    "length": 20776,
+    "sha256": "25C3E7BF27593F808534644B99B667D79F1D2EDCF36DD790CB23CB76FE0207A3"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\tr\\UIAutomationProvider.resources.dll",
+    "length": 15184,
+    "sha256": "BBB9D360A0BB5098167FA92A3E7BCF994DF94C0EE61A33CD8567791E228898B7"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\tr\\UIAutomationTypes.resources.dll",
+    "length": 18216,
+    "sha256": "732EA39F2BB72EA53A47C1A53B21653388D175822E4BCD92BDEB849B7729CB7D"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\tr\\WindowsBase.resources.dll",
+    "length": 84776,
+    "sha256": "60AE858A3C0A61AE2004327AB29854E93D0500649C3FD223ECDB5D3E49402076"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\tr\\WindowsFormsIntegration.resources.dll",
+    "length": 15656,
+    "sha256": "078B6D80A2D9AA65F7E8588EEC0773B4D0FFDF468D05AB6229F8D381296C2E7C"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hans\\Microsoft.VisualBasic.Forms.resources.dll",
+    "length": 24912,
+    "sha256": "AE86154A7F19A4FE20D19AA9BBC02E49D983B4B235398480E20B53CCFCE89151"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hans\\PresentationCore.resources.dll",
+    "length": 100176,
+    "sha256": "41A553952448FC834F817E33D4DE5CCC40BB1C9149E83B94D2CA0BA8F3323D65"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hans\\PresentationFramework.resources.dll",
+    "length": 183080,
+    "sha256": "3AEC65BA60B139C0CD0DFC7079B3D40AF24930BD54B460A58FEC60BF596B8D6B"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hans\\PresentationUI.resources.dll",
+    "length": 42832,
+    "sha256": "F02B0AA72DCF4BD969174A9CE7FEDD6B21668289E08A0FB475D8283600069D95"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hans\\ReachFramework.resources.dll",
+    "length": 36688,
+    "sha256": "492464C863C612743902E7796BC662B2A88472AE41FD41E86314579B95C389D9"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hans\\System.Windows.Controls.Ribbon.resources.dll",
+    "length": 18216,
+    "sha256": "C4F3228DA0941EC4C4D4B83B5F95C5A25709986F6462B902EB23F5A2D47AA62D"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hans\\System.Windows.Forms.Design.resources.dll",
+    "length": 144720,
+    "sha256": "F5B3F4C22F45E0A906E0F2993418C8A1B1031EA6A4A9FB970067F9BA79F59999"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hans\\System.Windows.Forms.Primitives.resources.dll",
+    "length": 15656,
+    "sha256": "ECEB403CD5B038FA1EFDDFC2BE135656B68CC96987513A8108383A4F4627EF0B"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hans\\System.Windows.Forms.resources.dll",
+    "length": 319312,
+    "sha256": "AA55C63584E61E8B803FB1C7F0C7B2DA61BF3111B288F1CEB386AB07A012819E"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hans\\System.Windows.Input.Manipulations.resources.dll",
+    "length": 16168,
+    "sha256": "61C7126CC48DD7C03160441EF6797FA2E3B85480626879B9F615A9417760A969"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hans\\System.Xaml.resources.dll",
+    "length": 60712,
+    "sha256": "BCD1A4CD4E67B7FC608F82CE621EAA5F212B1324254B81D207A3EA9C23212742"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hans\\UIAutomationClient.resources.dll",
+    "length": 19280,
+    "sha256": "51031E0546A24BE62DDCC0DD2DC4FACECA5F8A57E2B0D9C7D1E4932222B865E0"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hans\\UIAutomationClientSideProviders.resources.dll",
+    "length": 20304,
+    "sha256": "C07397F810D4AD1364A44FC8192FFE2C03DF3A9E6AF78D447E8F367F0EB57C3C"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hans\\UIAutomationProvider.resources.dll",
+    "length": 15144,
+    "sha256": "3EA96DDCB6B7FFE55162D69F38203F8E6F1392B4532BF66480362F45FC70A1A9"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hans\\UIAutomationTypes.resources.dll",
+    "length": 18216,
+    "sha256": "CCD4D418CB0DB17BCF5BE1AE3516CD88DD056A4854735E0FCF0B45CA5B0426E2"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hans\\WindowsBase.resources.dll",
+    "length": 78632,
+    "sha256": "92FF96640860995BA35890394CE0C52D6F2C55F0C55BD10D8867705AD96F35F1"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hans\\WindowsFormsIntegration.resources.dll",
+    "length": 15656,
+    "sha256": "6A9C5B066721120291B9EA33AD8251363F58FA51820E9403057767BA6B043225"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hant\\Microsoft.VisualBasic.Forms.resources.dll",
+    "length": 24912,
+    "sha256": "6660E359A573413085F8880D4F340D0BA62EB2B18650B130285933E41F1B6565"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hant\\PresentationCore.resources.dll",
+    "length": 101160,
+    "sha256": "68D0DC5C7800DA62B3C5BD621D5FA3149D04929896A27ABE8515A28FE5273D67"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hant\\PresentationFramework.resources.dll",
+    "length": 183592,
+    "sha256": "BBCD744C22743BC9092539E27C98A6393D8BFA1917D1404A0F3FDAADDA58B1B8"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hant\\PresentationUI.resources.dll",
+    "length": 42832,
+    "sha256": "16053CA93D0ADA5BB8F50CC52BD3FB96B737ED1206F7506EF8BE70D94DEBBACE"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hant\\ReachFramework.resources.dll",
+    "length": 37200,
+    "sha256": "53136A5478BAC91C27E5E87714CC88155177F4DF159C23106F398228930F082B"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hant\\System.Windows.Controls.Ribbon.resources.dll",
+    "length": 18216,
+    "sha256": "E158FD5ED52D5307B2E0AA92DEDBB6350B3CB3FDBCB6427C97013430813111E0"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hant\\System.Windows.Forms.Design.resources.dll",
+    "length": 144680,
+    "sha256": "C1259A61054C8DEE4A49738CDDE97B01EB074E340D7A3C383BB9FB14928236D0"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hant\\System.Windows.Forms.Primitives.resources.dll",
+    "length": 15696,
+    "sha256": "1D762AB3A0B22AA9B0157EF29B1FFDF8267C4D0AAFD0C6174B64488D436D1557"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hant\\System.Windows.Forms.resources.dll",
+    "length": 324904,
+    "sha256": "8C7AC2584D3D6F7FC8810AD84D603305B3A25B1C5012FB6852839800DD40607E"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hant\\System.Windows.Input.Manipulations.resources.dll",
+    "length": 16168,
+    "sha256": "9178C4DD146B133BB38347EA589714B8161C11E50352494B9A976BA0C36EF511"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hant\\System.Xaml.resources.dll",
+    "length": 60712,
+    "sha256": "29EC4646A783A2429C29DE8930DEBC0D5E6500F624B85DEA0A8A20BF896A144F"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hant\\UIAutomationClient.resources.dll",
+    "length": 19240,
+    "sha256": "C3BFE1EBECCE0395CDC4CC05D680F96DA3D0DD284D672DA48AFE873A4D306685"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hant\\UIAutomationClientSideProviders.resources.dll",
+    "length": 20264,
+    "sha256": "2781BCC30D2D79D2BA6AAC065E32DE9E9A6C87C13398564A6F589C331650824F"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hant\\UIAutomationProvider.resources.dll",
+    "length": 15144,
+    "sha256": "F3FF625B6D131771BB61FFB715077C011C2A4661B06C68D7197A05FAD4A545CB"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hant\\UIAutomationTypes.resources.dll",
+    "length": 18216,
+    "sha256": "79C95F631EE587558D9F944EB543DCBA640EC1D70FD9D5D8637F754E095BC711"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hant\\WindowsBase.resources.dll",
+    "length": 80208,
+    "sha256": "17904B5F5CC2323372B6F11DF75648D2709A870231481F8D248FC70E3AEEBF8B"
+  },
+  {
+    "path": "shared\\Microsoft.WindowsDesktop.App\\8.0.31\\zh-Hant\\WindowsFormsIntegration.resources.dll",
+    "length": 15656,
+    "sha256": "677072782C414F564D1BA2CE8C0686C955A283C9110064C4F171CED9D1F8EA5E"
+  }
+]

@@ -1,0 +1,34 @@
+{
+  "createdAt": "2026-09-14T01:32:47.4504626+08:00",
+  "metadataUrl": "https://builds.dotnet.microsoft.com/dotnet/release-metadata/8.0/releases.json",
+  "metadataSha256": "21CC0B1F333822C9C86DF690B9DAD0191EE3BD4ABEBD05AD86A0BB353E38FC0B",
+  "metadataLatestRuntime": "8.0.31",
+  "pinnedVersion": "8.0.31",
+  "packages": [
+    {
+      "version": "8.0.31",
+      "rid": "win-x64",
+      "url": "https://builds.dotnet.microsoft.com/dotnet/Runtime/8.0.31/dotnet-runtime-8.0.31-win-x64.zip",
+      "downloadUrl": "https://builds.dotnet.microsoft.com/dotnet/Runtime/8.0.31/dotnet-runtime-8.0.31-win-x64.zip",
+      "sha512": "9c55c58694676ee64b0eed2cd6d8cbf58b9aa8288420acc66841e15ca0099c75d4af0182d23a641c2342e5a151a325df4a12fa0bde2e47c0fb7e9a33e7b09896",
+      "metadataSha512": "9c55c58694676ee64b0eed2cd6d8cbf58b9aa8288420acc66841e15ca0099c75d4af0182d23a641c2342e5a151a325df4a12fa0bde2e47c0fb7e9a33e7b09896",
+      "archiveLength": 33322727,
+      "verified": true
+    },
+    {
+      "version": "8.0.31",
+      "rid": "win-x64",
+      "url": "https://builds.dotnet.microsoft.com/dotnet/WindowsDesktop/8.0.31/windowsdesktop-runtime-8.0.31-win-x64.zip",
+      "downloadUrl": "https://dotnetcli.blob.core.windows.net/dotnet/WindowsDesktop/8.0.31/windowsdesktop-runtime-8.0.31-win-x64.zip",
+      "sha512": "0615aca35754b2d743819578526d8ea4184c6c197afd59cfa55d75c62777955a760de0f7936d44789c3aeb703d094fb9a001f5c6c4954968733d9cbc93742a76",
+      "metadataSha512": "0615aca35754b2d743819578526d8ea4184c6c197afd59cfa55d75c62777955a760de0f7936d44789c3aeb703d094fb9a001f5c6c4954968733d9cbc93742a76",
+      "archiveLength": 36792459,
+      "verified": true
+    }
+  ],
+  "runtimeList": [
+    "Microsoft.NETCore.App 8.0.31 [E:\\yanxin_ws\\wuwa-fps-unlock\\.agent-worktrees\\materials\\components\\dotnet8\\shared\\Microsoft.NETCore.App]",
+    "Microsoft.WindowsDesktop.App 8.0.31 [E:\\yanxin_ws\\wuwa-fps-unlock\\.agent-worktrees\\materials\\components\\dotnet8\\shared\\Microsoft.WindowsDesktop.App]"
+  ],
+  "unlockerExecuted": false
+}

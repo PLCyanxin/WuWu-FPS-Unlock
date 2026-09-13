@@ -23,3 +23,11 @@ asset-comparison.json compares the three desktop input images. Desktop 图标.jp
 ## Remaining / parent integration
 
 Keep all binary payload/setup and payload/files content when packaging. Preserve artifacts logs in final distribution evidence. Actual game path mapping, runtime installation, deployment/cleanup and game-internal behavior remain parent-owned verification. No new game results claimed here.
+
+## .NET 8 portable runtime follow-up
+
+Official release-metadata retrieved 2026-09-14 reports latest-runtime 8.0.31, release date 2026-09-08, security=true. Downloaded Microsoft NETCore win-x64 ZIP from builds.dotnet.microsoft.com and WindowsDesktop ZIP from the Microsoft dotnetcli.blob.core.windows.net mirror. Both exact SHA-512 hashes match release metadata. See dotnet8-provenance.json for source URLs, actual download URLs, hashes and sizes; dotnet8-file-hashes.json for extracted files. Original build-host Desktop download was stopped only after equivalent mirror bytes were verified; a redundant NETCore mirror attempt timed out and was not used.
+
+Portable directory: .agent-worktrees/materials/components/dotnet8 (host + Microsoft.NETCore.App 8.0.31 + Microsoft.WindowsDesktop.App 8.0.31, licenses/notices retained). It is intentionally not committed as binary content; parent copies this directory into delivery. No machine runtime install or global PATH/registry changes.
+
+Reproducer: scripts/Prepare-UnlockerRuntime.ps1 -DesktopOnlyMirror. Version is pinned to audited current patch 8.0.31. Cached metadata can be reused with -ReuseMetadata, otherwise fetched fresh and the pinned release is selected. Corrupt archive cache stops at SHA-512 check before extraction. Actual verification log dotnet8-prepare-final.log contains both verified package hashes and successful dotnet --list-runtimes output. No unlock.exe execution occurred; runtime presence alone does not verify external unlocker's launch behavior.
