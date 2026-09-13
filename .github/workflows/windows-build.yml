@@ -1,0 +1,18 @@
+name: Windows build and core tests
+on: [workflow_dispatch, push, pull_request]
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Core tests (no game or injected process)
+        run: dotnet run --project tests/WuWaFpsUnlock.Tests -c Release
+      - name: Compile WPF and publish
+        run: dotnet publish src/WuWaFpsUnlock -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=false -o artifacts/win-x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WuWaFpsUnlock-win-x64-unvalidated
+          path: artifacts/win-x64/

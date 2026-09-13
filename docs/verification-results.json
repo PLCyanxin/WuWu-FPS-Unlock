@@ -1,0 +1,49 @@
+{
+  "release": "0.9-dev1",
+  "kind": "source-engineering-build-not-compiled",
+  "date": "2026-09-13",
+  "static_source_and_asset_checks": {
+    "executed": true,
+    "passed": 111,
+    "total": 111
+  },
+  "html_preview_interaction_checks": {
+    "executed": true,
+    "passed": 20,
+    "total": 20,
+    "browser": "Chromium + Playwright",
+    "nativeWpf": false
+  },
+  "core_regression_tests": {
+    "provided": true,
+    "declared_cases": 44,
+    "executed": false,
+    "reason": "本环境无 .NET SDK，SDK 获取失败"
+  },
+  "windows_build": {
+    "executed": false,
+    "outputExeProvided": false
+  },
+  "windows_wpf_visual_validation": {
+    "executed": false
+  },
+  "fps_plugin": {
+    "origin": "用户上传EXE资源，未执行",
+    "extractedAndHashed": true,
+    "gameTested": false
+  },
+  "mfg_payload": {
+    "provided": false,
+    "deploymentTested": false
+  },
+  "reshade_automation": {
+    "sourceImplemented": true,
+    "windowsExecutionTested": false
+  },
+  "warnings": [
+    "静态检查不是C#编译",
+    "HTML交互通过不是原生WPF测试",
+    "部署文件存在不是游戏内功能生效",
+    "原始图片保留，不代表公共分发授权"
+  ]
+}

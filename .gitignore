@@ -1,0 +1,17 @@
+bin/
+obj/
+artifacts/
+data/
+.tools/
+.nuget/
+.tmp/
+__pycache__/
+payload/files/
+
+.agent-worktrees/
+input/desktop-materials/替换/
+input/desktop-materials/*.exe
+input/desktop-materials/*.addon64
+payload/setup/
+components/unlocker/
+

@@ -1,0 +1,89 @@
+{
+  "scope": "HTML交互预览（不是原生WPF或游戏测试）",
+  "browser": "system Chromium via Playwright",
+  "tests": [
+    {
+      "name": "默认只显示主窗口",
+      "passed": true
+    },
+    {
+      "name": "主窗口无多帧生成控制",
+      "passed": true
+    },
+    {
+      "name": "设置打开独立完整窗口",
+      "passed": true
+    },
+    {
+      "name": "设置重复点击不创建重复窗口",
+      "passed": true
+    },
+    {
+      "name": "主窗口数值同步到设置窗口",
+      "passed": true
+    },
+    {
+      "name": "设置滑块同步到主窗口",
+      "passed": true
+    },
+    {
+      "name": "FPS关闭时两窗口控制均禁用",
+      "passed": true
+    },
+    {
+      "name": "两个开关同步",
+      "passed": true
+    },
+    {
+      "name": "取消MFG选择不自动卸载",
+      "passed": true
+    },
+    {
+      "name": "预览部署不假报成功",
+      "passed": true
+    },
+    {
+      "name": "预览清除说明不删除原有ReShade",
+      "passed": true
+    },
+    {
+      "name": "开始游戏明确为预览",
+      "passed": true
+    },
+    {
+      "name": "关闭设置不关闭主窗口",
+      "passed": true
+    },
+    {
+      "name": "重新打开设置保留FPS",
+      "passed": true
+    },
+    {
+      "name": "开始部署与清除插件等宽",
+      "passed": true
+    },
+    {
+      "name": "两按钮整行占满无右侧空白",
+      "passed": true
+    },
+    {
+      "name": "部署按钮旁不再有重新检测",
+      "passed": true
+    },
+    {
+      "name": "1760px界面无水平溢出",
+      "passed": true
+    },
+    {
+      "name": "图片来自内嵌原始资产",
+      "passed": true
+    },
+    {
+      "name": "无脚本执行错误",
+      "passed": true
+    }
+  ],
+  "passed": 20,
+  "total": 20,
+  "javascript_errors": []
+}

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType><TargetFramework>net10.0-windows</TargetFramework><UseWPF>true</UseWPF>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
+    <AssemblyName>WuWaFpsUnlock</AssemblyName><RootNamespace>WuWaFpsUnlock</RootNamespace>
+    <Version>0.9.0</Version><AssemblyVersion>0.9.0.0</AssemblyVersion><FileVersion>0.9.0.1</FileVersion>
+    <ApplicationIcon>Assets\App.ico</ApplicationIcon><ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x64</Platforms><PlatformTarget>x64</PlatformTarget><PublishTrimmed>false</PublishTrimmed><PublishAot>false</PublishAot>
+  </PropertyGroup>
+  <ItemGroup><ProjectReference Include="..\WuWaFpsUnlock.Core\WuWaFpsUnlock.Core.csproj" /></ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\Cover.original.png" /><Resource Include="Assets\Icon.original.jpg" /><Resource Include="Assets\App.ico" />
+    <Compile Remove="Services\FpsSession.cs" />
+    <Content Include="..\..\..\components\unlocker\**\*" Link="components\unlocker\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <Content Include="..\..\..\components\PROVENANCE.json" Link="components\PROVENANCE.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <Content Include="..\..\..\licenses\**\*" Link="licenses\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+  </ItemGroup>
+</Project>

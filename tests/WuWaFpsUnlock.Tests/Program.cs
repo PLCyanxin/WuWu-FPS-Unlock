@@ -1,0 +1,76 @@
+using System.Text;
+using WuWaFpsUnlock.Core;
+
+// Real filesystem-only regression tests; never starts a game, an installer, or a plugin.
+string root=Path.GetFullPath(Path.Combine("artifacts","test-work",Guid.NewGuid().ToString("N")));
+Directory.CreateDirectory(root);
+int passed=0,failed=0;
+async Task Test(string name,Func<Task> run)
+{try{await run();Console.WriteLine("PASS "+name);passed++;}catch(Exception ex){Console.WriteLine("FAIL "+name+": "+ex);failed++;}}
+void Check(bool value,string why="assertion failed"){if(!value)throw new Exception(why);}
+Task Sync(Action action){action();return Task.CompletedTask;}
+async Task Throws<T>(Func<Task> action) where T:Exception
+{try{await action();}catch(T){return;}throw new Exception("Expected "+typeof(T).Name);}
+string NewDir(){string p=Path.Combine(root,Guid.NewGuid().ToString("N"));Directory.CreateDirectory(p);return p;}
+async Task<(PayloadManifest m,string file,string game,string exe,List<PlannedFile> plan)> Fixture()
+{
+    var dir=NewDir();var game=Path.Combine(dir,"game");var exe=Path.Combine(game,"Client","Binaries","Win64");Directory.CreateDirectory(exe);
+    var pkg=Path.Combine(dir,"package");Directory.CreateDirectory(pkg);var dll=Path.Combine(pkg,"provider.dll");var addon=Path.Combine(pkg,"addon.bin");
+    File.WriteAllText(dll,"FAKE TEST BYTES -- never executable");File.WriteAllText(addon,"FAKE TEST ADDON -- never executable");
+    var m=new PayloadManifest{PackageId="fixture",ReShade=new(){ProxyApi="dxgi"},Files=[
+        new(){Source="provider.dll",Anchor=TargetAnchor.ExeDir,Target="nvngx_dlssg.dll",Kind=PayloadKind.Vendor,Size=new FileInfo(dll).Length,Sha256=await SafePaths.HashAsync(dll)},
+        new(){Source="addon.bin",Anchor=TargetAnchor.AddonDir,Target="renodx-mfgunlock.addon64",Kind=PayloadKind.Addon,Size=new FileInfo(addon).Length,Sha256=await SafePaths.HashAsync(addon)}]};
+    File.WriteAllText(Path.Combine(exe,"nvngx_dlssg.dll"),"original fixture vendor");
+    string f=Path.Combine(pkg,"manifest.json");JsonFiles.Save(f,m);m=PackageReader.Load(f);
+    return(m,f,game,exe,await PackageReader.PlanAsync(m,f,game,exe,exe));
+}
+foreach(string bad in new[]{"../outside.dll","..\\outside.dll","/absolute.dll","\\absolute.dll","C:\\x.dll","x.dll:stream","a//b.dll","NUL.dll","COM1.dll","dir./x.dll","dir /x.dll","a/./b.dll","a/*/x.dll"})
+    await Test("reject path "+bad,()=>Throws<InvalidDataException>(()=>Sync(()=>SafePaths.Under(root,bad))));
+await Test("allow Chinese and spaces",()=>Sync(()=>Check(SafePaths.Under(root,"鸣潮 Game/插件.dll").Contains("鸣潮 Game"))));
+await Test("reject sibling-prefix target",()=>Sync(()=>Check(!SafePaths.IsInside(root,root+"-evil/x.dll"))));
+await Test("manifest round trip",async()=>{var x=await Fixture();Check(x.m.Files.Count==2);});
+await Test("missing payload rejected",async()=>{var x=await Fixture();File.Delete(x.plan[0].Source);await Throws<InvalidDataException>(()=>PackageReader.PlanAsync(x.m,x.file,x.game,x.exe,x.exe));});
+await Test("hash mismatch prevents plan",async()=>{var x=await Fixture();File.WriteAllText(x.plan[0].Source,"wrong");await Throws<InvalidDataException>(()=>PackageReader.PlanAsync(x.m,x.file,x.game,x.exe,x.exe));Check(File.ReadAllText(x.plan[0].Target)=="original fixture vendor");});
+await Test("duplicate target rejected",async()=>{var x=await Fixture();x.m.Files.Add(x.m.Files[0]);await Throws<InvalidDataException>(()=>PackageReader.PlanAsync(x.m,x.file,x.game,x.exe,x.exe));});
+await Test("unknown vendor rejected",async()=>{var x=await Fixture();x.m.Files[0].Target="kernel32.dll";JsonFiles.Save(x.file,x.m);await Throws<InvalidDataException>(()=>Sync(()=>PackageReader.Load(x.file)));});
+await Test("missing addon rejected",async()=>{var x=await Fixture();x.m.Files.RemoveAt(1);JsonFiles.Save(x.file,x.m);await Throws<InvalidDataException>(()=>Sync(()=>PackageReader.Load(x.file)));});
+await Test("dynamic floor cannot be lowered",async()=>{var x=await Fixture();x.m.DynamicMinimumDriver=59186;JsonFiles.Save(x.file,x.m);await Throws<InvalidDataException>(()=>Sync(()=>PackageReader.Load(x.file)));});
+await Test("fixed does not inherit dynamic floor",async()=>{var x=await Fixture();Check(x.m.FixedMinimumDriver is null);});
+await Test("ReShade proxy not inferred",async()=>{var x=await Fixture();x.m.ReShade.ProxyApi="";JsonFiles.Save(x.file,x.m);await Throws<InvalidDataException>(()=>Sync(()=>PackageReader.Load(x.file)));});
+await Test("multi-line INI injection rejected",async()=>{var x=await Fixture();x.m.MfgConfig["Enabled"]="1\n[OTHER]";JsonFiles.Save(x.file,x.m);await Throws<InvalidDataException>(()=>Sync(()=>PackageReader.Load(x.file)));});
+await Test("INI preserves other sections",()=>Sync(()=>{var p=Path.Combine(NewDir(),"ReShade.ini");File.WriteAllText(p,";keep\r\n[GENERAL]\r\nPresetPath=user.ini\r\n[INPUT]\r\nKeyOverlay=36,0,0,0\r\n");var ini=IniDocument.Load(p);ini.Set("RenoDX.MFGUnlock","Enabled","1");ini.Save(p);Check(File.ReadAllText(p).Contains(";keep\r\n[GENERAL]\r\nPresetPath=user.ini"));Check(IniDocument.Load(p).Get("INPUT","KeyOverlay")=="36,0,0,0");}));
+await Test("INI duplicate keys fail closed",()=>Sync(()=>{var p=Path.Combine(NewDir(),"r.ini");File.WriteAllText(p,"[ADDON]\nAddonPath=a\nAddonPath=b");var ini=IniDocument.Load(p);try{ini.Get("ADDON","AddonPath");throw new Exception("not rejected");}catch(InvalidDataException){}}));
+await Test("merge early-load list without duplicates",()=>Sync(()=>{var p=Path.Combine(NewDir(),"r.ini");File.WriteAllText(p,"[ADDON]\nLoadFromDllMain=other.addon64,renodx-mfgunlock.addon64");var i=IniDocument.Load(p);Check(i.MergeCsv("ADDON","LoadFromDllMain","renodx-mfgunlock.addon64")=="other.addon64,renodx-mfgunlock.addon64");}));
+await Test("owned keys restore previous value only",()=>Sync(()=>{var p=Path.Combine(NewDir(),"r.ini");File.WriteAllText(p,"[RenoDX.MFGUnlock]\nEnabled=0\n");var i=IniDocument.Load(p);var r=new DeploymentReceipt();i.ApplyOwned("RenoDX.MFGUnlock","Enabled","1",r);i.RemoveOwnedEdits(r,_=>{});Check(i.Get("RenoDX.MFGUnlock","Enabled")=="0");}));
+await Test("later user key edits are retained",()=>Sync(()=>{var p=Path.Combine(NewDir(),"r.ini");var i=IniDocument.Load(p);var r=new DeploymentReceipt();i.ApplyOwned("RenoDX.MFGUnlock","ForceMultiplier","4",r);i.Set("RenoDX.MFGUnlock","ForceMultiplier","6");i.RemoveOwnedEdits(r,_=>{});Check(i.Get("RenoDX.MFGUnlock","ForceMultiplier")=="6");}));
+await Test("re-deploy retains original key ownership",()=>Sync(()=>{var p=Path.Combine(NewDir(),"r.ini");var i=IniDocument.Load(p);i.Set("RenoDX.MFGUnlock","Enabled","0");var r=new DeploymentReceipt();i.ApplyOwned("RenoDX.MFGUnlock","Enabled","1",r);i.ApplyOwned("RenoDX.MFGUnlock","Enabled","1",r);Check(r.IniEdits.Count==1&&r.IniEdits[0].Previous=="0");}));
+await Test("copy and post-write SHA validation",async()=>{var x=await Fixture();var r=new DeploymentReceipt{GameRoot=x.game};await DeploymentFiles.ApplyAsync(x.plan,r,()=>{},_=>{});Check(r.Files.All(f=>f.Completed));Check(await SafePaths.HashAsync(x.plan[0].Target)==x.plan[0].Sha256);});
+await Test("idempotent deployment retains created ownership",async()=>{var x=await Fixture();var r=new DeploymentReceipt{GameRoot=x.game};await DeploymentFiles.ApplyAsync(x.plan,r,()=>{},_=>{});await DeploymentFiles.ApplyAsync(x.plan,r,()=>{},_=>{});Check(r.Files.Count==2&&r.Files.Any(f=>f.CreatedByTool)&&r.Files.Any(f=>f.ReplacedByTool));});
+await Test("pre-existing files never become owned",async()=>{var x=await Fixture();File.WriteAllText(x.plan[1].Target,"old user addon");var r=new DeploymentReceipt{GameRoot=x.game};await DeploymentFiles.ApplyAsync(x.plan,r,()=>{},_=>{});Check(!r.Files.Single(f=>f.Kind=="Addon").CreatedByTool);});
+await Test("cleanup removes replaced vendor and own addon",async()=>{var x=await Fixture();var r=new DeploymentReceipt{GameRoot=x.game};await DeploymentFiles.ApplyAsync(x.plan,r,()=>{},_=>{});await DeploymentFiles.CleanOwnedAddonsAsync(r,()=>{},_=>{});Check(!File.Exists(x.plan[0].Target));Check(!File.Exists(x.plan[1].Target));});
+await Test("cleanup preserves modified addon",async()=>{var x=await Fixture();var r=new DeploymentReceipt{GameRoot=x.game};await DeploymentFiles.ApplyAsync(x.plan,r,()=>{},_=>{});File.WriteAllText(x.plan[1].Target,"user update");await DeploymentFiles.CleanOwnedAddonsAsync(r,()=>{},_=>{});Check(File.Exists(x.plan[1].Target));});
+await Test("cleanup preserves pre-existing addon",async()=>{var x=await Fixture();File.WriteAllText(x.plan[1].Target,"old");var r=new DeploymentReceipt{GameRoot=x.game};await DeploymentFiles.ApplyAsync(x.plan,r,()=>{},_=>{});await DeploymentFiles.CleanOwnedAddonsAsync(r,()=>{},_=>{});Check(File.Exists(x.plan[1].Target));});
+await Test("cleanup refuses arbitrary receipt filename",async()=>{var dir=NewDir();var p=Path.Combine(dir,"game.exe");File.WriteAllText(p,"protected");var r=new DeploymentReceipt{GameRoot=dir,Files=[new(){Path=p,Kind="Addon",CreatedByTool=true,InstalledHash=await SafePaths.HashAsync(p)}]};await DeploymentFiles.CleanOwnedAddonsAsync(r,()=>{},_=>{});Check(File.Exists(p));});
+await Test("journal intent is emitted before copy",async()=>{var x=await Fixture();var r=new DeploymentReceipt{GameRoot=x.game};bool observed=false;await DeploymentFiles.ApplyAsync(x.plan,r,()=>{if(r.Files.Count==1&&!r.Files[0].Completed){Check(File.ReadAllText(x.plan[0].Target)=="original fixture vendor");observed=true;}},_=>{});Check(observed);});
+await Test("driver 591.86 not Dynamic",()=>Sync(()=>{var h=new HardwareInfo("GeForce RTX 4080",59186,true,"","",null);Check(h.DynamicText.Contains("不足"));}));
+await Test("driver 595.40 not Dynamic",()=>Sync(()=>{var h=new HardwareInfo("GeForce RTX 4080",59540,true,"","",null);Check(h.DynamicText.Contains("不足"));}));
+await Test("driver 595.41 requires runtime verification",()=>Sync(()=>{var h=new HardwareInfo("GeForce RTX 4080",59541,true,"","",null);Check(h.DynamicText.Contains("待确认"));}));
+await Test("unknown driver never marked supported",()=>Sync(()=>{var h=new HardwareInfo("GeForce RTX 4080",null,true,"","",null);Check(h.DynamicText.Contains("未知"));}));
+await Test("driver formatting",()=>Sync(()=>Check(new HardwareInfo("",59660,true,"","",null).DriverText=="596.60")));
+await Test("all 18 vendor names accepted",async()=>{var x=await Fixture();Check(PackageReader.VendorNames.Count==18);foreach(var name in PackageReader.VendorNames){x.m.Files[0].Target=name;JsonFiles.Save(x.file,x.m);PackageReader.Load(x.file);}});
+await Test("no same name means no vendor creation",async()=>{var x=await Fixture();File.Delete(x.plan[0].Target);var p=await PackageReader.PlanAsync(x.m,x.file,x.game,x.exe,x.exe);Check(p.Count==1&&p[0].Kind==PayloadKind.Addon);await DeploymentFiles.ApplyAsync(p,new(){GameRoot=x.game},()=>{},_=>{});Check(!File.Exists(x.plan[0].Target));});
+await Test("same names in nested directories all explicitly mapped",async()=>{var x=await Fixture();var second=Path.Combine(x.game,"引擎 插件","深层");Directory.CreateDirectory(second);File.WriteAllText(Path.Combine(second,"nvngx_dlssg.dll"),"other original");var p=await PackageReader.PlanAsync(x.m,x.file,x.game,x.exe,x.exe);Check(p.Count(f=>f.Kind==PayloadKind.Vendor)==2);Check(p.Where(f=>f.Kind==PayloadKind.Vendor).All(f=>f.ExpectedTargetHash!=null));});
+await Test("same-hash pre-existing vendor is never claimed or cleaned",async()=>{var x=await Fixture();File.Copy(x.plan[0].Source,x.plan[0].Target,true);var p=await PackageReader.PlanAsync(x.m,x.file,x.game,x.exe,x.exe);var r=new DeploymentReceipt{GameRoot=x.game};await DeploymentFiles.ApplyAsync(p,r,()=>{},_=>{});Check(!r.Files.Single(f=>f.Kind=="Vendor").ReplacedByTool);await DeploymentFiles.CleanOwnedAddonsAsync(r,()=>{},_=>{});Check(File.Exists(x.plan[0].Target));});
+await Test("modified replaced vendor is preserved during clean",async()=>{var x=await Fixture();var r=new DeploymentReceipt{GameRoot=x.game};await DeploymentFiles.ApplyAsync(x.plan,r,()=>{},_=>{});File.WriteAllText(x.plan[0].Target,"game update");await DeploymentFiles.CleanOwnedAddonsAsync(r,()=>{},_=>{});Check(File.ReadAllText(x.plan[0].Target)=="game update");});
+await Test("changed target after planning blocks all writes",async()=>{var x=await Fixture();File.WriteAllText(x.plan[0].Target,"changed");await Throws<IOException>(()=>DeploymentFiles.ApplyAsync(x.plan,new(){GameRoot=x.game},()=>{},_=>{}));Check(!File.Exists(x.plan[1].Target));});
+await Test("missing target after planning is never recreated",async()=>{var x=await Fixture();File.Delete(x.plan[0].Target);await Throws<IOException>(()=>DeploymentFiles.ApplyAsync(x.plan,new(){GameRoot=x.game},()=>{},_=>{}));Check(!File.Exists(x.plan[0].Target));});
+await Test("locked target fails preflight before any copy",async()=>{var x=await Fixture();using var locked=new FileStream(x.plan[0].Target,FileMode.Open,FileAccess.ReadWrite,FileShare.None);await Throws<IOException>(()=>DeploymentFiles.ApplyAsync(x.plan,new(){GameRoot=x.game},()=>{},_=>{}));Check(!File.Exists(x.plan[1].Target));});
+await Test("partial write failure persists actual completed files",async()=>{var x=await Fixture();var r=new DeploymentReceipt{GameRoot=x.game};await Throws<IOException>(()=>DeploymentFiles.ApplyAsync(x.plan,r,()=>{},line=>{if(line.StartsWith("已写入"))throw new IOException("simulated interruption after first real filesystem replacement");}));Check(r.Status=="PartialFailure");Check(r.Files.Count==1&&r.Files[0].Completed&&r.Files[0].ReplacedByTool);Check(!File.Exists(x.plan[1].Target));await DeploymentFiles.CleanOwnedAddonsAsync(r,()=>{},_=>{});Check(!File.Exists(x.plan[0].Target));});
+await Test("repeat cleanup is safe",async()=>{var x=await Fixture();var r=new DeploymentReceipt{GameRoot=x.game};await DeploymentFiles.ApplyAsync(x.plan,r,()=>{},_=>{});await DeploymentFiles.CleanOwnedAddonsAsync(r,()=>{},_=>{});await DeploymentFiles.CleanOwnedAddonsAsync(r,()=>{},_=>{});Check(r.Status=="Cleaned"&&!File.Exists(x.plan[0].Target));});
+await Test("locked owned file reports partial cleanup and supports retry",async()=>{var x=await Fixture();var r=new DeploymentReceipt{GameRoot=x.game};await DeploymentFiles.ApplyAsync(x.plan,r,()=>{},_=>{});using(var locked=new FileStream(x.plan[0].Target,FileMode.Open,FileAccess.ReadWrite,FileShare.None)){await Throws<IOException>(()=>DeploymentFiles.CleanOwnedAddonsAsync(r,()=>{},_=>{}));Check(r.Status=="PartialClean");}await DeploymentFiles.CleanOwnedAddonsAsync(r,()=>{},_=>{});Check(!File.Exists(x.plan[0].Target));});
+await Test("out-of-root receipt refuses deletion",async()=>{var x=await Fixture();var outside=Path.Combine(NewDir(),"nvngx_dlssg.dll");File.WriteAllText(outside,"protected");var r=new DeploymentReceipt{GameRoot=x.game,Files=[new(){Path=outside,Kind="Vendor",ReplacedByTool=true,InstalledHash=await SafePaths.HashAsync(outside)}]};await Throws<InvalidDataException>(()=>DeploymentFiles.CleanOwnedAddonsAsync(r,()=>{},_=>{}));Check(File.Exists(outside));});
+Console.WriteLine($"RESULT: {passed} passed, {failed} failed. No Windows/game integration was exercised.");
+try{Directory.Delete(root,true);}catch{}
+return failed==0?0:1;
+
+

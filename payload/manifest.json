@@ -1,0 +1,171 @@
+{
+  "dynamicMinimumDriver": 59541,
+  "packageId": "user-local-20260914",
+  "files": [
+    {
+      "anchor": "GameRoot",
+      "target": "NvLowLatencyVk.dll",
+      "sha256": "2a77dc3e1c724b7eea5755be0ae7423752e79a2459fae72181a9f00e3507e5d6",
+      "source": "files/game/NvLowLatencyVk.dll",
+      "kind": "Vendor",
+      "size": 57840
+    },
+    {
+      "anchor": "GameRoot",
+      "target": "nvngx_deepdvc.dll",
+      "sha256": "dc9562c67594fa06b763fe5d78f4aa53452c5344f8b43e6e2b81264320588500",
+      "source": "files/game/nvngx_deepdvc.dll",
+      "kind": "Vendor",
+      "size": 3104880
+    },
+    {
+      "anchor": "GameRoot",
+      "target": "nvngx_dlss.dll",
+      "sha256": "3975567b8943c53acce397f2b72380092f84f162d00b0d2c7d08a1025c563983",
+      "source": "files/game/nvngx_dlss.dll",
+      "kind": "Vendor",
+      "size": 58956912
+    },
+    {
+      "anchor": "GameRoot",
+      "target": "nvngx_dlssd.dll",
+      "sha256": "4bc7ea5fcb2f32cf86bc2cb072e8d2860914a0be511cbdcb2fc206c1d9d83b80",
+      "source": "files/game/nvngx_dlssd.dll",
+      "kind": "Vendor",
+      "size": 48343664
+    },
+    {
+      "anchor": "GameRoot",
+      "target": "nvngx_dlssg.dll",
+      "sha256": "ff6e90eb78b827927dff5b4ecc6b1c870c2e9bca29ed9f48c7d348cc9e170b82",
+      "source": "files/game/nvngx_dlssg.dll",
+      "kind": "Vendor",
+      "size": 7460976
+    },
+    {
+      "anchor": "GameRoot",
+      "target": "nvngx_dlssnr.dll",
+      "sha256": "e16bcf15e16e13f527491cdf7845b2fe6521a738d8f7c9c721866a8496e1fc8e",
+      "source": "files/game/nvngx_dlssnr.dll",
+      "kind": "Vendor",
+      "size": 165840496
+    },
+    {
+      "anchor": "GameRoot",
+      "target": "sl.common.dll",
+      "sha256": "82924a8954dd671e09351c5de0eb87ad0eb25b944cc9f9ab955ca1d9950de15d",
+      "source": "files/game/sl.common.dll",
+      "kind": "Vendor",
+      "size": 843392
+    },
+    {
+      "anchor": "GameRoot",
+      "target": "sl.deepdvc.dll",
+      "sha256": "e4b7e83c9e67eab7023222af13de239241e8a09bdb63faf26f803e9fd0f3e9c9",
+      "source": "files/game/sl.deepdvc.dll",
+      "kind": "Vendor",
+      "size": 376448
+    },
+    {
+      "anchor": "GameRoot",
+      "target": "sl.directsr.dll",
+      "sha256": "4b2c0c90195c3a9991b4e0b59004113511a90802c85d81fc7faa7c7c75f53927",
+      "source": "files/game/sl.directsr.dll",
+      "kind": "Vendor",
+      "size": 369792
+    },
+    {
+      "anchor": "GameRoot",
+      "target": "sl.dlss_d.dll",
+      "sha256": "026b9f4f9ea848f2f5aa0e2024fc6b1c885f57eea5d41078124dba14f873b86b",
+      "source": "files/game/sl.dlss_d.dll",
+      "kind": "Vendor",
+      "size": 437376
+    },
+    {
+      "anchor": "GameRoot",
+      "target": "sl.dlss_g.dll",
+      "sha256": "f4a6b2b14dcc0b1485989e430d3b4e3a44ac1800b92ba1ad74f476e64fb2b09c",
+      "source": "files/game/sl.dlss_g.dll",
+      "kind": "Vendor",
+      "size": 636032
+    },
+    {
+      "anchor": "GameRoot",
+      "target": "sl.dlss_nr.dll",
+      "sha256": "9f6672e5e0170dc118a3188d21bda187e1fc1aa3502895b21ab846d23165c11d",
+      "source": "files/game/sl.dlss_nr.dll",
+      "kind": "Vendor",
+      "size": 401024
+    },
+    {
+      "anchor": "GameRoot",
+      "target": "sl.dlss.dll",
+      "sha256": "73bf52c0cfaa5900a8f3f4a91306e4625e7cca696dfb305aae44c9f97b582e1f",
+      "source": "files/game/sl.dlss.dll",
+      "kind": "Vendor",
+      "size": 422016
+    },
+    {
+      "anchor": "GameRoot",
+      "target": "sl.interposer.dll",
+      "sha256": "8c87c9499461da561edd529aa9bf7831d67d7b94ebb1c1a5ed54ef4934e1ea4c",
+      "source": "files/game/sl.interposer.dll",
+      "kind": "Vendor",
+      "size": 652928
+    },
+    {
+      "anchor": "GameRoot",
+      "target": "sl.nis.dll",
+      "sha256": "556870e456d268601188919927b3b122f76b25f9b221cc4b15d3ef649f0ad27b",
+      "source": "files/game/sl.nis.dll",
+      "kind": "Vendor",
+      "size": 1155712
+    },
+    {
+      "anchor": "GameRoot",
+      "target": "sl.nvperf.dll",
+      "sha256": "b4ca8f8eeba653446f27d20e8b394cdaae5d518c1292b440a4b97652e0f0376b",
+      "source": "files/game/sl.nvperf.dll",
+      "kind": "Vendor",
+      "size": 761472
+    },
+    {
+      "anchor": "GameRoot",
+      "target": "sl.pcl.dll",
+      "sha256": "f13d51cfa05f4cd514df2026049e2db8adf359221713170ad386fd499915b582",
+      "source": "files/game/sl.pcl.dll",
+      "kind": "Vendor",
+      "size": 360064
+    },
+    {
+      "anchor": "GameRoot",
+      "target": "sl.reflex.dll",
+      "sha256": "0ce9725e3e03ea9e7f81d008b57f33ee365973d2e349131c8b1c3e3378fe2db0",
+      "source": "files/game/sl.reflex.dll",
+      "kind": "Vendor",
+      "size": 388736
+    },
+    {
+      "anchor": "AddonDir",
+      "target": "renodx-mfgunlock.addon64",
+      "sha256": "64184bb370f223c3cabb359010a9a64e114cdae6b62d8b014a731a602af0a0da",
+      "source": "files/addon/renodx-mfgunlock.addon64",
+      "kind": "Addon",
+      "size": 601088
+    }
+  ],
+  "fixedMinimumDriver": null,
+  "schemaVersion": 1,
+  "addonVersion": "0.2026.0909.1640",
+  "fixedMultiplier": 4,
+  "reShade": {
+    "version": "6.8.0",
+    "proxyApi": "dxgi",
+    "setupSha256": "afe4c8f13048306307983b8b3d41d5bf00a86820440b0e57dea10950e1176445",
+    "fullRuntimeSha256": "",
+    "localSetupPath": "setup/ReShade_Setup_6.8.0_Addon.exe"
+  },
+  "preferDynamic": true,
+  "mfgConfig": {}
+}

@@ -1,0 +1,39 @@
+[
+  {
+    "offset": 0,
+    "length": 305152,
+    "machine": "0x8664",
+    "pdb": [
+      "D:\\a\\_work\\1\\s\\artifacts\\obj\\win-x64.Release\\corehost\\apphost\\standalone\\apphost.pdb"
+    ],
+    "sha256": "0fad29f713642fb66279414440c1fac12d7f189c97acb58147700f189dd936b4"
+  },
+  {
+    "offset": 307200,
+    "length": 10846208,
+    "machine": "0x8664",
+    "pdb": [
+      "E:\\GithubPush\\ww\\WutheringWaves-FPS-unlocker\\ww_unlockfps\\obj\\x64\\Release\\net8.0-windows10.0.17763.0\\win-x64\\ww_unlockfps.pdb",
+      "E:\\GithubPush\\ww\\WutheringWaves-FPS-unlocker\\ww_unlockfps\\Resources\\ww_plugin_base.pdb",
+      "costura.costura.pdb.compressed|||Costura.pdb",
+      "costura.costura.pdb"
+    ],
+    "sha256": "ce262df8e0f80f5d0560feb2f659c8930fc1f9f90244cf7d8d3467de89cdf97c"
+  },
+  {
+    "offset": 648369,
+    "length": 3581952,
+    "machine": "0x8664",
+    "pdb": [],
+    "sha256": "551000db1fb3d4f95a7ef0653ce372ea69ce57cd9115464009b246c3f2a5e3aa"
+  },
+  {
+    "offset": 4230325,
+    "length": 34304,
+    "machine": "0x8664",
+    "pdb": [
+      "E:\\GithubPush\\ww\\WutheringWaves-FPS-unlocker\\ww_unlockfps\\Resources\\ww_plugin_base.pdb"
+    ],
+    "sha256": "844d7552692f53e8a1bfe45edf360a094597c5bf2b26dc058ff59b21d2250c3a"
+  }
+]
