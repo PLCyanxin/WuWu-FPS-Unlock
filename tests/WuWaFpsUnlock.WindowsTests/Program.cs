@@ -1,3 +1,4 @@
+using System.IO;
 using WuWaFpsUnlock.Core;
 using WuWaFpsUnlock.Services;
 
