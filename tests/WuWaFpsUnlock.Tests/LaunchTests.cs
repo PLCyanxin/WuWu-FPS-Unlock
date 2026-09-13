@@ -15,7 +15,7 @@ public static class LaunchTests
         UserSettings Settings(bool enabled=true)=>new(){GameRoot=game,GameExe=shipping,FpsEnabled=enabled,TargetFps=360};
         void Check(bool value){if(!value)throw new Exception("launch assertion failed");}
         Task Sync(Action action){action();return Task.CompletedTask;}
-        void Reject(Action action){try{action();}catch(IOException){return;}throw new Exception("expected refusal");}
+        void Reject(Action action){try{action();}catch(Exception e) when(e is IOException or InvalidDataException){return;}throw new Exception("expected refusal");}
         await test("FPS OFF plan only Shipping, no unlocker or config required",()=>Sync(()=>{
             var plan=LaunchPlanBuilder.Build(Settings(false),Path.Combine(root,"missing.exe"));
             Check(plan.Executable==shipping && plan.ConfigPath is null && plan.Arguments.Count==0);

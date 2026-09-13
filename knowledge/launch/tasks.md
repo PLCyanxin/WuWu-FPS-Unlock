@@ -17,3 +17,9 @@ Test Program integration: before any tests `if (await LaunchProcessTests.HandleF
 INI regression additionally starts with all unrelated toggles true, ProcessPriorityMode=6 and custom GameParam; verifies DX11, power saving, advanced/FOV/UID/blur false, priority zero and no launch arguments, with unknown keys retained.
 
 Maintenance receipt precheck blocks PartialFailure, Installing, PartialClean; CleanedWithSkips reports retained files without claiming fully clean.
+
+## Actual run 2026-09-14
+
+.NET SDK 10.0.100 from main .tools/dotnet. Ran isolated artifacts/launch-runner/LaunchRunner.csproj with DOTNET_ROOT_X64 and NUGET_PACKAGES pointing to shared local dependencies. Result: 21 passed, 0 failed (13 plan/INI plus 8 process-boundary cases). Evidence: .agent-worktrees/launch/artifacts/launch-tests.log. Child fixture copies and PID markers remain under this worktree artifacts/test-work. Actual child processes were created; no user unlocker, installer, game or plugin ran.
+
+Corrected test-only Reject helper to catch InvalidDataException explicitly as well as IOException; these are separate expected error families. The first parent integration run revealed the helper issue, not a successful invalid-input launch.
