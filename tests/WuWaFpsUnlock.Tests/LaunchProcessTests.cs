@@ -54,6 +54,12 @@ public static class LaunchProcessTests
             await WaitMarker(marker);using var child=Process.GetProcessById(pid);Check(!child.HasExited,"controller killed fixture on timeout");await child.WaitForExitAsync();
             Check(starts==1 && !states.Contains("GameRunning") && states[^1]=="Failed","timeout reported as game success");
         });
+        await test("actual fixture exits before renderer: exit is not game success",async()=>{
+            string marker=Path.Combine(root,Guid.NewGuid()+".txt");var states=new List<string>();int starts=0;
+            await Expect<TimeoutException>(()=>new LaunchExecution().RunAsync(Plan(true),()=>Task.CompletedTask,()=>{starts++;return Process.Start(Fixture(marker,100))!;},
+                async(_,ct)=>{await Task.Delay(Timeout.Infinite,ct);throw new Exception("unreachable");},states.Add,TimeSpan.FromMilliseconds(900),default));
+            await WaitMarker(marker);Check(starts==1 && !states.Contains("GameRunning") && states[^1]=="Failed","external exit incorrectly reported game success");
+        });
         await test("missing configuration stops before actual process creation",async()=>{
             string marker=Path.Combine(root,Guid.NewGuid()+".txt");int starts=0;
             var plan=Plan(true) with {ConfigPath=Path.Combine(root,"missing.ini")};
