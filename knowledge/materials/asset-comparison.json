@@ -1,0 +1,23 @@
+[
+  {
+    "desktop": "C:\\Users\\StrixZ16\\Desktop\\input\\参考图.png",
+    "projectRelative": "reference/APPROVED_UI.png",
+    "desktopSha256": "3206993002D9E3D926CE52E8E5116708B042431790B94BA3E43D78B9944820BA",
+    "projectSha256": "8AA3AB6D8E4DEF1720F5E78CEC1B6929FDD31721925383BCFD309B23C9838A94",
+    "byteIdentical": false
+  },
+  {
+    "desktop": "C:\\Users\\StrixZ16\\Desktop\\input\\封面.jpg",
+    "projectRelative": "src/WuWaFpsUnlock/Assets/Cover.original.png",
+    "desktopSha256": "5A5DFE1B7117F3F4E75F6B7F51492FE11D1A278E7609E3241D074B28B3B2FE2D",
+    "projectSha256": "AF8AE40B5CD2675E9E0BB5E2B8FAE8F0DF7A23A48DD8EC8C4799885A709D09D9",
+    "byteIdentical": false
+  },
+  {
+    "desktop": "C:\\Users\\StrixZ16\\Desktop\\input\\图标.jpg",
+    "projectRelative": "src/WuWaFpsUnlock/Assets/Icon.original.jpg",
+    "desktopSha256": "24B42AC3DD24B23E9291607B8890DA86F812D3F2FC44F02B98141E8610630B63",
+    "projectSha256": "24B42AC3DD24B23E9291607B8890DA86F812D3F2FC44F02B98141E8610630B63",
+    "byteIdentical": true
+  }
+]
