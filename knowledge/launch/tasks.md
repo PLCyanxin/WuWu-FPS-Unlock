@@ -23,3 +23,13 @@ Maintenance receipt precheck blocks PartialFailure, Installing, PartialClean; Cl
 .NET SDK 10.0.100 from main .tools/dotnet. Ran isolated artifacts/launch-runner/LaunchRunner.csproj with DOTNET_ROOT_X64 and NUGET_PACKAGES pointing to shared local dependencies. Result: 21 passed, 0 failed (13 plan/INI plus 8 process-boundary cases). Evidence: .agent-worktrees/launch/artifacts/launch-tests.log. Child fixture copies and PID markers remain under this worktree artifacts/test-work. Actual child processes were created; no user unlocker, installer, game or plugin ran.
 
 Corrected test-only Reject helper to catch InvalidDataException explicitly as well as IOException; these are separate expected error families. The first parent integration run revealed the helper issue, not a successful invalid-input launch.
+
+## Native WPF offscreen work, actual run 2026-09-14
+
+Merged main into the same isolated agent branch, reused all existing context and knowledge. Added tests/UiRendering.Wpf with exact production App resources, MainWindow, SettingsWindow and shared VM. Native RenderTargetBitmap outputs: .agent-worktrees/launch/artifacts/native-offscreen. Build/run log: artifacts/ui-offscreen-build-run.log. Result: 15 passed, 0 failed. Viewed PNGs using image tools; text and artwork visibly present.
+
+No Window.Show, Application.Run, desktop automation or game execution. The production Startup handler is detached before bounded Dispatcher flushing. Final default images use fresh VM, empty game paths, FPS240, and actual RefreshAsync hardware detection. This machine reported NVIDIA GeForce RTX4080 Laptop GPU, driver596.60, Windows10.0.22631, HAGS default/unknown. These values were actually read, not copied from reference art. A separately named long-path-fixture render carries fake test paths.
+
+Found real template defect: PART_ContentHost had Margin bound to TextBox.Padding while its default template already applies Padding. Text viewport was6DIPs high inside40DIP FPS field. Removed only the duplicate Margin in App.xaml; viewport now22DIPs, verified >=1.15×font size in all editable native inputs. Deployment/clean buttons measured258.67DIPs each and filled their529.33DIP row with12DIP gap. No redesign.
+
+Offscreen raster DPI100/150/200% is not an actual monitor-DPI test or desktop screenshot. Desktop interaction/settings-single-instance activation and game effects remain unverified pending unlock/approval.
