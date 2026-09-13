@@ -4,6 +4,7 @@ $Root = Split-Path $PSScriptRoot -Parent
 Set-Location $Root
 $env:DOTNET_CLI_TELEMETRY_OPTOUT='1'
 $env:DOTNET_NOLOGO='1'
+$env:DOTNET_GENERATE_ASPNET_CERTIFICATE='false'
 $env:DOTNET_CLI_HOME=Join-Path $Root '.tools\dotnet-home'
 $env:NUGET_PACKAGES=Join-Path $Root '.nuget\packages'
 $env:TEMP=Join-Path $Root '.tmp'
@@ -27,12 +28,18 @@ if(-not $hasSdk){
     if(-not(Test-Path $localDotnet)){throw 'SDK installation failed.'}
     $dotnet=$localDotnet
 }
+$env:DOTNET_ROOT_X64=Split-Path $dotnet -Parent
 Write-Host 'Running core regression tests...'
 & $dotnet run --project '.\tests\WuWaFpsUnlock.Tests\WuWaFpsUnlock.Tests.csproj' -c Release 2>&1 | Tee-Object '.\artifacts\tests.log'
 if($LASTEXITCODE -ne 0){throw 'Core tests failed; publish stopped.'}
+& $dotnet run --project '.\tests\ExternalLaunch.WorkerTests\ExternalLaunch.WorkerTests.csproj' -c Release 2>&1 | Tee-Object '.\artifacts\external-worker-tests.log'
+if($LASTEXITCODE -ne 0){throw 'External worker tests failed.'}
 Write-Host 'Running native Windows and local ReShade integration tests...'
 & $dotnet run --project '.\tests\WuWaFpsUnlock.WindowsTests\WuWaFpsUnlock.WindowsTests.csproj' -c Release -- $Root 2>&1 | Tee-Object '.\artifacts\windows-tests.log'
 if($LASTEXITCODE -ne 0){throw 'Windows integration tests failed; publish stopped.'}
+Write-Host 'Running native WPF offscreen component tests...'
+& $dotnet run --project '.\tests\UiRendering.Wpf\UiRendering.Wpf.csproj' -c Release -- (Join-Path $Root 'artifacts\native-offscreen') 2>&1 | Tee-Object '.\artifacts\ui-tests.log'
+if($LASTEXITCODE -ne 0){throw 'Native WPF component tests failed; publish stopped.'}
 Write-Host 'Publishing Windows x64 WPF application...'
 & $dotnet publish '.\src\WuWaFpsUnlock\WuWaFpsUnlock.csproj' -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=false -p:PublishAot=false -o '.\artifacts\win-x64' 2>&1 | Tee-Object '.\artifacts\build.log'
 if($LASTEXITCODE -ne 0){throw 'WPF build/publish failed. Check artifacts\build.log.'}
@@ -44,3 +51,5 @@ Get-FileHash $exe -Algorithm SHA256 | Format-List | Out-File '.\artifacts\BUILD_
 Write-Host "Built: $exe"
 Write-Host 'Build success is not a real-game compatibility test. Read WINDOWS_VALIDATION.md.'
 if($RunAfterBuild){Start-Process $exe}
+
+

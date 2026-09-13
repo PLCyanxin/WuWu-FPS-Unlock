@@ -163,7 +163,7 @@
     "version": "6.8.0",
     "proxyApi": "dxgi",
     "setupSha256": "afe4c8f13048306307983b8b3d41d5bf00a86820440b0e57dea10950e1176445",
-    "fullRuntimeSha256": "",
+    "fullRuntimeSha256": "0cee63f9c9f13f3ac909c5b4903f4dbb4b719a7ab3b4f13b0deaf83c814b94f7",
     "localSetupPath": "setup/ReShade_Setup_6.8.0_Addon.exe"
   },
   "preferDynamic": true,

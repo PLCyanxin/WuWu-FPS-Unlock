@@ -194,7 +194,7 @@ public sealed class AppViewModel:INotifyPropertyChanged
         try
         {
             var snapshot=_settings.Clone();var service=new DeploymentService(Log);
-            string preview=service.CleanPreview(snapshot)+"\n保留 ReShade 本体、滤镜、其他插件。无原 DLL 备份；清除后是否自动补齐需由游戏验证，必要时使用官方校验。";
+            string preview=(await service.CleanPreviewAsync(snapshot))+"\n保留 ReShade 本体、滤镜、其他插件。无原 DLL 备份；清除后是否自动补齐需由游戏验证，必要时使用官方校验。";
             Log(preview);
             if(!OperationReview.Show("确认清除插件",preview)){Status="已取消清除。";return;}
             Status="正在核对部署记录并清除…";
@@ -249,3 +249,4 @@ public sealed class AppViewModel:INotifyPropertyChanged
     }
     public Task CloseAsync(){_monitor.Stop();_lifetime.Cancel();_game?.Dispose();return Task.CompletedTask;}
 }
+

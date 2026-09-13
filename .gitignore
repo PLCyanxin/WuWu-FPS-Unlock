@@ -15,3 +15,4 @@ input/desktop-materials/*.addon64
 payload/setup/
 components/unlocker/
 
+components/dotnet8/

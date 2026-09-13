@@ -42,6 +42,7 @@ public sealed class ReShadeService(Action<string> log)
         }
         if(proxy is null)return new("Missing",null,ini,addon,"未安装");
         string stateHit=hits[0].state,version=PeInspector.Version(proxy);
+        if(stateHit=="UnknownReShade")return new("Conflict",proxy,ini,addon,"检测到无法确认构建类型的 ReShade 代理；保留原文件并停止自动升级。");
         var versionInfo=FileVersionInfo.GetVersionInfo(proxy);
         if(versionInfo.FileMajorPart>6)return new("Conflict",proxy,ini,addon,$"ReShade {version} 超出本版已适配的主版本范围；保留原安装并停止。");
         if(stateHit=="FullCandidate" && PeInspector.IsAmd64(proxy) && versionInfo.FileMajorPart==6 && versionInfo.FileMinorPart>=8)
@@ -102,3 +103,4 @@ public sealed class ReShadeService(Action<string> log)
         return path;
     }
 }
+

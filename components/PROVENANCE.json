@@ -1,9 +1,11 @@
 {
-  "source": "用户上传的 鸣潮.exe，仅静态提取，未执行",
-  "sourceSha256": "5b9cba854357a4d9ce9c56676e22e397be8d5dbd2dc10de9393155e378050fae",
-  "resourceName": "ww_unlockfps.Resources.ww_plugin_base.dll",
-  "offset": 4230325,
-  "resourceSize": 34304,
-  "sha256": "844d7552692f53e8a1bfe45edf360a094597c5bf2b26dc058ff59b21d2250c3a",
-  "verification": "PE x64、资源长度前缀与节区边界一致；尚未完成 Windows 运行测试"
+  "route": "external-unlocker",
+  "source": "input/unlocker/鸣潮.exe (user supplied; never executed during this build)",
+  "runtimeAlias": "components/unlocker/unlock.exe",
+  "size": 11232037,
+  "sha256": "5b9cba854357a4d9ce9c56676e22e397be8d5dbd2dc10de9393155e378050fae",
+  "configuration": "components/unlocker/ww_fps_config.ini",
+  "dependency": "components/dotnet8; Microsoft.NETCore.App + Microsoft.WindowsDesktop.App 8.0.31",
+  "verification": "Static bundle extraction and exact binary config audit; 21 launch plan/fixture tests passed; user unlocker and game have NOT been executed",
+  "legacy": "ww_plugin_base.dll retained only in original source baseline; excluded from build and portable distribution"
 }

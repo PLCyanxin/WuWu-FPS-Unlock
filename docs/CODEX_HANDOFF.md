@@ -1,15 +1,11 @@
-# Windows 开发交接
+# 当前开发交接
 
-当前是源码开发基线，不是已通过编译/游戏验证的发布版本。先读 README.md、verification-results.json 和 WINDOWS_VALIDATION.md。不要把 HTML 预览的测试成绩用于原生 WPF 或真实游戏状态。
+当前版本已在Windows实际编译，核心85/85及Windows集成12/12通过；原生离屏15/15通过。现行规则见AGENTS、README与docs/WINDOWS_VALIDATION.md；docs/baseline是旧dev1，不能继续内置FPS注入路线。
 
-工程请放在 `E:\yanxin_ws\wuwa-fps-unlock` 这样的独立目录，保留所有原图和组件哈希；不要重新生成封面或头像，不改成多页启动器。主窗口仅 FPS 和开始游戏；设置为独立完整窗口，部署/清除按钮等宽。
+子agent知识及Git隔离空间见knowledge/README.md。优先复用launch、deployment、materials三个agent；所有提交已由main整合。
 
-第一优先级是在 Windows 运行 Build.cmd。审查并修正实际编译错误，再运行现有核心回归测试。核心测试仅对假文件操作；尚没有“44 项已通过”的记录。真正 WPF 的绑定、DPI、窗口开合、忙碌状态和字体裁剪要另外检查。修复时更新验证记录，不覆盖既有未验证标记为“成功”。
+已导入桌面20项材料，副本SHA一致。已实际只读发现D:\Wuthering Waves\Wuthering Waves Game中的18 DLL、ReShade、addon均与用户材料一致；候选映射见artifacts/real-game-candidate-map.md。旧INI仅提供线索，未默认填入用户设置，未写游戏。相同文件不构成本工具所有权。
 
-第二优先级核对用户实际 MFG 文件包，不自动换一套网上 latest 文件。取得完整 DLL 和相对于游戏根目录的路径后，用 Prepare-Payload.ps1 生成清单，确认真实 ReShade 代理 `dxgi`/`d3d12`。缺包阶段 MFG 部署必须阻断，不使用占位 DLL、空文件或假哈希。
+剩余工作：用户解锁桌面后进行主/设置实际窗口开合、数值同步、输入/快捷键、最小化/多DPI和桌面截图；用户集中确认候选路径/完整映射/配置操作后，才可真实部署、清除或启动。已完成的原生离屏图必须标注离屏，不能冒充桌面截图。
 
-第三优先级验证 Windows 原生接口：NVAPI 查询、ReShade Full Add-on 首装/复用/升级、现有配置保留、权限取消和冲突场景。FPS DLL 为用户上传 EXE 中原样提取的资源；不把仅有字符串/资源匹配扩大成完整来源或兼容性审计。不要在这一步带回 FOV、隐藏 UID、模糊、进程优先级或旧工具完整 UI。
-
-最后才进行鸣潮实机测试：目标渲染 PID、命名管道 PID、FPS 指令与真实帧率、MFG 实际加载栈和 Dynamic capability 分开记录。遇到系统权限或反作弊限制就停止并报告，不实现绕过，不关闭安全软件。只清除所有权明确且未被他人修改的插件，保留用户原有 ReShade、滤镜和 NVIDIA DLL，不宣传无备份也能完整恢复原版。
-
-交付新的 build/test 日志、Windows 原生界面截图与游戏验证记录，标注所有仍待实测的项目。未达到发布门槛时继续使用 dev 标记。
+真实游戏FPS/MFG四组合、实际加载模块、Dynamic接受状态、240/180/240测量、官方补齐文件、UAC/权限/反作弊兼容尚未验证。ExternalUnlockerService只调用用户程序，内部额外窗口/托盘/按名称进程管理仍是该二进制限制。

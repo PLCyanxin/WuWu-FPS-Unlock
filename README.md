@@ -1,128 +1,37 @@
-# 鸣潮 FPS Unlock — 0.9-dev1
+# 鸣潮 FPS Unlock — 0.9 本机开发版
 
-**当前交付是原生 Windows WPF 源码工程，不是已经编译、签名并经过鸣潮实机验证的正式 EXE。** 本次环境没有 .NET SDK/Windows；SDK 下载失败，未运行 C# 编译和原生测试。另有一个可直接打开的 HTML 交互预览，它不会启动游戏或部署文件。
+原生 Windows x64 WPF/.NET 10 双窗口。延续用户定稿和原图；没有网页套壳、页签、侧栏或恢复原版功能。
 
-## 已实现的代码范围
+当前已完成真实 WPF 编译、91 项核心/测试子进程回归、12 项 Windows 集成回归，以及15项原生WPF离屏组件测试。Windows 集成在工程假目录实际运行用户 ReShade Setup，并使用全部18个用户DLL完成替换、哈希复核、重复部署与清除。它们不是鸣潮游戏内兼容性证明。当前游戏内 FPS、MFG/Dynamic、自动补齐原DLL、UAC升级及真实游戏启动尚未验证。
 
-主窗口只包含原图横幅、帧率解锁开关、目标 FPS、设置和开始游戏。设置打开一个独立的完整窗口；两个窗口共用同一个 ViewModel，FPS 数值、开关、忙碌状态及日志同步。设置窗口包含手选游戏目录、真正游戏 EXE、环境检测、可选多帧生成部署、开始部署、清除插件和日志。没有多页面导航或无关功能。开始部署与清除插件使用等宽 `* / 12 / *` 列布局。
+## 运行与材料
 
-封面、头像是上传原图的字节级副本；头图只做裁剪、等比缩放、右侧构图和渐变遮罩。标题为“鸣潮 FPS Unlock”，副标题为“为40系显卡解锁帧率并提供多帧生成”。资源中的 ICO 仅由原头像转换格式及尺寸；没有附带字体或重新绘制人物。
+便携入口：artifacts/win-x64/WuWaFpsUnlock.exe。请保留整个目录，包含components/unlocker、components/dotnet8、payload及licenses。本工具.NET10自包含；用户解锁器另外带有经微软SHA512核验的.NET8 Desktop 8.0.31运行库。已核实原解锁器要求管理员权限：独立固定工作进程请求标准UAC，提升后使用随包.NET8启动一次。实际UAC与无.NET干净Windows仍未实测。
 
-后端包含真实的文件包校验、逐文件写入和记录、INI 合并、ReShade 探测与官方 headless 安装调用、NVAPI 查询、游戏进程检查、FPS DLL 加载及命名管道通信代码。没有用定时器假装安装，没有在原生程序中硬编码示意 GPU/驱动信息，也没有把未验证状态写成已支持。
+所有DLSS/Streamline/addon/ReShade Setup来自本次桌面input/多帧生成，未换成其他版本。20项来源、版本、签名结果和SHA256见input/desktop-materials/source-manifest.json、artifacts/material-audit.csv；payload/manifest.json是平铺素材清单，不是游戏目录镜像。解锁器来自input/unlocker/鸣潮.exe的原字节副本，发布别名unlock.exe，哈希在knowledge/launch中。
 
-## 三个必须知道的限制
+## 实际工作流程
 
-1. **尚未 Windows 编译/运行。** 下列构建步骤是交付的构建入口，不是已经成功运行的构建记录。需要先通过本机编译和回归测试，再进行游戏验证。
-2. **MFG/DLSS/Streamline 实际文件包尚未提供。** `payload/` 只有说明，没有假的 DLL 或假哈希清单。FPS 基础插件已经从上传的 `鸣潮.exe` 静态提取并随包提供；不包含完整旧启动器和高级插件。
-3. **真实游戏的兼容性仍待确认。** 原 FPS 插件的地址定位、当前鸣潮版本、真实游戏 EXE、ReShade 代理布局、MFG 运行时和反作弊影响都必须在 Windows 验证。DLL 已加载/指令已发送不等于测得实际 FPS；部署完成不等于 Dynamic 已启用。
+1. 设置中选择游戏根目录和原装Client-Win64-Shipping.exe。FPS关闭时直接启动该文件；FPS开启时调用用户unlock.exe，由它启动/管理Shipping，本应用不注入FPS DLL或扫描/写入游戏内存。
+2. 外部解锁器INI按静态核实的字段适配。目标FPS、开关只在下次启动生效，不宣称实时调帧。FPS开启要求已核实的Client/Binaries/Win64布局及对应根入口；其他布局会明确停止。
+3. 需要多帧生成时打开设置中的“多帧生成部署”。工具在所选根目录内搜索18个白名单DLL的同名现存目标，逐项展示；无同名文件跳过，不把整套DLL塞到根目录或EXE旁。一个名称存在多个副本时，全部列出映射供一次确认。
+4. 本地ReShade 6.8.0 Full Add-on安装器优先；已有兼容本体复用，升级需在整份操作计划中确认，未知代理/多份本体/配置歧义停止。保留用户INI、滤镜和其他addon。Setup可能访问官方兼容表；本工具没有在线下载另一套Setup或滤镜。
+5. “清除插件”展示完整对象清单：本工具所有权记录之外，也可在用户明确确认后直接移除与本次材料同名、同哈希的既有DLL/addon；不把指纹相同误记为本工具安装。未知或已改文件保留，无所有权INI项不动。保留ReShade本体与其他插件。不备份或恢复原DLL；清除后游戏能否自行补齐尚待验证，必要时用官方文件校验。
 
-## 在 Windows 构建
+FPS与MFG相互独立。Fixed/Dynamic是同一包的能力层次；595.41只用于Dynamic驱动判断。驱动条件通过、文件已部署、插件加载和游戏内实际接受Dynamic分别报告。HAGS只读，不改驱动、系统开关或全局OTA。
 
-把整个文件夹解压到独立工作目录，例如：
+## 构建与测试
 
-```text
-E:\yanxin_ws\wuwa-fps-unlock\
-```
+Windows PowerShell运行scripts/Build.ps1；缺SDK时传-InstallSdk，安装到工程.tools。固定.NET SDK 10.0.100；不需要WSL。顺序：核心测试→Windows/ReShade假目录集成→win-x64自包含发布。日志在artifacts。ReShade集成测试会运行用户提供的Setup，但目标只在artifacts/windows-integration，绝不运行假Shipping/真实游戏/解锁器。
 
-双击 `Build.cmd`。脚本先寻找 .NET 10 SDK；没有时，通过微软官方安装脚本把 SDK 下载到当前工程的 `.tools\dotnet`，不启用 WSL，不需要把源文件散落到 C 盘。NuGet 缓存、临时目录和 SDK 配置也指定在工程内。下载需要网络，系统仍可能自行创建其常规缓存。
+原生界面离屏布局测试和真实桌面交互分开记录。HTML preview目录及docs/baseline均为旧基线资料，不用于当前验收。完整验证状态见docs/WINDOWS_VALIDATION.md。
 
-脚本顺序为：运行核心回归测试 → 编译 WPF → 自包含发布 Windows x64。任一步骤失败就停止，日志位于 `artifacts\tests.log` 和 `artifacts\build.log`。**不要忽略编译错误而直接开始游戏测试。**
+## 安全边界及已知限制
 
-成功构建后的预定入口：
+外部用户解锁器内部会按名称处理游戏及nvngx_update进程，并有窗口/托盘/UAC行为。工具在启动前阻断已运行同名进程及原解锁器；不能保证消除外部二进制内的进程竞态，不伪称完全无窗口。缺配置/超时不自动改走普通启动。
 
-```text
-artifacts\win-x64\WuWaFpsUnlock.exe
-```
+本工具以普通权限运行；必要文件工作进程走标准UAC，并重新校验用户确认的路径/文件指纹。权限、反作弊或杀软阻断时停止，不绕过。部分写入或清除失败有逐项日志，不声称完整回滚。
 
-发布后须保留 `components` 与 `licenses` 等同目录文件，不是只复制一个 EXE。自包含发布不要求最终使用者单独安装 .NET。单文件运行时可能使用系统的临时解压位置，这是 .NET 的运行行为，不是工作区源文件路径。
+该包只供本地交付，未发布远端。第三方DLL、解锁器和用户原图各有自己的来源/许可，不统一套用MIT。许可证和静态出处见licenses及knowledge。
 
-需要命令行时：
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build.ps1 -InstallSdk
-```
-
-这里的 `ExecutionPolicy Bypass` 仅作用于该 PowerShell 进程的脚本执行策略，不修改系统安全软件或反作弊设置。构建完成后不会默认启动游戏；只有主动运行发布程序并点击“开始游戏”才进入游戏启动流程。
-
-## 首次使用和日常操作
-
-首次进入主窗口，点击设置，手动选择游戏根目录和真正的游戏 EXE。程序不根据截图猜测或自动填写游戏安装位置。原 EXE 不会自动选择为目标；当前允许的目标文件名是 `Wuthering Waves.exe`、`WutheringWaves.exe` 和 `Client-Win64-Shipping.exe`，同时检查 x64 与所选根目录归属。
-
-仅使用 FPS 功能时，不要求 MFG 文件包，不安装 ReShade，不修改 DLSS/Streamline，不因没有 RTX 40 或 Dynamic 驱动不足而拦截该独立功能。点击开始游戏后，等待归属于所选目录的鸣潮渲染窗口，再加载 FPS 基础 DLL并发送上限。若游戏已运行，只在目标唯一、可确认且用户同意后连接，不重复启动。
-
-需要 MFG 时，在设置窗口选中“多帧生成部署”，点击开始部署。部署完成后不会擅自启动游戏；关闭设置，在主窗口点击开始游戏。日常启动不反复覆盖文件。发现上次部署未完成时要求先处理；发现已部署文件发生变化时提示检查或明确选择继续，不把旧 DLL 静默覆盖到游戏更新版本。
-
-“多帧生成部署”开关表示**下一次部署的选择**，不是对已安装插件的即时启停。关闭开关不会偷偷卸载；清除使用明确的“清除插件”按钮。
-
-## 导入已经整理好的 MFG 包
-
-先确认运行库文件相对于游戏根目录的真实位置，以及成功使用时的 ReShade 代理是 `dxgi.dll` 还是 `d3d12.dll`。**游戏使用 D3D12 不等于代理必须叫 d3d12.dll。** 当前代码不猜测这个信息。
-
-准备一个仅包含要替换的 NVIDIA DLL 的目录树，其相对层级必须与所选游戏根目录一致；把 `renodx-mfgunlock.addon64` 作为独立输入。运行：
-
-```powershell
-.\scripts\Prepare-Payload.ps1 `
-  -GameRootFiles "E:\yanxin_ws\wuwa-fps-unlock\input\game-root-files" `
-  -MfgAddon "E:\yanxin_ws\wuwa-fps-unlock\input\renodx-mfgunlock.addon64" `
-  -ProxyApi dxgi
-```
-
-上述 `dxgi` **只是调用示例**，应填写实测成功的代理布局；不能据此认定你的包已验证为 dxgi。已有自定义 MFG 配置时，可另外提供 `-MfgIni "实际配置路径"`，只读取 `[RenoDX.MFGUnlock]`，不复制整份 ReShade.ini。可通过参数提供经可信渠道确认的 Setup/runtime SHA-256。
-
-脚本保留源目录层级，生成每个文件的长度、SHA-256、目标锚点与路径，不重新下载或混搭 DLSS 版本。未知 DLL 会被拒绝，而不是猜测用途。生成后必须复核 `payload\manifest.json` 的目标路径。它是包的部署说明，不是“已验证有效”的证书。
-
-发布时若已有 `payload\manifest.json`，Build 脚本将其和文件包一起收集；程序自动发现。未内置时，“开始部署”会要求选择你的 manifest。没有真实文件包之前，MFG 不能完成部署，这是明确的缺项而不是已实现的模拟成功。
-
-## ReShade 自动化和兼容边界
-
-当前官方 Setup 调用按 6.8.0 源码适配，使用 Full Add-on 构建，不下载滤镜包。没有 ReShade 时从官方 HTTPS 来源下载并 headless 安装；首次成功下载后缓存。Setup 版本变更需要更新适配并重新测试，当前不追逐 latest。
-
-已有完整 Add-on 特征、版本满足本版探测规则的 ReShade 会优先复用。普通或旧版需要先确认再升级。未知 dxgi/d3d12 代理、多个 ReShade 代理、冲突 INI 都会停止；不强行覆盖。版本资源与导出/字符串检查只能识别兼容候选，不能取代游戏运行验证。已有 `AddonPath`、preset、滤镜、输入快捷键及其他 INI 章节都保留，只合并必要的 MFG 键和 early-load 项。
-
-**当前明确不自动写入游戏目录之外的共享 AddonPath。** 这种环境会显示需要人工处理，避免修改用户的公共插件目录。不能把本版宣传为覆盖所有 ReShade 安装方式。
-
-Full Add-on 官方构建可能没有数字签名；代码不伪造“已通过 Authenticode”状态。下载默认信任官方 HTTPS，并记录实际哈希；若包内提供可信预设哈希则额外强校验。缓存哈希本身不是发行来源证明，公开分发前应固定审核过的值。
-
-## 驱动判断与成功状态
-
-NVAPI 在正常权限中读取全部 NVIDIA 设备，优先识别 GeForce RTX 40 系；检测失败显示未知，不把核显枚举顺序当作独显不支持。多个 GPU 时，本工具不能仅凭枚举断言游戏最终选择了哪张卡。
-
-Dynamic 的最低驱动值是 595.41，Fixed 不继承这个门槛。低于 Dynamic 门槛时配置 Fixed；若包本身声明了 Fixed 最低驱动，则另行检查。没有统一最低值不代表所有老驱动兼容。
-
-HAGS 读取注册表配置并明确显示“已配置/系统默认”；不声称这是已确认的运行时状态，也不自动修改或重启系统。MFG 需要在游戏中打开相应功能并进一步确认实际 runtime capability。
-
-界面/日志严格区分：预检查通过、文件已部署、插件已加载、FPS 指令已发送、游戏内能力待确认。本版不提供假的 FPS 采样器或 Dynamic 已启用判定。
-
-## 清除插件与失败处理
-
-按照要求，不备份被替换的原游戏 DLL，也没有一键恢复原版。部署记录只包含写入项目、哈希、所有权和本工具所改 INI 键的原值，不是一份原始游戏文件备份。
-
-清除前确认游戏已关闭，并检查记录和哈希。只删除本工具新建、当前未被别人改过的标准 MFG addon；用户本来已有的同名 addon 不被视为本工具独占。撤销本工具仍保持原样的 INI 键修改，保留后来由用户改动的键和他人的 early-load 项。
-
-**保留 ReShade、用户滤镜、第三方插件和 NVIDIA DLL。** 因为没有原 DLL，不能删除被替换的 NVIDIA 运行库来冒充恢复。官方恢复/校验由游戏自己的工具负责；这里不承诺启动器一定自动清除全部第三方文件。应用内 FPS 基础 DLL保留，关闭 FPS 开关即可让下一次启动不加载它。
-
-写入前会检查全部源文件哈希、路径、占用和权限；先记录意图再逐文件暂存、替换和复核。重复部署跳过相同文件。多文件安装不是一个可完整回滚的事务：中途失败时记录 `PartialFailure` 和已处理文件，不显示已回滚或成功。
-
-普通 UI 不默认管理员运行。确需写入权限时弹出确认并让固定职责 worker 请求 UAC。取消不会继续。自动化无法合法绕过 UAC、系统权限或反作弊拦截，相关阻断会明确报错。
-
-## FPS 原生组件的限制
-
-`components/ww_plugin_base.dll` 是从本次上传的解锁器资源中静态提取的原样 FPS-only 模块；没执行原 EXE，也没带高级 DLL。提取偏移、资源长度及 SHA-256 记录在 `components/PROVENANCE.json`。
-
-控制器检查 DLL 哈希、目标进程和管道服务端 PID，发送原项目协议里的 FPS 字段；不是把 FOV/UID 等高级功能也带进来。原 DLL 的内存定位机制没有在这里重写，也没有对当前鸣潮版本验证。此模块的既有扫描行为和原生错误弹窗仍由上游代码决定。
-
-游戏运行期间可通过已连接的控制通道更新目标 FPS。由于没有经过验证的热卸载/停止命令，运行中锁定 FPS 启停开关；要改变是否加载插件，应退出游戏后设置。关闭主窗口前会提示：游戏继续，插件可能保留最后上限，但 UI 不能再调节。不宣称退出 UI 能自动还原游戏内存。
-
-## 验证与开发接续
-
-`docs/static-check-results.json`：本环境执行过的 111 项静态结构/资源/资产检查。
-
-`docs/browser-test-results.json`：本环境通过的 20 项 HTML 预览交互检查。**不是 WPF 自动化测试。**
-
-`tests/WuWaFpsUnlock.Tests`：等待在 .NET SDK 环境执行的核心回归测试，使用临时假文件，不运行游戏或插件。本次未运行，不能把测试源码数量当成通过数量。
-
-`docs/WINDOWS_VALIDATION.md`：Windows 编译、界面、FPS、ReShade、MFG 的真实验收清单。
-
-`docs/IMPLEMENTATION.md`：模块说明、状态机、公开来源和已知未闭合事项。
-
-本工程适合作为下一轮 Windows/Codex 开发的基线。**只有构建、原生界面和真实鸣潮场景均完成相应验证，才可把它标成可用成品。**

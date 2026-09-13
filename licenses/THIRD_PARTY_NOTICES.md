@@ -1,21 +1,23 @@
-# 第三方来源与素材范围
+# 第三方文件与素材来源
 
-## FPS 基础插件
+当前便携包面向本次用户本地交付，未上传到远端。各组件保留自己的来源与许可，不把整个二进制包统一声明为MIT。
 
-`components/ww_plugin_base.dll` 是从用户上传的 `鸣潮.exe` 中原样静态提取并返回给同一用户的资源，不是本次从源码重新编译的产物。它的偏移、资源长度、PE 架构、哈希和源 EXE 哈希见 PROVENANCE.json。未运行原 EXE，未重新创作或改写该 DLL。只提取 FPS-only 资源，未带入高级插件或完整旧 GUI。
+## 外部FPS解锁器
 
-上传 EXE 含 `https://github.com/30launchers/WutheringWaves-FPS-unlocker`，已核对该仓库 LICENSE 文本为 MIT、Copyright (c) 2026 30launchers。许可文本附在 WutherFPSUnlocker-MIT.txt。此前同时检索到 `30LAUNCHER` 等相似仓库；尚未做完整来源审计和可复现构建比对，因此不能仅因某个仓库有 MIT，就认定任何同名二进制和所有内嵌内容自动覆盖该许可。
+components/unlocker/unlock.exe来自用户input/unlocker/鸣潮.exe，原字节未改，SHA256见components/PROVENANCE.json。仅静态读取程序集、配置和有效PE清单以适配启动；本轮没有执行它。其清单要求管理员权限，按标准UAC执行，不重写内部插件。旧components/ww_plugin_base.dll仅保留于源码基线，当前编译和便携包均不使用它。
 
-公开分发前应从确认的上游来源构建并记录提交、构建依赖、许可证和产物哈希，或取得原作者相应授权。此包中的用户二进制只作为本次整合的开发输入。
+用户EXE包含30launchers/WutheringWaves-FPS-unlocker来源引用，附WutherFPSUnlocker-MIT.txt。未做完整可复现构建比对，不将同名仓库许可证视为任意同名二进制所有内容的授权证明。
 
-## 封面和图标
+## 本地图像
 
-Cover.original.png 和 Icon.original.jpg 为用户提供素材。原始封面版权归相应权利人；头像权利归相应权利人。这里仅按用户要求用于本次界面开发，未对它们授予新许可，也不意味着可以任意公开或商业分发。App.ico 是原头像尺寸/格式转换，不是原创授权替代品。没有重新分发系统字体。
+Cover.original.png、Icon.original.jpg来自用户交接包；桌面另外提供的更高分辨率封面保持原件。仅裁剪、等比缩放、渐变；App.ico由原头像做格式转换以修复WPF解码兼容，未重绘。
 
-## ReShade、MFG 与 NVIDIA
+## ReShade、MFG、NVIDIA/Streamline
 
-未捆绑官方 ReShade 二进制，程序采用官网 HTTPS 自动获取官方 Full Add-on 安装器的方式。ReShade 源码许可、官网预编译文件分发要求和实际安装器条款应分别遵守。
+包内包含用户提供的ReShade_Setup_6.8.0_Addon.exe、renodx-mfgunlock.addon64和18个替换DLL；未下载另一个版本替换用户包。来源、版本、数字签名实际结果、SHA256在payload/source-manifest.json。ReShade的源码许可、预编译文件及用户输入来源需分别看待；NVIDIA DLL和addon各有自身许可，不派生自本工具代码许可。
 
-未捆绑 MFG addon 或 NVIDIA DLL；必须另外提供已整理且来源清楚的包。它们分别受各自许可约束，不能因应用代码或 FPS 项目采用 MIT 就推导出整个包任意分发权。
+addon静态配置审计使用上游0.9代码与公开发布哈希；相关源码片段保留原版权声明，出处见knowledge/deployment/ADDON_CONFIG_AUDIT.md。发布到第三方前仍须单独核对这些文件及原图的再分发授权；本次未进行公开发布。
 
-本工程提供技术接口与开发文件，不保证游戏官方许可或账号安全。
+## Microsoft .NET
+
+本工具Windows x64自包含使用.NET10.0.0运行库，SDK10.0.100固定；外部解锁器附加.NET8.0.31 NETCore和WindowsDesktop x64。运行库来自微软官方zip，SHA512与官方release metadata一致，出处及逐文件哈希见components/dotnet8/PROVENANCE.json与knowledge/materials。组件目录包含Microsoft LICENSE.txt及ThirdPartyNotices.txt。
