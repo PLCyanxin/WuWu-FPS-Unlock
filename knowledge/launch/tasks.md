@@ -37,3 +37,13 @@ Offscreen raster DPI100/150/200% is not an actual monitor-DPI test or desktop sc
 ## Exact UAC manifest follow-up
 
 Read UAC_MANIFEST_AUDIT.md before any further FPS launch work. Exact native RT_MANIFEST is requireAdministrator. Current false+customEnvironment -> same-object shell=true fallback is invalid under .NET10. Standard-UAC self-contained launch-worker proposal documented; no production code changes or unlocker execution made for this audit.
+
+## Implemented standard UAC boundary, 2026-09-14
+
+ExternalLaunchWorker now replaces the known invalid740+custom Environment shell fallback. Parent uses a fresh fixed self-contained controller ProcessStartInfo with runas and no custom environment. Request path is restricted to AppPaths.Data/jobs, nonce-named, digest-pinned, expires in5minutes, and has a persistent exclusive claim against replay. Worker receives only request/nonce/hash, never arbitrary executable/CLI.
+
+Worker revalidates elevated admin token, plan reconstructed from settings with fixed AppPaths.Unlocker, plan fingerprint, Shipping x64 identity/path, game stopped, maintenance state, user binary exact SHA, unrelated config disabled, process/mutex conflicts and complete embedded .NET8 file inventory. Rejects extra runtime files/links to avoid a second unpinned hostfxr/version. After UAC approval it sets DOTNET_ROOT_X64 only on its child CreateProcess environment and starts unchanged unlock.exe exactly once. Main GUI remains non-elevated. Response records nonce, phase/error, PID/start time; parent verifies identity then uses shared LaunchExecution to wait for exact Shipping renderer. UAC1223, worker failure and timeout never trigger fallback or retry.
+
+GameProcesses uses QueryFullProcessImageName with PROCESS_QUERY_LIMITED_INFORMATION for process-path identity, not MainModule/process memory access, supporting read-only checks across the elevation boundary where Windows permits.
+
+Actual verification: production WPF build succeeded0warnings/0errors; ExternalLaunch.WorkerTests14/14 (protocol roundtrip/tampering/path/nonce/expiry/off-mode/fingerprint/replay/results/fixedUACarguments/limitedQuery/async1223/failure). Existing21launch tests also passed again with the async start boundary. Logs: artifacts/external-worker-build.log, external-worker-tests.log, launch-tests.log. No actual UAC, user unlocker or game was executed. Real UAC+private runtime end-to-end remains pending approval and unlocked desktop. Parent must package components/dotnet8 exactly matching embedded knowledge/materials/dotnet8-file-hashes.json; system .NET8 is not considered a portable guarantee.

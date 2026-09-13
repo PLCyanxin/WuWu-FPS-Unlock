@@ -6,7 +6,7 @@ namespace WuWaFpsUnlock.Services;
 public sealed class ExternalUnlockerService(Action<string> log)
 {
     private static readonly LaunchExecution Execution=new();
-    public Task<Process> LaunchAsync(LaunchPlan plan, Action<string> status, CancellationToken token)
+    public Task<Process> LaunchAsync(LaunchPlan plan, UserSettings settings, Action<string> status, CancellationToken token)
     {
         return Execution.RunAsync(plan,Prepare,Start,(at,ct)=>GameProcesses.WaitForRenderer(plan.ShippingExePath,at,ct),
             state=>status(state switch { "StartingUnlocker"=>"正在启动外部解锁器…", "StartingShipping"=>"正在启动原装 Shipping…",
@@ -21,43 +21,28 @@ public sealed class ExternalUnlockerService(Action<string> log)
         GameProcesses.RequireStopped(Path.GetDirectoryName(plan.ShippingExePath)!);
         if (plan.FpsEnabled)
         {
-            if (!string.Equals(await SafePaths.HashAsync(plan.Executable), UnlockerConfigAdapter.AuditedSha256, StringComparison.OrdinalIgnoreCase))
-                throw new InvalidDataException("解锁器哈希与已审计用户版本不符；未执行。");
-            RequireUnlockerStopped(plan.Executable);
-            // This exact binary kills these process names itself. Refuse to expose an existing process to that behavior.
-            LaunchProcessGuard.RequireNamesStopped(["Wuthering Waves", "Client-Win64-Shipping", "nvngx_update"]);
-            if (GameProcesses.HasWindowTitle("鸣潮")) throw new IOException("已有标题为“鸣潮”的窗口；该用户解锁器会结束此窗口进程，已阻止启动。");
-            WriteProbe.Check(plan.ConfigPath!);
-            UnlockerConfigAdapter.Prepare(plan);
-            log("已更新运行副本 INI：FPS / 路径 / AutoStart / GameLaunchExe=1；禁用无关高级功能，保留未知键及服务器设置。");
+            await PreflightUnlockerAsync(plan,log);
         }
         }
-        Process Start()
+        async Task<Process> Start()
         {
-        var info = new ProcessStartInfo(plan.Executable) { UseShellExecute = true, WorkingDirectory = plan.WorkingDirectory };
-        string localRuntime=Path.Combine(AppPaths.Base,"components","dotnet8");
-        if(plan.FpsEnabled && Directory.Exists(Path.Combine(localRuntime,"host","fxr")))
-        {
-            info.UseShellExecute=false;
-            info.Environment["DOTNET_ROOT_X64"]=localRuntime;
-            log("解锁器优先使用便携 .NET 8 运行库："+localRuntime);
+            if(plan.FpsEnabled)return await ExternalLaunchWorker.RunFromUi(settings,plan,log,token);
+            var info=new ProcessStartInfo(plan.Executable){UseShellExecute=true,WorkingDirectory=plan.WorkingDirectory};
+            var process=Process.Start(info)??throw new IOException("系统没有返回原装 Shipping 启动进程。");
+            log($"已直接启动所选 Shipping：{plan.Executable}；PID={process.Id}。等待实际渲染窗口。");
+            return process;
         }
-        foreach (var argument in plan.Arguments) info.ArgumentList.Add(argument);
-        var initial = StartProcess(info);
-        Process StartProcess(ProcessStartInfo start)
-        {
-            try { return Process.Start(start) ?? throw new IOException("系统没有返回启动进程："+start.FileName); }
-            catch(System.ComponentModel.Win32Exception e) when(e.NativeErrorCode==740 && !start.UseShellExecute)
-            {
-                log("系统要求提升权限，交给标准 UAC；此分支由系统解析 .NET 8 运行库。");
-                start.UseShellExecute=true;
-                return Process.Start(start) ?? throw new IOException("UAC 后未返回启动进程。");
-            }
-        }
-        log($"启动请求已提交：{plan.Executable}；PID={initial.Id}；工作目录={plan.WorkingDirectory}。等待目标 Shipping，不视为 FPS 已生效。");
-        if (plan.FpsEnabled) log("用户解锁器可显示自己的窗口、托盘或 UAC；未验证无窗口行为，未接入实时 FPS 接口。");
-        return initial;
-        }
+    }
+    internal static async Task PreflightUnlockerAsync(LaunchPlan plan,Action<string> log)
+    {
+        if(!string.Equals(await SafePaths.HashAsync(plan.Executable),UnlockerConfigAdapter.AuditedSha256,StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException("解锁器哈希与已审计用户版本不符；未执行。");
+        RequireUnlockerStopped(plan.Executable);
+        LaunchProcessGuard.RequireNamesStopped(["Wuthering Waves","Client-Win64-Shipping","nvngx_update"]);
+        if(GameProcesses.HasWindowTitle("鸣潮"))throw new IOException("已有标题为鸣潮的窗口，已阻止外部工具管理该进程。");
+        UnlockerConfigAdapter.Prepare(plan,write:false);
+        await ExternalLaunchWorker.ValidateRuntimeAsync();
+        log("外部启动预检查通过；用户 EXE 需要管理员权限，将由标准 UAC 启动独立工作进程，主界面保持普通权限。");
     }
 
     private static void RequireUnlockerStopped(string exe)
@@ -71,7 +56,7 @@ public sealed class ExternalUnlockerService(Action<string> log)
                 string name; try { name = p.ProcessName; } catch { continue; }
                 if (name != Path.GetFileNameWithoutExtension(exe) && name != "鸣潮" && name != "ww_unlockfps") continue;
                 string? path;
-                try { path = p.MainModule?.FileName; }
+                try { path = GameProcesses.ImagePath(p.Id); }
                 catch { throw new IOException("有无法核对路径的同名解锁器进程；请自行关闭后重试：" + name); }
                 if (path is not null && File.Exists(path) && string.Equals(awaitHash(path), UnlockerConfigAdapter.AuditedSha256, StringComparison.OrdinalIgnoreCase))
                     throw new IOException("同一用户解锁器已运行：" + path);

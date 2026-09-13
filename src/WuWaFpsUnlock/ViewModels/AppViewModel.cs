@@ -232,7 +232,7 @@ public sealed class AppViewModel:INotifyPropertyChanged
         Busy=true;
         try
         {
-            _game=await new ExternalUnlockerService(Log).LaunchAsync(plan,value=>Status=value,_lifetime.Token);
+            _game=await new ExternalUnlockerService(Log).LaunchAsync(plan,_settings.Clone(),value=>Status=value,_lifetime.Token);
             IsGameRunning=true;
             Status=plan.FpsEnabled?"游戏运行中 · 外部 FPS 实际效果待确认":"游戏运行中 · 原装 Shipping 直接启动";
             Log($"已确认渲染窗口：{plan.ShippingExePath}；PID={_game.Id}。"+Status);

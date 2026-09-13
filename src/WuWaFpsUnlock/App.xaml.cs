@@ -8,6 +8,10 @@ public partial class App:Application
     private async void OnStartup(object sender,StartupEventArgs e)
     {
         DispatcherUnhandledException+=(_,args)=>{MessageBox.Show(args.Exception.Message,"鸣潮 FPS Unlock：未处理错误",MessageBoxButton.OK,MessageBoxImage.Error);args.Handled=true;};
+        if(e.Args.Length==4&&e.Args[0]=="--external-launch-worker")
+        {
+            try{Shutdown(await ExternalLaunchWorker.Execute(e.Args[1],e.Args[2],e.Args[3]));}catch{Shutdown(1);}return;
+        }
         if(e.Args.Length==2&&e.Args[0]=="--worker")
         {
             try{Shutdown(await ElevatedWorker.Execute(e.Args[1]));}catch{Shutdown(1);}return;

@@ -38,7 +38,7 @@ public static class LaunchPlanBuilder
 public static class UnlockerConfigAdapter
 {
     public const string AuditedSha256 = "5b9cba854357a4d9ce9c56676e22e397be8d5dbd2dc10de9393155e378050fae";
-    public static void Prepare(LaunchPlan plan)
+    public static void Prepare(LaunchPlan plan,bool write=true)
     {
         if (!plan.FpsEnabled) return;
         if (plan.ConfigPath is null || !File.Exists(plan.ConfigPath)) throw new InvalidDataException("解锁器运行配置缺失；未生成猜测的默认配置。");
@@ -59,6 +59,6 @@ public static class UnlockerConfigAdapter
         foreach (string key in new[] { "DX11Enabled", "PowerSavingEnabled", "AdvanEnabled", "FovEnabled", "HideUidEnabled", "RemoveBlurEnabled" }) ini.Set("Settings", key, "False");
         ini.Set("Settings", "ProcessPriorityMode", "0");
         ini.Set("Settings", "GameParam", "");
-        ini.Save(plan.ConfigPath);
+        if(write)ini.Save(plan.ConfigPath);
     }
 }

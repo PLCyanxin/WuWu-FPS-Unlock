@@ -11,6 +11,7 @@
   <ItemGroup>
     <Resource Include="Assets\Cover.original.png" /><Resource Include="Assets\Icon.original.jpg" /><Resource Include="Assets\App.ico" />
     <Compile Remove="Services\FpsSession.cs" />
+    <EmbeddedResource Include="..\..\knowledge\materials\dotnet8-file-hashes.json" LogicalName="WuWaFpsUnlock.Runtime8Hashes.json" />
     <Content Include="..\..\components\unlocker\**\*" Link="components\unlocker\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
     <Content Include="..\..\components\PROVENANCE.json" Link="components\PROVENANCE.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
     <Content Include="..\..\licenses\**\*" Link="licenses\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />

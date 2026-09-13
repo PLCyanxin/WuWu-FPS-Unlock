@@ -21,7 +21,7 @@ public static class GameProcesses
         foreach(string name in Names)
         foreach(var p in Process.GetProcessesByName(name))
         {
-            try { var path=p.MainModule?.FileName; if(path is not null && SafePaths.IsInside(root,path)) { result.Add(p);continue; } }
+            try { var path=ImagePath(p.Id); if(path is not null && SafePaths.IsInside(root,path)) { result.Add(p);continue; } }
             catch { p.Dispose(); throw new UnauthorizedAccessException("存在无法检查的鸣潮进程；请先关闭游戏再部署，不会忽略该占用。"); }
             p.Dispose();
         }
@@ -29,6 +29,16 @@ public static class GameProcesses
     }
     public static void RequireStopped(string root)
     { var all=Find(root); bool running=all.Count>0; foreach(var p in all)p.Dispose();if(running)throw new IOException("鸣潮正在运行。请完全退出游戏后再部署或清除插件。"); }
+    [DllImport("kernel32.dll",SetLastError=true)] private static extern Microsoft.Win32.SafeHandles.SafeProcessHandle OpenProcess(uint access,bool inherit,int pid);
+    [DllImport("kernel32.dll",CharSet=CharSet.Unicode,SetLastError=true)] private static extern bool QueryFullProcessImageName(Microsoft.Win32.SafeHandles.SafeProcessHandle process,uint flags,StringBuilder path,ref int size);
+    public static string ImagePath(int pid)
+    {
+        using var handle=OpenProcess(0x1000,false,pid); // PROCESS_QUERY_LIMITED_INFORMATION: no process memory access.
+        if(handle.IsInvalid)throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(),"无法只读核对进程路径。");
+        var path=new StringBuilder(32768);int size=path.Capacity;
+        if(!QueryFullProcessImageName(handle,0,path,ref size))throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(),"无法只读核对进程路径。");
+        return path.ToString();
+    }
     private delegate bool EnumProc(IntPtr hwnd,IntPtr param);
     [DllImport("user32.dll")] private static extern bool EnumWindows(EnumProc cb,IntPtr param);
     [DllImport("user32.dll",CharSet=CharSet.Unicode)] private static extern int GetClassName(IntPtr hwnd,StringBuilder value,int max);
@@ -48,7 +58,7 @@ public static class GameProcesses
             Process? chosen=null;
             foreach(var p in all)
             {
-                try { if(string.Equals(p.MainModule?.FileName,shippingExe,StringComparison.OrdinalIgnoreCase) && !p.HasExited && p.StartTime.ToUniversalTime()>=launchTime.AddSeconds(-2) && HasUnrealWindow(p.Id)) {chosen=p;break;} }
+                try { if(string.Equals(ImagePath(p.Id),shippingExe,StringComparison.OrdinalIgnoreCase) && !p.HasExited && p.StartTime.ToUniversalTime()>=launchTime.AddSeconds(-2) && HasUnrealWindow(p.Id)) {chosen=p;break;} }
                 catch { }
             }
             foreach(var p in all)if(!ReferenceEquals(p,chosen))p.Dispose();

@@ -6,7 +6,11 @@ namespace WuWaFpsUnlock.Core;
 public sealed class LaunchExecution
 {
     private readonly SemaphoreSlim _gate=new(1,1);
-    public async Task<Process> RunAsync(LaunchPlan plan,Func<Task> prepare,Func<Process> start,
+    public Task<Process> RunAsync(LaunchPlan plan,Func<Task> prepare,Func<Process> start,
+        Func<DateTime,CancellationToken,Task<Process>> waitForRenderer,Action<string> state,
+        TimeSpan timeout,CancellationToken cancellationToken)
+        =>RunAsync(plan,prepare,()=>Task.FromResult(start()),waitForRenderer,state,timeout,cancellationToken);
+    public async Task<Process> RunAsync(LaunchPlan plan,Func<Task> prepare,Func<Task<Process>> start,
         Func<DateTime,CancellationToken,Task<Process>> waitForRenderer,Action<string> state,
         TimeSpan timeout,CancellationToken cancellationToken)
     {
@@ -18,7 +22,7 @@ public sealed class LaunchExecution
             cancellationToken.ThrowIfCancellationRequested();
             state(plan.FpsEnabled?"StartingUnlocker":"StartingShipping");
             var startedAt=DateTime.UtcNow;
-            using var initial=start();
+            using var initial=await start();
             state("WaitingForRenderer");
             using var deadline=CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             deadline.CancelAfter(timeout);
