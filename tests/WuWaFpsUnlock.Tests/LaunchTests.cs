@@ -31,6 +31,12 @@ public static class LaunchTests
             Check(ini.Get("Settings","PathValue")==entry && ini.Get("Settings","AutoStartEnabled")=="True");
             Check(ini.Get("Settings","GameServerArea")=="2" && ini.Get("Settings","UnknownFutureKey")=="保留");
         }));
+        await test("INI unrelated advanced features actively disabled while unknown keys survive",()=>Sync(()=>{
+            File.WriteAllText(iniPath,config.Replace("Enabled=False","Enabled=True").Replace("ProcessPriorityMode=0","ProcessPriorityMode=6").Replace("GameParam=","GameParam=-dx11 -other"));
+            UnlockerConfigAdapter.Prepare(LaunchPlanBuilder.Build(Settings(),unlock));var ini=IniDocument.Load(iniPath);
+            foreach(string key in new[]{"DX11Enabled","PowerSavingEnabled","AdvanEnabled","FovEnabled","HideUidEnabled","RemoveBlurEnabled"})Check(ini.Get("Settings",key)=="False");
+            Check(ini.Get("Settings","ProcessPriorityMode")=="0" && ini.Get("Settings","GameParam")=="" && ini.Get("Settings","UnknownFutureKey")=="保留");
+        }));
         await test("FPS OFF does not modify existing unlocker INI",()=>Sync(()=>{
             var before=File.ReadAllBytes(iniPath);UnlockerConfigAdapter.Prepare(LaunchPlanBuilder.Build(Settings(false),unlock));Check(before.SequenceEqual(File.ReadAllBytes(iniPath)));
         }));
