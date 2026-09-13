@@ -39,7 +39,7 @@ public static partial class SafePaths
         if (!Directory.Exists(root)) throw new DirectoryNotFoundException("请先选择存在的鸣潮目录。");
         if (string.Equals(Path.GetPathRoot(root)?.TrimEnd('\\','/'), root.TrimEnd('\\','/'), StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("不能把整个磁盘根目录作为游戏目录。");
-        EnsureNoLinks(root, root);
+        EnsureNoLinks(Path.GetPathRoot(root)!, root);
         return root;
     }
     public static async Task<string> HashAsync(string path, CancellationToken token = default)

@@ -18,3 +18,13 @@
 ## Pending / limits
 - Real game paths/mapping and native game execution require parent/user confirmation.
 - Windows installer and actual game not executed here. Concurrent malicious filesystem remapping cannot be fully eliminated by path-based checks; reparse points detected/ignored and destinations rechecked before writes.
+
+## Follow-up safety audit
+- Added absent-at-preview addon protection at preflight and per-file write. New addon uses non-overwriting rename, and a previous completed receipt only permits same-plan idempotence while the current file hash still matches.
+- Cleanup hashes and marks deletion on one Windows handle (READ|DELETE access, share-read only). This closes the file-hash versus path-deletion race and prevents concurrent modification/replacement while the handle is held. Real fake-directory tests must verify Win32 behavior after SDK is ready.
+- Integrity now verifies all recorded configuration writes; early-load CSV may have additional user entries but cannot lose recorded entries.
+- Launch agent implements independent PartialClean/PartialFailure/Installing startup guard, coordinated with parent VM guard.
+- `ADDON_CONFIG_AUDIT.md` records local hash, upstream release match and per-process RuntimeSelectionMode semantics. Never executed addon.
+
+## Native Win32 component evidence
+Before full SDK availability, PowerShell Add-Type compiled the exact `OwnedFileDeletion.cs` production file with only implicit-using equivalents prepended. Executed in this worktree's `artifacts/safety-tests` against inert files: mismatched hash retained, exclusive lock blocked deletion, matching file deleted by the verified handle. All three passed. Log: `knowledge/deployment/win32-delete.log`. This checks the real Windows deletion API path, not the full .NET 10 project build, installer, UI or game. Full console regression suite still pending.
