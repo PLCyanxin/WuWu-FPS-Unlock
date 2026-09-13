@@ -31,3 +31,15 @@ Official release-metadata retrieved 2026-09-14 reports latest-runtime 8.0.31, re
 Portable directory: .agent-worktrees/materials/components/dotnet8 (host + Microsoft.NETCore.App 8.0.31 + Microsoft.WindowsDesktop.App 8.0.31, licenses/notices retained). It is intentionally not committed as binary content; parent copies this directory into delivery. No machine runtime install or global PATH/registry changes.
 
 Reproducer: scripts/Prepare-UnlockerRuntime.ps1 -DesktopOnlyMirror. Version is pinned to audited current patch 8.0.31. Cached metadata can be reused with -ReuseMetadata, otherwise fetched fresh and the pinned release is selected. Corrupt archive cache stops at SHA-512 check before extraction. Actual verification log dotnet8-prepare-final.log contains both verified package hashes and successful dotnet --list-runtimes output. No unlock.exe execution occurred; runtime presence alone does not verify external unlocker's launch behavior.
+
+## Real game candidate read-only audit
+
+Parent authorized scoped read-only inspection of D:\Wuthering Waves\Wuthering Waves Game, derived from original input/unlocker/ww_fps_config.ini PathValue. This remains a candidate pending user's explicit selection/confirmation. scripts/Inspect-Game.ps1 uses a queue, skips reparse points, stays within this root and writes reports only outside it. No EXE execution or game writes. Inspected 730 directories/2551 files, no errors or skipped links.
+
+18 Vendor names each have exactly one existing match; all 18 target hashes already equal the provided payload. nvngx_dlss.dll and nvngx_dlssd.dll are under Engine\Plugins\Runtime\Nvidia\DLSS\Binaries\ThirdParty\Win64; the other 16 are under Engine\Plugins\Runtime\Nvidia\StreamlineCore\Binaries\ThirdParty\Win64. Same hashes do NOT establish tool ownership. Existing user-installed files must not be claimed or removed without ownership evidence.
+
+Shipping is Client\Binaries\Win64\Client-Win64-Shipping.exe, x64, 976121112 bytes, no file version resource, SHA256 0e6865a9bdb0196293d8c41d39eebbb0df782e31c5d2974949e7954f726d1985. Its presence/PE/hash is not proof of originality.
+
+Shipping directory already contains dxgi.dll, x64 ReShade 6.8.0.2155, SHA256 0cee63f9c9f13f3ac909c5b4903f4dbb4b719a7ab3b4f13b0deaf83c814b94f7, plus renodx-mfgunlock.addon64 matching local user material. ReShade.ini (2931 bytes) and empty ReShadePreset.ini exist. No AddonPath key was present in inspected path keys. No redirected path was traversed, and compatibility/loading was not tested.
+
+Delivery reports in isolated artifacts/real-game-candidate-map.json and .md; a durable JSON copy is in this knowledge directory. Runtime reuse/ownership and real game writes remain parent/user confirmation decisions. These reports are expressly titled candidate pending user confirmation.

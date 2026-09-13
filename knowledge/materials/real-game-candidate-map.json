@@ -1,0 +1,713 @@
+{
+  "title": "真实游戏目录候选映射—待用户确认",
+  "readAt": "2026-09-14T01:44:24.8177677+08:00",
+  "readOnly": true,
+  "gameWritten": false,
+  "executablesRun": false,
+  "gameRoot": "D:\\Wuthering Waves\\Wuthering Waves Game",
+  "rootSource": "用户原始ww_fps_config.ini PathValue的父目录；尚未手选确认",
+  "shipping": {
+    "path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Client\\Binaries\\Win64\\Client-Win64-Shipping.exe",
+    "relativePath": "Client\\Binaries\\Win64\\Client-Win64-Shipping.exe",
+    "length": 976121112,
+    "sha256": "0e6865a9bdb0196293d8c41d39eebbb0df782e31c5d2974949e7954f726d1985",
+    "fileVersion": "",
+    "productVersion": "",
+    "company": "",
+    "description": "",
+    "architecture": "x64",
+    "peMachine": "0x8664"
+  },
+  "directoryCount": 730,
+  "fileCount": 2551,
+  "skippedLinks": [],
+  "readErrors": [],
+  "mapping": [
+    {
+      "name": "NvLowLatencyVk.dll",
+      "source": {
+        "path": "E:\\yanxin_ws\\wuwa-fps-unlock\\payload\\files\\game\\NvLowLatencyVk.dll",
+        "relativePath": null,
+        "length": 57840,
+        "sha256": "2a77dc3e1c724b7eea5755be0ae7423752e79a2459fae72181a9f00e3507e5d6",
+        "fileVersion": null,
+        "productVersion": null,
+        "company": null,
+        "description": null,
+        "architecture": "x64",
+        "peMachine": "0x8664"
+      },
+      "targets": [
+        {
+          "path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\NvLowLatencyVk.dll",
+          "relativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\NvLowLatencyVk.dll",
+          "length": 57840,
+          "sha256": "2a77dc3e1c724b7eea5755be0ae7423752e79a2459fae72181a9f00e3507e5d6",
+          "fileVersion": null,
+          "productVersion": null,
+          "company": null,
+          "description": null,
+          "architecture": "x64",
+          "peMachine": "0x8664"
+        }
+      ],
+      "status": "候选已有同名目标；待用户确认全部路径",
+      "confirmed": false
+    },
+    {
+      "name": "nvngx_deepdvc.dll",
+      "source": {
+        "path": "E:\\yanxin_ws\\wuwa-fps-unlock\\payload\\files\\game\\nvngx_deepdvc.dll",
+        "relativePath": null,
+        "length": 3104880,
+        "sha256": "dc9562c67594fa06b763fe5d78f4aa53452c5344f8b43e6e2b81264320588500",
+        "fileVersion": "310,9,1,0",
+        "productVersion": "310,9,1,0",
+        "company": "NVIDIA",
+        "description": "NVIDIA Deep Digital Vibrance Control - DVS PRODUCTION",
+        "architecture": "x64",
+        "peMachine": "0x8664"
+      },
+      "targets": [
+        {
+          "path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\nvngx_deepdvc.dll",
+          "relativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\nvngx_deepdvc.dll",
+          "length": 3104880,
+          "sha256": "dc9562c67594fa06b763fe5d78f4aa53452c5344f8b43e6e2b81264320588500",
+          "fileVersion": "310,9,1,0",
+          "productVersion": "310,9,1,0",
+          "company": "NVIDIA",
+          "description": "NVIDIA Deep Digital Vibrance Control - DVS PRODUCTION",
+          "architecture": "x64",
+          "peMachine": "0x8664"
+        }
+      ],
+      "status": "候选已有同名目标；待用户确认全部路径",
+      "confirmed": false
+    },
+    {
+      "name": "nvngx_dlss.dll",
+      "source": {
+        "path": "E:\\yanxin_ws\\wuwa-fps-unlock\\payload\\files\\game\\nvngx_dlss.dll",
+        "relativePath": null,
+        "length": 58956912,
+        "sha256": "3975567b8943c53acce397f2b72380092f84f162d00b0d2c7d08a1025c563983",
+        "fileVersion": "310,9,1,0",
+        "productVersion": "310,9,1,0",
+        "company": "NVIDIA",
+        "description": "NVIDIA DLSS - DVS PRODUCTION",
+        "architecture": "x64",
+        "peMachine": "0x8664"
+      },
+      "targets": [
+        {
+          "path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\DLSS\\Binaries\\ThirdParty\\Win64\\nvngx_dlss.dll",
+          "relativePath": "Engine\\Plugins\\Runtime\\Nvidia\\DLSS\\Binaries\\ThirdParty\\Win64\\nvngx_dlss.dll",
+          "length": 58956912,
+          "sha256": "3975567b8943c53acce397f2b72380092f84f162d00b0d2c7d08a1025c563983",
+          "fileVersion": "310,9,1,0",
+          "productVersion": "310,9,1,0",
+          "company": "NVIDIA",
+          "description": "NVIDIA DLSS - DVS PRODUCTION",
+          "architecture": "x64",
+          "peMachine": "0x8664"
+        }
+      ],
+      "status": "候选已有同名目标；待用户确认全部路径",
+      "confirmed": false
+    },
+    {
+      "name": "nvngx_dlssd.dll",
+      "source": {
+        "path": "E:\\yanxin_ws\\wuwa-fps-unlock\\payload\\files\\game\\nvngx_dlssd.dll",
+        "relativePath": null,
+        "length": 48343664,
+        "sha256": "4bc7ea5fcb2f32cf86bc2cb072e8d2860914a0be511cbdcb2fc206c1d9d83b80",
+        "fileVersion": "310,9,1,0",
+        "productVersion": "310,9,1,0",
+        "company": "NVIDIA",
+        "description": "NVIDIA DLSS - DVS PRODUCTION",
+        "architecture": "x64",
+        "peMachine": "0x8664"
+      },
+      "targets": [
+        {
+          "path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\DLSS\\Binaries\\ThirdParty\\Win64\\nvngx_dlssd.dll",
+          "relativePath": "Engine\\Plugins\\Runtime\\Nvidia\\DLSS\\Binaries\\ThirdParty\\Win64\\nvngx_dlssd.dll",
+          "length": 48343664,
+          "sha256": "4bc7ea5fcb2f32cf86bc2cb072e8d2860914a0be511cbdcb2fc206c1d9d83b80",
+          "fileVersion": "310,9,1,0",
+          "productVersion": "310,9,1,0",
+          "company": "NVIDIA",
+          "description": "NVIDIA DLSS - DVS PRODUCTION",
+          "architecture": "x64",
+          "peMachine": "0x8664"
+        }
+      ],
+      "status": "候选已有同名目标；待用户确认全部路径",
+      "confirmed": false
+    },
+    {
+      "name": "nvngx_dlssg.dll",
+      "source": {
+        "path": "E:\\yanxin_ws\\wuwa-fps-unlock\\payload\\files\\game\\nvngx_dlssg.dll",
+        "relativePath": null,
+        "length": 7460976,
+        "sha256": "ff6e90eb78b827927dff5b4ecc6b1c870c2e9bca29ed9f48c7d348cc9e170b82",
+        "fileVersion": "310,9,1,0",
+        "productVersion": "310,9,1,0",
+        "company": "NVIDIA",
+        "description": "NVIDIA DLSS-G MFGLW - DVS PRODUCTION",
+        "architecture": "x64",
+        "peMachine": "0x8664"
+      },
+      "targets": [
+        {
+          "path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\nvngx_dlssg.dll",
+          "relativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\nvngx_dlssg.dll",
+          "length": 7460976,
+          "sha256": "ff6e90eb78b827927dff5b4ecc6b1c870c2e9bca29ed9f48c7d348cc9e170b82",
+          "fileVersion": "310,9,1,0",
+          "productVersion": "310,9,1,0",
+          "company": "NVIDIA",
+          "description": "NVIDIA DLSS-G MFGLW - DVS PRODUCTION",
+          "architecture": "x64",
+          "peMachine": "0x8664"
+        }
+      ],
+      "status": "候选已有同名目标；待用户确认全部路径",
+      "confirmed": false
+    },
+    {
+      "name": "nvngx_dlssnr.dll",
+      "source": {
+        "path": "E:\\yanxin_ws\\wuwa-fps-unlock\\payload\\files\\game\\nvngx_dlssnr.dll",
+        "relativePath": null,
+        "length": 165840496,
+        "sha256": "e16bcf15e16e13f527491cdf7845b2fe6521a738d8f7c9c721866a8496e1fc8e",
+        "fileVersion": "310,8,0,0",
+        "productVersion": "310,8,0,0",
+        "company": "NVIDIA",
+        "description": "NVIDIA DLSSNR - DVS PRODUCTION",
+        "architecture": "x64",
+        "peMachine": "0x8664"
+      },
+      "targets": [
+        {
+          "path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\nvngx_dlssnr.dll",
+          "relativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\nvngx_dlssnr.dll",
+          "length": 165840496,
+          "sha256": "e16bcf15e16e13f527491cdf7845b2fe6521a738d8f7c9c721866a8496e1fc8e",
+          "fileVersion": "310,8,0,0",
+          "productVersion": "310,8,0,0",
+          "company": "NVIDIA",
+          "description": "NVIDIA DLSSNR - DVS PRODUCTION",
+          "architecture": "x64",
+          "peMachine": "0x8664"
+        }
+      ],
+      "status": "候选已有同名目标；待用户确认全部路径",
+      "confirmed": false
+    },
+    {
+      "name": "sl.common.dll",
+      "source": {
+        "path": "E:\\yanxin_ws\\wuwa-fps-unlock\\payload\\files\\game\\sl.common.dll",
+        "relativePath": null,
+        "length": 843392,
+        "sha256": "82924a8954dd671e09351c5de0eb87ad0eb25b944cc9f9ab955ca1d9950de15d",
+        "fileVersion": "2,14,1,0",
+        "productVersion": "2,14,1,0",
+        "company": "NVIDIA",
+        "description": "SL.COMMON PLUGIN - PRODUCTION",
+        "architecture": "x64",
+        "peMachine": "0x8664"
+      },
+      "targets": [
+        {
+          "path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.common.dll",
+          "relativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.common.dll",
+          "length": 843392,
+          "sha256": "82924a8954dd671e09351c5de0eb87ad0eb25b944cc9f9ab955ca1d9950de15d",
+          "fileVersion": "2,14,1,0",
+          "productVersion": "2,14,1,0",
+          "company": "NVIDIA",
+          "description": "SL.COMMON PLUGIN - PRODUCTION",
+          "architecture": "x64",
+          "peMachine": "0x8664"
+        }
+      ],
+      "status": "候选已有同名目标；待用户确认全部路径",
+      "confirmed": false
+    },
+    {
+      "name": "sl.deepdvc.dll",
+      "source": {
+        "path": "E:\\yanxin_ws\\wuwa-fps-unlock\\payload\\files\\game\\sl.deepdvc.dll",
+        "relativePath": null,
+        "length": 376448,
+        "sha256": "e4b7e83c9e67eab7023222af13de239241e8a09bdb63faf26f803e9fd0f3e9c9",
+        "fileVersion": "2,14,1,0",
+        "productVersion": "2,14,1,0",
+        "company": "NVIDIA",
+        "description": "SL.DEEPDVC PLUGIN - PRODUCTION",
+        "architecture": "x64",
+        "peMachine": "0x8664"
+      },
+      "targets": [
+        {
+          "path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.deepdvc.dll",
+          "relativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.deepdvc.dll",
+          "length": 376448,
+          "sha256": "e4b7e83c9e67eab7023222af13de239241e8a09bdb63faf26f803e9fd0f3e9c9",
+          "fileVersion": "2,14,1,0",
+          "productVersion": "2,14,1,0",
+          "company": "NVIDIA",
+          "description": "SL.DEEPDVC PLUGIN - PRODUCTION",
+          "architecture": "x64",
+          "peMachine": "0x8664"
+        }
+      ],
+      "status": "候选已有同名目标；待用户确认全部路径",
+      "confirmed": false
+    },
+    {
+      "name": "sl.directsr.dll",
+      "source": {
+        "path": "E:\\yanxin_ws\\wuwa-fps-unlock\\payload\\files\\game\\sl.directsr.dll",
+        "relativePath": null,
+        "length": 369792,
+        "sha256": "4b2c0c90195c3a9991b4e0b59004113511a90802c85d81fc7faa7c7c75f53927",
+        "fileVersion": "2,14,1,0",
+        "productVersion": "2,14,1,0",
+        "company": "NVIDIA",
+        "description": "SL.DirectSR PLUGIN - PRODUCTION",
+        "architecture": "x64",
+        "peMachine": "0x8664"
+      },
+      "targets": [
+        {
+          "path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.directsr.dll",
+          "relativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.directsr.dll",
+          "length": 369792,
+          "sha256": "4b2c0c90195c3a9991b4e0b59004113511a90802c85d81fc7faa7c7c75f53927",
+          "fileVersion": "2,14,1,0",
+          "productVersion": "2,14,1,0",
+          "company": "NVIDIA",
+          "description": "SL.DirectSR PLUGIN - PRODUCTION",
+          "architecture": "x64",
+          "peMachine": "0x8664"
+        }
+      ],
+      "status": "候选已有同名目标；待用户确认全部路径",
+      "confirmed": false
+    },
+    {
+      "name": "sl.dlss_d.dll",
+      "source": {
+        "path": "E:\\yanxin_ws\\wuwa-fps-unlock\\payload\\files\\game\\sl.dlss_d.dll",
+        "relativePath": null,
+        "length": 437376,
+        "sha256": "026b9f4f9ea848f2f5aa0e2024fc6b1c885f57eea5d41078124dba14f873b86b",
+        "fileVersion": "2,14,1,0",
+        "productVersion": "2,14,1,0",
+        "company": "NVIDIA",
+        "description": "SL.DLSS_RR PLUGIN - PRODUCTION",
+        "architecture": "x64",
+        "peMachine": "0x8664"
+      },
+      "targets": [
+        {
+          "path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.dlss_d.dll",
+          "relativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.dlss_d.dll",
+          "length": 437376,
+          "sha256": "026b9f4f9ea848f2f5aa0e2024fc6b1c885f57eea5d41078124dba14f873b86b",
+          "fileVersion": "2,14,1,0",
+          "productVersion": "2,14,1,0",
+          "company": "NVIDIA",
+          "description": "SL.DLSS_RR PLUGIN - PRODUCTION",
+          "architecture": "x64",
+          "peMachine": "0x8664"
+        }
+      ],
+      "status": "候选已有同名目标；待用户确认全部路径",
+      "confirmed": false
+    },
+    {
+      "name": "sl.dlss_g.dll",
+      "source": {
+        "path": "E:\\yanxin_ws\\wuwa-fps-unlock\\payload\\files\\game\\sl.dlss_g.dll",
+        "relativePath": null,
+        "length": 636032,
+        "sha256": "f4a6b2b14dcc0b1485989e430d3b4e3a44ac1800b92ba1ad74f476e64fb2b09c",
+        "fileVersion": "2,14,1,0",
+        "productVersion": "2,14,1,0",
+        "company": "NVIDIA",
+        "description": "SL.DLSS_G PLUGIN - PRODUCTION",
+        "architecture": "x64",
+        "peMachine": "0x8664"
+      },
+      "targets": [
+        {
+          "path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.dlss_g.dll",
+          "relativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.dlss_g.dll",
+          "length": 636032,
+          "sha256": "f4a6b2b14dcc0b1485989e430d3b4e3a44ac1800b92ba1ad74f476e64fb2b09c",
+          "fileVersion": "2,14,1,0",
+          "productVersion": "2,14,1,0",
+          "company": "NVIDIA",
+          "description": "SL.DLSS_G PLUGIN - PRODUCTION",
+          "architecture": "x64",
+          "peMachine": "0x8664"
+        }
+      ],
+      "status": "候选已有同名目标；待用户确认全部路径",
+      "confirmed": false
+    },
+    {
+      "name": "sl.dlss_nr.dll",
+      "source": {
+        "path": "E:\\yanxin_ws\\wuwa-fps-unlock\\payload\\files\\game\\sl.dlss_nr.dll",
+        "relativePath": null,
+        "length": 401024,
+        "sha256": "9f6672e5e0170dc118a3188d21bda187e1fc1aa3502895b21ab846d23165c11d",
+        "fileVersion": "2,13,0,0",
+        "productVersion": "2,13,0,0",
+        "company": "NVIDIA",
+        "description": "SL.DLSS_NR PLUGIN - PRODUCTION",
+        "architecture": "x64",
+        "peMachine": "0x8664"
+      },
+      "targets": [
+        {
+          "path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.dlss_nr.dll",
+          "relativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.dlss_nr.dll",
+          "length": 401024,
+          "sha256": "9f6672e5e0170dc118a3188d21bda187e1fc1aa3502895b21ab846d23165c11d",
+          "fileVersion": "2,13,0,0",
+          "productVersion": "2,13,0,0",
+          "company": "NVIDIA",
+          "description": "SL.DLSS_NR PLUGIN - PRODUCTION",
+          "architecture": "x64",
+          "peMachine": "0x8664"
+        }
+      ],
+      "status": "候选已有同名目标；待用户确认全部路径",
+      "confirmed": false
+    },
+    {
+      "name": "sl.dlss.dll",
+      "source": {
+        "path": "E:\\yanxin_ws\\wuwa-fps-unlock\\payload\\files\\game\\sl.dlss.dll",
+        "relativePath": null,
+        "length": 422016,
+        "sha256": "73bf52c0cfaa5900a8f3f4a91306e4625e7cca696dfb305aae44c9f97b582e1f",
+        "fileVersion": "2,14,1,0",
+        "productVersion": "2,14,1,0",
+        "company": "NVIDIA",
+        "description": "SL.DLSS PLUGIN - PRODUCTION",
+        "architecture": "x64",
+        "peMachine": "0x8664"
+      },
+      "targets": [
+        {
+          "path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.dlss.dll",
+          "relativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.dlss.dll",
+          "length": 422016,
+          "sha256": "73bf52c0cfaa5900a8f3f4a91306e4625e7cca696dfb305aae44c9f97b582e1f",
+          "fileVersion": "2,14,1,0",
+          "productVersion": "2,14,1,0",
+          "company": "NVIDIA",
+          "description": "SL.DLSS PLUGIN - PRODUCTION",
+          "architecture": "x64",
+          "peMachine": "0x8664"
+        }
+      ],
+      "status": "候选已有同名目标；待用户确认全部路径",
+      "confirmed": false
+    },
+    {
+      "name": "sl.interposer.dll",
+      "source": {
+        "path": "E:\\yanxin_ws\\wuwa-fps-unlock\\payload\\files\\game\\sl.interposer.dll",
+        "relativePath": null,
+        "length": 652928,
+        "sha256": "8c87c9499461da561edd529aa9bf7831d67d7b94ebb1c1a5ed54ef4934e1ea4c",
+        "fileVersion": "2,14,1,0",
+        "productVersion": "2,14,1,0",
+        "company": "NVIDIA",
+        "description": "SL.INTERPOSER MODULE - PRODUCTION",
+        "architecture": "x64",
+        "peMachine": "0x8664"
+      },
+      "targets": [
+        {
+          "path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.interposer.dll",
+          "relativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.interposer.dll",
+          "length": 652928,
+          "sha256": "8c87c9499461da561edd529aa9bf7831d67d7b94ebb1c1a5ed54ef4934e1ea4c",
+          "fileVersion": "2,14,1,0",
+          "productVersion": "2,14,1,0",
+          "company": "NVIDIA",
+          "description": "SL.INTERPOSER MODULE - PRODUCTION",
+          "architecture": "x64",
+          "peMachine": "0x8664"
+        }
+      ],
+      "status": "候选已有同名目标；待用户确认全部路径",
+      "confirmed": false
+    },
+    {
+      "name": "sl.nis.dll",
+      "source": {
+        "path": "E:\\yanxin_ws\\wuwa-fps-unlock\\payload\\files\\game\\sl.nis.dll",
+        "relativePath": null,
+        "length": 1155712,
+        "sha256": "556870e456d268601188919927b3b122f76b25f9b221cc4b15d3ef649f0ad27b",
+        "fileVersion": "2,14,1,0",
+        "productVersion": "2,14,1,0",
+        "company": "NVIDIA",
+        "description": "SL.NIS PLUGIN - PRODUCTION",
+        "architecture": "x64",
+        "peMachine": "0x8664"
+      },
+      "targets": [
+        {
+          "path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.nis.dll",
+          "relativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.nis.dll",
+          "length": 1155712,
+          "sha256": "556870e456d268601188919927b3b122f76b25f9b221cc4b15d3ef649f0ad27b",
+          "fileVersion": "2,14,1,0",
+          "productVersion": "2,14,1,0",
+          "company": "NVIDIA",
+          "description": "SL.NIS PLUGIN - PRODUCTION",
+          "architecture": "x64",
+          "peMachine": "0x8664"
+        }
+      ],
+      "status": "候选已有同名目标；待用户确认全部路径",
+      "confirmed": false
+    },
+    {
+      "name": "sl.nvperf.dll",
+      "source": {
+        "path": "E:\\yanxin_ws\\wuwa-fps-unlock\\payload\\files\\game\\sl.nvperf.dll",
+        "relativePath": null,
+        "length": 761472,
+        "sha256": "b4ca8f8eeba653446f27d20e8b394cdaae5d518c1292b440a4b97652e0f0376b",
+        "fileVersion": "2,14,1,0",
+        "productVersion": "2,14,1,0",
+        "company": "NVIDIA",
+        "description": "SL.NVPERF PLUGIN - PRODUCTION",
+        "architecture": "x64",
+        "peMachine": "0x8664"
+      },
+      "targets": [
+        {
+          "path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.nvperf.dll",
+          "relativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.nvperf.dll",
+          "length": 761472,
+          "sha256": "b4ca8f8eeba653446f27d20e8b394cdaae5d518c1292b440a4b97652e0f0376b",
+          "fileVersion": "2,14,1,0",
+          "productVersion": "2,14,1,0",
+          "company": "NVIDIA",
+          "description": "SL.NVPERF PLUGIN - PRODUCTION",
+          "architecture": "x64",
+          "peMachine": "0x8664"
+        }
+      ],
+      "status": "候选已有同名目标；待用户确认全部路径",
+      "confirmed": false
+    },
+    {
+      "name": "sl.pcl.dll",
+      "source": {
+        "path": "E:\\yanxin_ws\\wuwa-fps-unlock\\payload\\files\\game\\sl.pcl.dll",
+        "relativePath": null,
+        "length": 360064,
+        "sha256": "f13d51cfa05f4cd514df2026049e2db8adf359221713170ad386fd499915b582",
+        "fileVersion": "2,14,1,0",
+        "productVersion": "2,14,1,0",
+        "company": "NVIDIA",
+        "description": "SL.PCL PLUGIN - PRODUCTION",
+        "architecture": "x64",
+        "peMachine": "0x8664"
+      },
+      "targets": [
+        {
+          "path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.pcl.dll",
+          "relativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.pcl.dll",
+          "length": 360064,
+          "sha256": "f13d51cfa05f4cd514df2026049e2db8adf359221713170ad386fd499915b582",
+          "fileVersion": "2,14,1,0",
+          "productVersion": "2,14,1,0",
+          "company": "NVIDIA",
+          "description": "SL.PCL PLUGIN - PRODUCTION",
+          "architecture": "x64",
+          "peMachine": "0x8664"
+        }
+      ],
+      "status": "候选已有同名目标；待用户确认全部路径",
+      "confirmed": false
+    },
+    {
+      "name": "sl.reflex.dll",
+      "source": {
+        "path": "E:\\yanxin_ws\\wuwa-fps-unlock\\payload\\files\\game\\sl.reflex.dll",
+        "relativePath": null,
+        "length": 388736,
+        "sha256": "0ce9725e3e03ea9e7f81d008b57f33ee365973d2e349131c8b1c3e3378fe2db0",
+        "fileVersion": "2,14,1,0",
+        "productVersion": "2,14,1,0",
+        "company": "NVIDIA",
+        "description": "SL.REFLEX PLUGIN - PRODUCTION",
+        "architecture": "x64",
+        "peMachine": "0x8664"
+      },
+      "targets": [
+        {
+          "path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.reflex.dll",
+          "relativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.reflex.dll",
+          "length": 388736,
+          "sha256": "0ce9725e3e03ea9e7f81d008b57f33ee365973d2e349131c8b1c3e3378fe2db0",
+          "fileVersion": "2,14,1,0",
+          "productVersion": "2,14,1,0",
+          "company": "NVIDIA",
+          "description": "SL.REFLEX PLUGIN - PRODUCTION",
+          "architecture": "x64",
+          "peMachine": "0x8664"
+        }
+      ],
+      "status": "候选已有同名目标；待用户确认全部路径",
+      "confirmed": false
+    }
+  ],
+  "reShade": {
+    "proxyCandidates": [
+      {
+        "path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Client\\Binaries\\Win64\\dxgi.dll",
+        "relativePath": "Client\\Binaries\\Win64\\dxgi.dll",
+        "length": 5592064,
+        "sha256": "0cee63f9c9f13f3ac909c5b4903f4dbb4b719a7ab3b4f13b0deaf83c814b94f7",
+        "fileVersion": "6.8.0.2155",
+        "productVersion": "6.8.0",
+        "company": "crosire",
+        "description": "crosire's ReShade post-processing injector for 64-bit",
+        "architecture": "x64",
+        "peMachine": "0x8664"
+      }
+    ],
+    "iniFiles": [
+      {
+        "path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Client\\Binaries\\Win64\\ReShade.ini",
+        "length": 2931,
+        "sha256": "2ab0e376da15e8bd286e77330ad2744d1ecc4f18445e2a6b4f93a90364078687",
+        "pathKeys": [
+          {
+            "section": "GENERAL",
+            "key": "EffectSearchPaths",
+            "value": ".\\"
+          },
+          {
+            "section": "GENERAL",
+            "key": "IntermediateCachePath",
+            "value": "C:\\Users\\StrixZ16\\AppData\\Local\\Temp\\ReShade"
+          },
+          {
+            "section": "GENERAL",
+            "key": "PresetPath",
+            "value": ".\\ReShadePreset.ini"
+          },
+          {
+            "section": "GENERAL",
+            "key": "PresetShortcutKeys",
+            "value": ""
+          },
+          {
+            "section": "GENERAL",
+            "key": "PresetShortcutPaths",
+            "value": ""
+          },
+          {
+            "section": "GENERAL",
+            "key": "PresetTransitionDuration",
+            "value": "1000"
+          },
+          {
+            "section": "GENERAL",
+            "key": "StartupPresetPath",
+            "value": ""
+          },
+          {
+            "section": "GENERAL",
+            "key": "TextureSearchPaths",
+            "value": ".\\"
+          },
+          {
+            "section": "INPUT",
+            "key": "KeyNextPreset",
+            "value": "0,0,0,0"
+          },
+          {
+            "section": "INPUT",
+            "key": "KeyPreviousPreset",
+            "value": "0,0,0,0"
+          },
+          {
+            "section": "OVERLAY",
+            "key": "AutoSavePreset",
+            "value": "1"
+          },
+          {
+            "section": "OVERLAY",
+            "key": "ShowPresetName",
+            "value": "0"
+          },
+          {
+            "section": "OVERLAY",
+            "key": "ShowPresetTransitionMessage",
+            "value": "1"
+          },
+          {
+            "section": "SCREENSHOT",
+            "key": "SavePath",
+            "value": ".\\"
+          },
+          {
+            "section": "SCREENSHOT",
+            "key": "SavePresetFile",
+            "value": "0"
+          },
+          {
+            "section": "SCREENSHOT",
+            "key": "SoundPath",
+            "value": ""
+          }
+        ],
+        "redirectedPathsFollowed": false
+      },
+      {
+        "path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Client\\Binaries\\Win64\\ReShadePreset.ini",
+        "length": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "pathKeys": [],
+        "redirectedPathsFollowed": false
+      }
+    ],
+    "mfgAddons": [
+      {
+        "path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Client\\Binaries\\Win64\\renodx-mfgunlock.addon64",
+        "relativePath": "Client\\Binaries\\Win64\\renodx-mfgunlock.addon64",
+        "length": 601088,
+        "sha256": "64184bb370f223c3cabb359010a9a64e114cdae6b62d8b014a731a602af0a0da",
+        "fileVersion": "0.2026.0909.1640",
+        "productVersion": "",
+        "company": "",
+        "description": "",
+        "architecture": "x64",
+        "peMachine": "0x8664"
+      }
+    ],
+    "compatibility": "仅候选文件与版本读取；未验证加载或兼容性"
+  }
+}
