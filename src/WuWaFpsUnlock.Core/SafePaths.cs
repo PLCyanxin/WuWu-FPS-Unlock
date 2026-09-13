@@ -64,11 +64,13 @@ public static class PackageReader
         if (m.ReShade.ProxyApi is not ("dxgi" or "d3d12")) throw new InvalidDataException("清单必须注明已验证的 ReShade 代理：dxgi 或 d3d12。");
         if (!Regex.IsMatch(m.ReShade.Version, @"^\d+\.\d+\.\d+$")) throw new InvalidDataException("ReShade 版本格式无效。");
         if (m.ReShade.Version != "6.8.0") throw new InvalidDataException("该实现的自动安装流程仅按 ReShade 6.8.0 源码适配；更换版本需验证后更新代码。");
+        var vendorInputs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var f in m.Files)
         {
             if (!Enum.IsDefined(f.Anchor) || !Enum.IsDefined(f.Kind)) throw new InvalidDataException("文件锚点或类型无效。");
             if (f.Size <= 0 || !Regex.IsMatch(f.Sha256, "^[a-fA-F0-9]{64}$")) throw new InvalidDataException("文件大小或哈希缺失：" + f.Source);
             var name = f.Target.Replace('\\','/').Split('/').Last();
+            if (f.Kind == PayloadKind.Vendor && !vendorInputs.Add(name)) throw new InvalidDataException("重复的运行库输入：" + name);
             if (f.Kind == PayloadKind.Vendor && (!VendorNames.Contains(name) || f.Anchor == TargetAnchor.AddonDir)) throw new InvalidDataException("拒绝未知运行库：" + name);
             if (f.Kind == PayloadKind.Addon && (name != "renodx-mfgunlock.addon64" || f.Anchor != TargetAnchor.AddonDir || name != f.Target)) throw new InvalidDataException("MFG addon 必须使用 AddonDir 锚点和标准文件名。");
         }

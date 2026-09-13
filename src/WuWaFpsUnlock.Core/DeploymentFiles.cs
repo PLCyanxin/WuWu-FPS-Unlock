@@ -62,7 +62,7 @@ public static class DeploymentFiles
     }
     public static async Task CleanOwnedAddonsAsync(DeploymentReceipt receipt, Action persist, Action<string> log, CancellationToken token = default)
     {
-        bool failures = false;
+        bool failures = false, skipped = false;
         foreach (var f in receipt.Files)
         {
             token.ThrowIfCancellationRequested();
@@ -73,7 +73,8 @@ public static class DeploymentFiles
             {
                 SafePaths.EnsureInside(receipt.GameRoot, f.Path); SafePaths.EnsureNoLinks(receipt.GameRoot, f.Path);
                 if (!File.Exists(f.Path)) { f.Completed = false; persist(); continue; }
-                if (await SafePaths.HashAsync(f.Path, token) != f.InstalledHash) { log("保留已被他人修改的文件：" + f.Path); continue; }
+                if (!f.Completed) { skipped = true; log("保留未完成登记的文件：" + f.Path); continue; }
+                if (await SafePaths.HashAsync(f.Path, token) != f.InstalledHash) { skipped = true; log("保留已被他人修改的文件：" + f.Path); continue; }
                 File.Delete(f.Path); f.Completed = false; f.ReplacedByTool = false; f.CreatedByTool = false; persist(); log("已移除本工具部署文件：" + f.Path);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -90,8 +91,8 @@ public static class DeploymentFiles
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         { failures = true; log("配置清理失败，保留记录：" + ex.Message); }
-        receipt.Status = failures ? "PartialClean" : "Cleaned"; receipt.Updated = DateTimeOffset.UtcNow; persist();
-        log(failures ? "部分清除失败，请检查逐项记录后重试。" : "清除结束：移除本工具实际替换且哈希匹配的 DLL 与自有插件；保留用户 ReShade/滤镜。未恢复原版，游戏是否补齐文件尚待实测。");
+        receipt.Status = failures ? "PartialClean" : skipped ? "CleanedWithSkips" : "Cleaned"; receipt.Updated = DateTimeOffset.UtcNow; persist();
+        log(failures ? "部分清除失败，请检查逐项记录后重试。" : skipped ? "清除已结束，部分文件因已变化或登记未完成而保留，详情见日志。" : "清除结束：移除本工具实际替换且哈希匹配的 DLL 与自有插件；保留用户 ReShade/滤镜。未恢复原版，游戏是否补齐文件尚待实测。");
         if (failures) throw new IOException("部分文件或配置清除失败，详情见日志。");
     }
     public static async Task<bool> IsIntactAsync(DeploymentReceipt receipt, CancellationToken token = default)

@@ -7,6 +7,7 @@ public sealed class WorkerRequest
     public string Operation {get;set;}="";
     public UserSettings Settings {get;set;}=new();
     public bool ApproveReShadeUpgrade {get;set;}
+    public string ApprovalFingerprint {get;set;}="";
 }
 public sealed class WorkerResult
 {
@@ -17,11 +18,11 @@ public sealed class WorkerResult
 }
 public static class ElevatedWorker
 {
-    public static async Task RunFromUi(string operation,UserSettings settings,bool upgrade,Action<string> log)
+    public static async Task RunFromUi(string operation,UserSettings settings,bool upgrade,Action<string> log,string approvalFingerprint="")
     {
         string jobs=Path.Combine(AppPaths.Data,"jobs");Directory.CreateDirectory(jobs);
         string nonce=Guid.NewGuid().ToString("N"),request=Path.Combine(jobs,nonce+".request.json"),result=Path.Combine(jobs,nonce+".result.json");
-        JsonFiles.Save(request,new WorkerRequest{Nonce=nonce,Operation=operation,Settings=settings.Clone(),ApproveReShadeUpgrade=upgrade});
+        JsonFiles.Save(request,new WorkerRequest{Nonce=nonce,Operation=operation,Settings=settings.Clone(),ApproveReShadeUpgrade=upgrade,ApprovalFingerprint=approvalFingerprint});
         try
         {
             string exe=Environment.ProcessPath??throw new IOException("无法定位提权工作进程。");
@@ -50,6 +51,7 @@ public static class ElevatedWorker
         {
             // Revalidate identity, stopped game, payload and target paths inside the elevated boundary.
             var deploy=new DeploymentService(result.Log.Add);
+            deploy.UseApprovedFingerprint(req.ApprovalFingerprint);
             if(req.Operation=="deploy")await deploy.DeployAsync(req.Settings,req.ApproveReShadeUpgrade);else await deploy.CleanAsync(req.Settings);
             result.Success=true;
         }
