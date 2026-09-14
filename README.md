@@ -1,37 +1,28 @@
-# 鸣潮 FPS Unlock — 0.9 本机开发版
+# 鸣潮 FPS Unlock v0.1
 
-原生 Windows x64 WPF/.NET 10 双窗口。延续用户定稿和原图；没有网页套壳、页签、侧栏或恢复原版功能。
+原生Windows x64 WPF/.NET10。自有程序集与文件版本0.1.0.0；第三方二进制保持原版本。延续定稿双窗口，路径区域增加自动查找并保留手选。
 
-当前已完成真实 WPF 编译、91 项核心/测试子进程回归、12 项 Windows 集成回归，以及15项原生WPF离屏组件测试。Windows 集成在工程假目录实际运行用户 ReShade Setup，并使用全部18个用户DLL完成替换、哈希复核、重复部署与清除。它们不是鸣潮游戏内兼容性证明。当前游戏内 FPS、MFG/Dynamic、自动补齐原DLL、UAC升级及真实游戏启动尚未验证。
+开始游戏只启动所选Shipping。FPS OFF不加载内置核心；FPS ON使用随包components/fps/ww_plugin_base.dll，校验来源哈希与PID，建立新的管道会话。无unlock.exe运行路线或.NET8外部依赖。
 
-## 运行与材料
+点击开始游戏将自动结束规范完整EXE路径匹配的旧实例，等待退出后仅启动一次。其他路径同名游戏、官方启动器、反作弊服务及无关子进程不会被批量终止。无法核对身份、权限不足、超时或发现进程竞态时停止并显示日志；不绕过系统权限。如系统拒绝游戏访问，请由用户通过Windows正常管理员启动机制处理权限后重试。
 
-便携入口：artifacts/win-x64/WuWaFpsUnlock.exe。请保留整个目录，包含components/unlocker、components/dotnet8、payload及licenses。本工具.NET10自包含；用户解锁器另外带有经微软SHA512核验的.NET8 Desktop 8.0.31运行库。已核实原解锁器要求管理员权限：独立固定工作进程请求标准UAC，提升后使用随包.NET8启动一次。实际UAC与无.NET干净Windows仍未实测。
+新的插件部署或内置核心首次使用须知在结束游戏前展示并持久保存。取消不杀、不启动、不确认；重复无变化部署不重置，清除再部署重新提示。风险包括强制结束会中断操作、第三方兼容/崩溃/账号风险、目标FPS非实际保证、清除后可能需要官方文件校验。
 
-所有DLSS/Streamline/addon/ReShade Setup来自本次桌面input/多帧生成，未换成其他版本。20项来源、版本、签名结果和SHA256见input/desktop-materials/source-manifest.json、artifacts/material-audit.csv；payload/manifest.json是平铺素材清单，不是游戏目录镜像。解锁器来自input/unlocker/鸣潮.exe的原字节副本，发布别名unlock.exe，哈希在knowledge/launch中。
+确认渲染窗口就绪、FPS开启时新会话连接成功后，启动器收起至通知区，双击原彩色头像恢复；图标是否折叠由Windows设置决定。失败时不自动隐藏。
 
-## 实际工作流程
+DLL仍仅使用本次用户桌面材料，在所选游戏根内搜索同名现存目标，不创建猜测路径。已有用户ReShade保留；本工具新装ReShade凭完整来源和当前哈希记录清理；旧记录来源未知时保守保留。配置与部署记录不因降版号清空，未知JSON字段保留。
 
-1. 设置中选择游戏根目录和原装Client-Win64-Shipping.exe。FPS关闭时直接启动该文件；FPS开启时调用用户unlock.exe，由它启动/管理Shipping，本应用不注入FPS DLL或扫描/写入游戏内存。
-2. 外部解锁器INI按静态核实的字段适配。目标FPS、开关只在下次启动生效，不宣称实时调帧。FPS开启要求已核实的Client/Binaries/Win64布局及对应根入口；其他布局会明确停止。
-3. 需要多帧生成时打开设置中的“多帧生成部署”。工具在所选根目录内搜索18个白名单DLL的同名现存目标，逐项展示；无同名文件跳过，不把整套DLL塞到根目录或EXE旁。一个名称存在多个副本时，全部列出映射供一次确认。
-4. 本地ReShade 6.8.0 Full Add-on安装器优先；已有兼容本体复用，升级需在整份操作计划中确认，未知代理/多份本体/配置歧义停止。保留用户INI、滤镜和其他addon。Setup可能访问官方兼容表；本工具没有在线下载另一套Setup或滤镜。
-5. “清除插件”展示完整对象清单：本工具所有权记录之外，也可在用户明确确认后直接移除与本次材料同名、同哈希的既有DLL/addon；不把指纹相同误记为本工具安装。未知或已改文件保留，无所有权INI项不动。保留ReShade本体与其他插件。不备份或恢复原DLL；清除后游戏能否自行补齐尚待验证，必要时用官方文件校验。
+## 使用与迁移
+入口：artifacts/v0.1/win-x64/WuWaFpsUnlock.exe。保留整个目录。关闭旧版本后运行新版；单实例名称保持兼容，避免旧版和新版并行操作同一游戏。
 
-FPS与MFG相互独立。Fixed/Dynamic是同一包的能力层次；595.41只用于Dynamic驱动判断。驱动条件通过、文件已部署、插件加载和游戏内实际接受Dynamic分别报告。HAGS只读，不改驱动、系统开关或全局OTA。
+显式迁移：PowerShell7运行scripts/Migrate-UserData.ps1 -SourceDirectory '<旧包根>' -DestinationDirectory '<新包根>'。源只读，保留data内配置、记录及日志；目标不同文件时阻止覆盖。仅旧包内部manifest路径重定位。报告在目标migration-reports。
 
-## 构建与测试
+本机已将artifacts/win-x64/data迁移到artifacts/v0.1/win-x64/data，8文件通过SHA核验。旧包保持不变。
 
-Windows PowerShell运行scripts/Build.ps1；缺SDK时传-InstallSdk，安装到工程.tools。固定.NET SDK 10.0.100；不需要WSL。顺序：核心测试→Windows/ReShade假目录集成→win-x64自包含发布。日志在artifacts。ReShade集成测试会运行用户提供的Setup，但目标只在artifacts/windows-integration，绝不运行假Shipping/真实游戏/解锁器。
+## 验证范围
+当前代码构建成功：核心93、重启fixture25、Windows/ReShade假目录12、WPF离屏19、原生通知区生命周期4、迁移19项测试通过。通知区就绪事件由测试模拟，不是实机游戏联动证明。
 
-原生界面离屏布局测试和真实桌面交互分开记录。HTML preview目录及docs/baseline均为旧基线资料，不用于当前验收。完整验证状态见docs/WINDOWS_VALIDATION.md。
+旧版外部解锁器曾获用户实测成功并有Dynamic accepted160，但不能替代v0.1内置核心及自动终止/重启验收。v0.1实机仍待集中确认。普通启动自动补齐未取得独立成功证据，已知旧轮用户通过官方文件校验恢复。
 
-## 安全边界及已知限制
-
-外部用户解锁器内部会按名称处理游戏及nvngx_update进程，并有窗口/托盘/UAC行为。工具在启动前阻断已运行同名进程及原解锁器；不能保证消除外部二进制内的进程竞态，不伪称完全无窗口。缺配置/超时不自动改走普通启动。
-
-本工具以普通权限运行；必要文件工作进程走标准UAC，并重新校验用户确认的路径/文件指纹。权限、反作弊或杀软阻断时停止，不绕过。部分写入或清除失败有逐项日志，不声称完整回滚。
-
-该包只供本地交付，未发布远端。第三方DLL、解锁器和用户原图各有自己的来源/许可，不统一套用MIT。许可证和静态出处见licenses及knowledge。
-
+构建：scripts/Build.ps1；发布与日志在artifacts/v0.1。源码中的旧外部路线保留为历史审计，不参与编译或发布。完整状态见docs/WINDOWS_VALIDATION.md。
 

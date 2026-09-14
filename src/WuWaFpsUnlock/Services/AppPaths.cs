@@ -7,7 +7,7 @@ public static class AppPaths
     public static string Base=>AppContext.BaseDirectory;
     public static string Data=>Path.Combine(Base,"data");
     public static string Settings=>Path.Combine(Data,"settings.json");
-    public static string Unlocker=>Path.Combine(Base,"components","unlocker","unlock.exe");
+    public static string FpsCore=>Path.Combine(Base,"components","fps","ww_plugin_base.dll");
     public static string Receipt(string gameExe)
     { string hash=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Path.GetFullPath(gameExe).ToUpperInvariant())));return Path.Combine(Data,"deployments",hash[..24]+".json"); }
     public static DeploymentReceipt? LoadReceipt(UserSettings s)=>!string.IsNullOrWhiteSpace(s.GameExe)&&File.Exists(Receipt(s.GameExe))?JsonFiles.Read<DeploymentReceipt>(Receipt(s.GameExe)):null;
@@ -26,3 +26,4 @@ public static class WriteProbe
         finally {if(File.Exists(probe))File.Delete(probe);}
     }
 }
+

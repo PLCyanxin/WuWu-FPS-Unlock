@@ -10,7 +10,7 @@ $env:NUGET_PACKAGES=Join-Path $Root '.nuget\packages'
 $env:TEMP=Join-Path $Root '.tmp'
 $env:TMP=$env:TEMP
 New-Item $env:TEMP -ItemType Directory -Force | Out-Null
-New-Item (Join-Path $Root 'artifacts') -ItemType Directory -Force | Out-Null
+New-Item (Join-Path $Root 'artifacts\v0.1') -ItemType Directory -Force | Out-Null
 $localDotnet=Join-Path $Root '.tools\dotnet\dotnet.exe'
 $dotnet=$null
 if(Test-Path $localDotnet){$dotnet=$localDotnet}
@@ -30,26 +30,29 @@ if(-not $hasSdk){
 }
 $env:DOTNET_ROOT_X64=Split-Path $dotnet -Parent
 Write-Host 'Running core regression tests...'
-& $dotnet run --project '.\tests\WuWaFpsUnlock.Tests\WuWaFpsUnlock.Tests.csproj' -c Release 2>&1 | Tee-Object '.\artifacts\tests.log'
+& $dotnet run --project '.\tests\WuWaFpsUnlock.Tests\WuWaFpsUnlock.Tests.csproj' -c Release 2>&1 | Tee-Object '.\artifacts\v0.1\tests.log'
 if($LASTEXITCODE -ne 0){throw 'Core tests failed; publish stopped.'}
-& $dotnet run --project '.\tests\ExternalLaunch.WorkerTests\ExternalLaunch.WorkerTests.csproj' -c Release 2>&1 | Tee-Object '.\artifacts\external-worker-tests.log'
-if($LASTEXITCODE -ne 0){throw 'External worker tests failed.'}
+& $dotnet run --project '.\tests\Restart.ProcessTests\Restart.ProcessTests.csproj' -c Release 2>&1 | Tee-Object '.\artifacts\v0.1\restart-tests.log'
+if($LASTEXITCODE -ne 0){throw 'Restart tests failed.'}
 Write-Host 'Running native Windows and local ReShade integration tests...'
-& $dotnet run --project '.\tests\WuWaFpsUnlock.WindowsTests\WuWaFpsUnlock.WindowsTests.csproj' -c Release -- $Root 2>&1 | Tee-Object '.\artifacts\windows-tests.log'
+& $dotnet run --project '.\tests\WuWaFpsUnlock.WindowsTests\WuWaFpsUnlock.WindowsTests.csproj' -c Release -- $Root 2>&1 | Tee-Object '.\artifacts\v0.1\windows-tests.log'
 if($LASTEXITCODE -ne 0){throw 'Windows integration tests failed; publish stopped.'}
 Write-Host 'Running native WPF offscreen component tests...'
-& $dotnet run --project '.\tests\UiRendering.Wpf\UiRendering.Wpf.csproj' -c Release -- (Join-Path $Root 'artifacts\native-offscreen') 2>&1 | Tee-Object '.\artifacts\ui-tests.log'
+& $dotnet run --project '.\tests\UiRendering.Wpf\UiRendering.Wpf.csproj' -c Release -- (Join-Path $Root 'artifacts\v0.1\native-offscreen') 2>&1 | Tee-Object '.\artifacts\v0.1\ui-tests.log'
 if($LASTEXITCODE -ne 0){throw 'Native WPF component tests failed; publish stopped.'}
+Write-Host 'Running native tray lifecycle tests...'
+& $dotnet run --project '.\tests\Tray.WpfTests\Tray.WpfTests.csproj' -c Release 2>&1 | Tee-Object '.\artifacts\v0.1\tray-tests.log'
+if($LASTEXITCODE -ne 0){throw 'Native tray tests failed; publish stopped.'}
 Write-Host 'Publishing Windows x64 WPF application...'
-& $dotnet publish '.\src\WuWaFpsUnlock\WuWaFpsUnlock.csproj' -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=false -p:PublishAot=false -o '.\artifacts\win-x64' 2>&1 | Tee-Object '.\artifacts\build.log'
+& $dotnet publish '.\src\WuWaFpsUnlock\WuWaFpsUnlock.csproj' -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=false -p:PublishAot=false -o '.\artifacts\v0.1\win-x64' 2>&1 | Tee-Object '.\artifacts\v0.1\build.log'
 if($LASTEXITCODE -ne 0){throw 'WPF build/publish failed. Check artifacts\build.log.'}
-Copy-Item '.\docs\WINDOWS_VALIDATION.md' '.\artifacts\win-x64\WINDOWS_VALIDATION.md' -Force
-if(Test-Path '.\components\dotnet8\dotnet.exe'){ Copy-Item '.\components\dotnet8' '.\artifacts\win-x64\components' -Recurse -Force }
-if(Test-Path '.\payload\manifest.json'){New-Item '.\artifacts\win-x64\payload' -ItemType Directory -Force|Out-Null; Copy-Item '.\payload\*' '.\artifacts\win-x64\payload' -Recurse -Force}
-$exe=Join-Path $Root 'artifacts\win-x64\WuWaFpsUnlock.exe'
-Get-FileHash $exe -Algorithm SHA256 | Format-List | Out-File '.\artifacts\BUILD_SHA256.txt' -Encoding utf8
+Copy-Item '.\docs\WINDOWS_VALIDATION.md' '.\artifacts\v0.1\win-x64\WINDOWS_VALIDATION.md' -Force
+if(Test-Path '.\payload\manifest.json'){New-Item '.\artifacts\v0.1\win-x64\payload' -ItemType Directory -Force|Out-Null; Copy-Item '.\payload\*' '.\artifacts\v0.1\win-x64\payload' -Recurse -Force}
+$exe=Join-Path $Root 'artifacts\v0.1\win-x64\WuWaFpsUnlock.exe'
+Get-FileHash $exe -Algorithm SHA256 | Format-List | Out-File '.\artifacts\v0.1\BUILD_SHA256.txt' -Encoding utf8
 Write-Host "Built: $exe"
 Write-Host 'Build success is not a real-game compatibility test. Read WINDOWS_VALIDATION.md.'
 if($RunAfterBuild){Start-Process $exe}
+
 
 

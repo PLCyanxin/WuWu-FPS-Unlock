@@ -70,6 +70,28 @@ public static class Program
                 input.SetCurrentValue(TextBox.TextProperty,"240");input.GetBindingExpression(TextBox.TextProperty)!.UpdateSource();Layout(main);Layout(settings);
                 Check(vm.StartCommand.CanExecute(null)&&Command(MainRoot(),vm.StartCommand).IsEnabled,"valid FPS did not recover start command");
             });
+            Test("running game keeps restart enabled and discovery disabled",()=>{
+                typeof(AppViewModel).GetField("_running",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)!.SetValue(vm,true);
+                Check(vm.StartCommand.CanExecute(null),"running game disabled restart");
+                Check(!vm.FindGameCommand.CanExecute(null),"running game enabled discovery");
+                typeof(AppViewModel).GetField("_busy",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)!.SetValue(vm,true);
+                Check(!vm.StartCommand.CanExecute(null),"busy restart was enabled");
+                typeof(AppViewModel).GetField("_busy",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)!.SetValue(vm,false);
+                typeof(AppViewModel).GetField("_running",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)!.SetValue(vm,false);
+            });
+            Test("auto discovery button exists without removing manual choices",()=>{
+                Check(Command(SettingsRoot(),vm.FindGameCommand)!=null&&Command(SettingsRoot(),vm.BrowseDirectoryCommand)!=null&&Command(SettingsRoot(),vm.BrowseExeCommand)!=null,"path controls missing");
+            });
+            Test("external unlocker runtime route is absent from built assemblies",()=>{
+                Check(typeof(App).Assembly.GetType("WuWaFpsUnlock.Services.ExternalUnlockerService")==null,"external service compiled");
+                Check(typeof(App).Assembly.GetType("WuWaFpsUnlock.Services.ExternalLaunchWorker")==null,"external worker compiled");
+                Check(typeof(WuWaFpsUnlock.Core.UserSettings).Assembly.GetType("WuWaFpsUnlock.Core.LaunchPlanBuilder")==null,"legacy launch plan compiled");
+                Check(typeof(App).Assembly.GetType("WuWaFpsUnlock.Services.FpsSession")!=null,"builtin core session missing");
+            });
+            Test("all own assemblies use 0.1.0.0",()=>{
+                Check(typeof(App).Assembly.GetName().Version==new Version(0,1,0,0),"WPF version");
+                Check(typeof(WuWaFpsUnlock.Core.UserSettings).Assembly.GetName().Version==new Version(0,1,0,0),"Core version");
+            });
             Test("FPS disabled disables both native FPS editors",()=>{
                 vm.FpsEnabled=false;Layout(main);Layout(settings);Check(!Fps(MainRoot()).IsEnabled&&!Fps(SettingsRoot()).IsEnabled,"disabled FPS editors remain enabled");
                 vm.FpsEnabled=true;Layout(main);Layout(settings);
@@ -140,3 +162,5 @@ public static class Program
         yield return root;for(int i=0;i<VisualTreeHelper.GetChildrenCount(root);i++)foreach(var child in Tree(VisualTreeHelper.GetChild(root,i)))yield return child;
     }
 }
+
+
