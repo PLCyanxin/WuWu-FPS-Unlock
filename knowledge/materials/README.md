@@ -51,3 +51,17 @@ Only the already-known Shipping directory ReShade.log was inspected (74,162 byte
 Historical lines: L1 ReShade6.8.0.2155 via dxgi into Shipping at20:39:26; L46 addon loading; L167 provider310.9.1.0; L168 Streamline2.14.1.0; L225 runtime status0x0 OK; L227 Dynamic support; L235 Dynamic accepted target160FPS; L236–241 runtime reports2–6 actual presented frames. DriverStore provider warnings L146–150 and exit addon-loaded warning L471 are also retained. File LastWrite local2026-09-13 21:47:54, but lines contain time only, so do not infer exact session date solely from LastWrite.
 
 This is pre-existing historical self-reported runtime evidence, NOT this round's game test, independent FPS measurement, proof of current performance, or blanket compatibility success.
+
+## v0.1 discovery and embedded FPS resource follow-up
+
+Merged main before this work. Parent conveys user's newer decision to use the existing embedded FPS route instead of external unlock.exe; this agent only audits resources and implements discovery, with no injection or game execution.
+
+API: static GameDiscoveryService.DiscoverAsync(string? selectedRoot, IEnumerable<string>? savedPaths=null, bool includeSystemHints=true, CancellationToken token=default). Returns GameDiscoveryResult with all Candidates and Diagnostics. Candidate has GameRoot, ShippingExePath, Evidence. VM should present choice when multiple candidates exist, and retain manual selection regardless of discovery result. Core DiscoverFromHints(IEnumerable<GameDiscoveryHint>, token) supports deterministic fake-directory tests.
+
+Sources: explicit selected/saved paths; Windows HKCU/HKLM 32/64 uninstall keys matching Wuthering Waves/鸣潮 DisplayName and InstallLocation; Epic's ProgramData/Epic/EpicGamesLauncher/Data/Manifests/*.item matching DisplayName and InstallLocation. Known folders come from Environment.SpecialFolder, not a guessed username/drive. Limits:128 saved paths,256 hints,4096 uninstall children per hive/view,2048 Epic manifests<=512KB each,4 ancestor levels with only exact known root/layout probes. No recursive game or full-drive scan. All existing ancestors are checked for reparse points. Root entry Wuthering Waves.exe must exist and exact Client/Binaries/Win64/Client-Win64-Shipping.exe must have x64 PE executable/not-DLL header. This validates layout/architecture, not cryptographic originality.
+
+Primary documentation checked: Microsoft https://learn.microsoft.com/en-us/windows/win32/msi/uninstall-registry-key (InstallLocation) and Epic https://dev.epicgames.com/documentation/en-us/unreal-engine/academic-installation-of-unreal-engine (.item manifest directory). Unknown launcher formats are not guessed; user can manually select.
+
+New10 discovery cases passed, total core101 passed/0 failed (discovery-tests.log). These are temporary-directory tests with non-executed PE header fixtures, not native game discovery integration or actual game testing. UI/VM/csproj untouched.
+
+FPS component audit: components/ww_plugin_base.dll remains34304 bytes x64 DLL, SHA256844d7552692f53e8a1bfe45edf360a094597c5bf2b26dc058ff59b21d2250c3a, NotSigned. Re-read main input/unlocker/鸣潮.exe hash5b9cba854357a4d9ce9c56676e22e397be8d5dbd2dc10de9393155e378050fae and resource bytes offset4230325 length34304; exact SHA256 matches component and baseline. fps-plugin-availability.json preserves evidence. Resource is statically available but current runtime protocol/game compatibility remains unverified. No executable load/injection occurred.

@@ -85,8 +85,10 @@ await Test("material cleanup revalidates entire target plan before first delete"
 await Test("material cleanup maps duplicate nested files explicitly",async()=>{var x=await Fixture();foreach(var file in x.plan)File.Copy(file.Source,file.Target,true);var nested=Path.Combine(x.game,"nested");Directory.CreateDirectory(nested);File.Copy(x.plan[0].Source,Path.Combine(nested,"nvngx_dlssg.dll"));var plan=await UserMaterialRemoval.PlanAsync(x.file,x.game);Check(plan.Candidates.Count==3);var result=await UserMaterialRemoval.ExecuteAsync(plan,_=>{});Check(result.Removed==3);});
 await Test("material cleanup refuses arbitrary manually forged candidate names",async()=>{var x=await Fixture();var shipping=Path.Combine(x.exe,"Client-Win64-Shipping.exe");File.Copy(x.plan[0].Source,shipping);var plan=new MaterialRemovalPlan(x.game,"",[new(x.plan[0].Source,shipping,x.plan[0].Sha256,x.plan[0].Size,PayloadKind.Vendor)],[]);await Throws<InvalidDataException>(()=>UserMaterialRemoval.ExecuteAsync(plan,_=>{}));Check(File.Exists(shipping));});
 await NoticeTests.RunAsync(Test);
+await GameDiscoveryTests.RunAsync(Test);
 await LaunchTests.RunAsync(Test);
 await LaunchProcessTests.RunAsync(Test);
 Console.WriteLine($"RESULT: {passed} passed, {failed} failed. No Windows/game integration was exercised.");
 try{Directory.Delete(root,true);}catch{}
 return failed==0?0:1;
+
