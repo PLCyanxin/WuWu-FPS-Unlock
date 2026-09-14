@@ -71,10 +71,16 @@ public sealed class RestartController
             token.ThrowIfCancellationRequested();
             Phase("Starting");started=await actions.Start(executable,token);
             if(started is null)throw new IOException("启动步骤没有返回进程；未执行第二次启动。");
+            token.ThrowIfCancellationRequested();
             if(request.FpsEnabled){Phase("AttachingFps");await actions.AttachFps!(started,token);}
             Phase("Running");return started;
         }
-        catch(OperationCanceledException){Phase("Cancelled");throw;}
+        catch(OperationCanceledException error)
+        {
+            string cancelledPhase=phase;Phase("Cancelled");
+            if(started is not null)throw new RestartFailureException(cancelledPhase,stopped.ToArray(),started,error);
+            throw;
+        }
         catch(Exception error)
         {
             string failedPhase=phase;Phase("Failed");

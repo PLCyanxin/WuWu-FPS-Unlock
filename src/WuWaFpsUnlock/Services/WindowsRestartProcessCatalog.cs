@@ -32,21 +32,34 @@ public sealed class WindowsRestartProcessCatalog:IRestartProcessCatalog
             using(candidate)
             {
                 using var query=OpenProcess(QueryLimited|Synchronize,false,candidate.Id);
-                if(query.IsInvalid)throw Error($"同名候选 PID {candidate.Id} 无法读取身份；未终止任何未确认对象");
+                if(query.IsInvalid)
+                {
+                    int error=Marshal.GetLastWin32Error();
+                    if(HasProvablyExited(candidate.Id))continue;
+                    throw new Win32Exception(error,$"同名候选 PID {candidate.Id} 无法读取身份；未终止任何未确认对象");
+                }
+                if(WaitForSingleObject(query,0)==0)continue;
                 string path;long created;
                 try{path=NormalizeExecutablePath(ImagePath(query));created=CreationTime(query);}
-                catch(Exception error){throw new IOException($"同名候选 PID {candidate.Id} 路径不可确认；停止重启。",error);}
+                catch(Exception error){if(WaitForSingleObject(query,0)==0)continue;throw new IOException($"同名候选 PID {candidate.Id} 路径不可确认；停止重启。",error);}
                 if(!path.Equals(normalizedExecutablePath,StringComparison.OrdinalIgnoreCase))continue;
-                if(WaitForSingleObject(query,0)!=258)throw new IOException("目标在枚举期间退出；PID 竞态，停止重启。");
+                uint queryState=WaitForSingleObject(query,0);if(queryState==0)continue;
+                if(queryState!=258)throw new IOException("目标进程等待状态无法确认；停止重启。");
                 // Query-only handle stays held while acquiring the handle used for query + terminate + wait.
                 var held=OpenProcess(QueryLimited|Terminate|Synchronize,false,candidate.Id);
-                if(held.IsInvalid){held.Dispose();throw Error($"目标 PID {candidate.Id} 无终止权限；不请求 UAC 或绕过权限");}
+                if(held.IsInvalid)
+                {
+                    int error=Marshal.GetLastWin32Error();held.Dispose();
+                    if(WaitForSingleObject(query,0)==0)continue;
+                    throw new Win32Exception(error,$"目标 PID {candidate.Id} 无终止权限；不请求 UAC 或绕过权限");
+                }
                 try
                 {
+                    if(WaitForSingleObject(held,0)==0){held.Dispose();continue;}
                     if(CreationTime(held)!=created||!NormalizeExecutablePath(ImagePath(held)).Equals(path,StringComparison.OrdinalIgnoreCase))throw new IOException("候选进程身份发生变化；未终止。");
                     result.Add(new HeldProcess(this,held,new(candidate.Id,path,DateTime.FromFileTimeUtc(created)),created));
                 }
-                catch{held.Dispose();throw;}
+                catch{bool exited=WaitForSingleObject(held,0)==0;held.Dispose();if(exited)continue;throw;}
             }
             return result;
         }
@@ -58,14 +71,27 @@ public sealed class WindowsRestartProcessCatalog:IRestartProcessCatalog
         public void VerifyStillSameProcess()
         {
             uint wait=WaitForSingleObject(handle,0);
-            if(wait!=258)throw new IOException($"PID {identity.Pid} 已退出或等待状态异常；进程竞态，停止重启。");
-            if(CreationTime(handle)!=created||!owner.NormalizeExecutablePath(ImagePath(handle)).Equals(identity.ExecutablePath,StringComparison.OrdinalIgnoreCase))
-                throw new IOException("持有句柄的身份与确认对象不一致；未终止。");
+            if(wait==0)return; // The held kernel object has exited; this cannot refer to a reused PID.
+            if(wait!=258)throw new IOException($"PID {identity.Pid} 等待状态异常；停止重启。");
+            try
+            {
+                if(CreationTime(handle)!=created||!owner.NormalizeExecutablePath(ImagePath(handle)).Equals(identity.ExecutablePath,StringComparison.OrdinalIgnoreCase))
+                    throw new IOException("持有句柄的身份与确认对象不一致；未终止。");
+            }
+            catch{if(WaitForSingleObject(handle,0)==0)return;throw;}
         }
         public async Task TerminateAndWaitAsync(TimeSpan timeout,CancellationToken token)
         {
-            token.ThrowIfCancellationRequested();VerifyStillSameProcess();
-            if(!TerminateProcess(handle,1))throw Error($"终止已确认 PID {identity.Pid} 失败；停止重启");
+            token.ThrowIfCancellationRequested();
+            if(WaitForSingleObject(handle,0)==0)return;
+            VerifyStillSameProcess();
+            if(WaitForSingleObject(handle,0)==0)return;
+            if(!TerminateProcess(handle,1))
+            {
+                int error=Marshal.GetLastWin32Error();
+                if(WaitForSingleObject(handle,0)==0)return;
+                throw new Win32Exception(error,$"终止已确认 PID {identity.Pid} 失败；停止重启");
+            }
             var watch=Stopwatch.StartNew();
             while(true)
             {
@@ -77,6 +103,16 @@ public sealed class WindowsRestartProcessCatalog:IRestartProcessCatalog
             }
         }
         public void Dispose()=>handle.Dispose();
+    }
+    private static bool HasProvablyExited(int pid)
+    {
+        using var waitOnly=OpenProcess(Synchronize,false,pid);
+        if(!waitOnly.IsInvalid)return WaitForSingleObject(waitOnly,0)==0;
+        // Invalid PID plus an absent fresh process snapshot proves disappearance; access denial is not proof.
+        if(Marshal.GetLastWin32Error()!=87)return false;
+        var processes=Process.GetProcesses();
+        try{return !processes.Any(process=>process.Id==pid);}
+        finally{foreach(var process in processes)process.Dispose();}
     }
     private static string ImagePath(SafeProcessHandle handle)
     {

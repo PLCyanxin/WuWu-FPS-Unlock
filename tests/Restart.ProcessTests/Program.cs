@@ -76,9 +76,9 @@ await Test("single controller rejects double click while notice is pending",asyn
     var first=Run(Actions(notice:(_,_)=>{entered.SetResult();return choice.Task;},start:async(path,_)=>{starts++;return await StartOwned(path);}),controller:controller);await entered.Task;
     try{await Run(Actions(),controller:controller);throw new Exception("double click accepted");}catch(IOException){}choice.SetResult(false);Check(await first is null&&starts==0);
 });
-await Test("actual held process natural exit is detected as race, never PID-reopened for kill",async()=>{
+await Test("actual held process natural exit is already stopped, never PID-reopened for kill",async()=>{
     var old=await StartOwned(targetExe,300);var held=catalog.CaptureMatching(catalog.NormalizeExecutablePath(targetExe));Check(held.Count==1);await old.WaitForExitAsync();
-    try{try{held[0].VerifyStillSameProcess();throw new Exception("exited handle accepted");}catch(IOException){}}finally{foreach(var item in held)item.Dispose();}
+    try{held[0].VerifyStillSameProcess();await held[0].TerminateAndWaitAsync(TimeSpan.FromSeconds(1),default);Check(old.HasExited);}finally{foreach(var item in held)item.Dispose();}
 });
 await Test("actual FPS attach failure reports started process without restarting or killing it",async()=>{
     int starts=0;var failure=await Failure(()=>Run(Actions(start:async(path,_)=>{starts++;return await StartOwned(path);},attach:(_,_)=>throw new IOException("fake attach error")),true));
@@ -110,6 +110,19 @@ await Test("cancellation before workflow never confirms, releases, terminates or
 await Test("controller recovers after a failed preflight and performs one later start",async()=>{
     var controller=new RestartController();await Failure(()=>Run(Actions(preflight:_=>throw new IOException("first preflight fails")),controller:controller));int starts=0;
     var result=await Run(Actions(start:async(path,_)=>{starts++;return await StartOwned(path);}),controller:controller);Check(result is not null&&starts==1);
+});
+await Test("actual old process exits naturally during notice and replacement still starts once",async()=>{
+    var old=await StartOwned(targetExe,500);int starts=0;
+    var result=await Run(Actions(notice:async(_,_)=>{await old.WaitForExitAsync();return true;},start:async(path,_)=>{starts++;return await StartOwned(path);}));Check(result is not null&&starts==1&&old.HasExited);
+});
+await Test("actual newly started process reference survives cancellation after Start",async()=>{
+    using var cts=new CancellationTokenSource();int starts=0;
+    var error=await Failure(()=>new RestartController().RunAsync(new(targetExe,false),catalog,Actions(start:async(path,_)=>{starts++;var child=await StartOwned(path);cts.Cancel();return child;}),_=>{},TimeSpan.FromSeconds(1),cts.Token));
+    Check(error.StartedProcess is not null&&!error.StartedProcess.HasExited&&error.InnerException is OperationCanceledException&&starts==1);
+});
+await Test("actual newly started process reference survives FPS attachment cancellation",async()=>{
+    var error=await Failure(()=>Run(Actions(attach:(_,_)=>throw new OperationCanceledException("fake attachment cancellation")),true));
+    Check(error.StartedProcess is not null&&!error.StartedProcess.HasExited&&error.Phase=="AttachingFps"&&error.InnerException is OperationCanceledException);
 });
 Console.WriteLine($"TOTAL passed={passed} failed={failed}; only self-built owned fixture processes started/terminated. No game, FPS DLL or UAC executed.");Environment.ExitCode=failed==0?0:1;
 
