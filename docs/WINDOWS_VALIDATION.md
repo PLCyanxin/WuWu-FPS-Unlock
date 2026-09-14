@@ -34,3 +34,8 @@
 
 
 外部启动工作进程协议：14/14 回归通过（artifacts/external-worker-tests.log）；未实际执行UAC或用户解锁器。
+
+## 2026-09-14 真实游戏验收补充
+用户操作已完成标准UAC外部unlock.exe启动及进入游戏，反馈帧率解锁成功、无可见报错。新ReShade日志有Dynamic accepted target160及2–6帧实际呈现；截图约93–96 FPS，未证明稳定160。日志有退出引用计数/addon警告。
+用户执行清除，工具记录删除18DLL+addon；只读核对ReShade本体原哈希保持、本工具新增INI项撤销、后来修改的值保留。随后用户执行官方文件校验，确认修复后可进入游戏，帧率解锁与多帧生成不再生效。
+普通启动自动补齐未取得独立成功证据，不能标通过；官方校验恢复与自动补齐必须分开。真实记录及截图位于artifacts/real-run/USER_TEST_RESULTS.md和user-evidence/。本补充覆盖上文对应项目的旧“未执行”状态，其他未测项仍保留。
