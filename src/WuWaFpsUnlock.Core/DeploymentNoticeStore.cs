@@ -54,7 +54,7 @@ public static class DeploymentNoticeStore
         // Clone so future entries do not mutate the historical ownership/configuration evidence.
         var snapshot = System.Text.Json.JsonSerializer.Deserialize<DeploymentReceipt>(System.Text.Json.JsonSerializer.Serialize(previous, JsonFiles.Options), JsonFiles.Options)!;
         snapshot.History.Add(new(previous.Updated, previous.PackageId, previous.Status, snapshot.Files, snapshot.IniEdits));
-        return new() { GameRoot = gameRoot, GameExe = gameExe, Notice = snapshot.Notice, History = snapshot.History };
+        return new() { GameRoot = gameRoot, GameExe = gameExe, Notice = snapshot.Notice, History = snapshot.History, ExtensionData = snapshot.ExtensionData };
     }
 }
 

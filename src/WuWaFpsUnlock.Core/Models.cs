@@ -5,6 +5,7 @@ namespace WuWaFpsUnlock.Core;
 
 public sealed class UserSettings
 {
+    [JsonExtensionData] public Dictionary<string, JsonElement>? ExtensionData { get; set; }
     public string GameRoot { get; set; } = "";
     public string GameExe { get; set; } = "";
     public int TargetFps { get; set; } = 240;
@@ -59,6 +60,7 @@ public sealed class PayloadManifest
 public sealed record PlannedFile(string Source, string Target, string Sha256, long Size, PayloadKind Kind, string? ExpectedTargetHash = null);
 public sealed class FileReceipt
 {
+    [JsonExtensionData] public Dictionary<string, JsonElement>? ExtensionData { get; set; }
     public string Path { get; set; } = "";
     public string InstalledHash { get; set; } = "";
     public bool CreatedByTool { get; set; }
@@ -71,6 +73,7 @@ public sealed class FileReceipt
 }
 public sealed class IniReceipt
 {
+    [JsonExtensionData] public Dictionary<string, JsonElement>? ExtensionData { get; set; }
     public string Section { get; set; } = "";
     public string Key { get; set; } = "";
     public string? Previous { get; set; }
@@ -78,6 +81,7 @@ public sealed class IniReceipt
 }
 public sealed class DeploymentReceipt
 {
+    [JsonExtensionData] public Dictionary<string, JsonElement>? ExtensionData { get; set; }
     public int SchemaVersion { get; set; } = 1;
     public string GameRoot { get; set; } = "";
     public string GameExe { get; set; } = "";
