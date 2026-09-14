@@ -38,6 +38,17 @@ internal static class Program
                 Check(searches==2&&pathVm.GameRoot==fixture&&pathVm.GameExe==shipping,"cleared pair automatically searches and restores both fields");
                 await Task.Delay(1000);
                 Check(searches==2,"applying discovery does not cause another search loop");
+                var pathWindow=new SettingsWindow(pathVm);pathWindow.Show();pathWindow.UpdateLayout();
+                System.Windows.Controls.Button? FindButton(System.Windows.DependencyObject node){
+                    if(node is System.Windows.Controls.Button button&&ReferenceEquals(button.Command,pathVm.FindGameCommand))return button;
+                    for(int i=0;i<System.Windows.Media.VisualTreeHelper.GetChildrenCount(node);i++){var match=FindButton(System.Windows.Media.VisualTreeHelper.GetChild(node,i));if(match is not null)return match;}return null;
+                }
+                var findButton=FindButton(pathWindow)!;
+                var peer=new System.Windows.Automation.Peers.ButtonAutomationPeer(findButton);
+                ((System.Windows.Automation.Provider.IInvokeProvider)peer.GetPattern(System.Windows.Automation.Peers.PatternInterface.Invoke)).Invoke();
+                await Task.Delay(200);
+                Check(searches==2&&pathVm.Logs.Contains("当前鸣潮路径有效，已复用")&&!pathVm.Busy,"native find button reports valid reuse immediately without searching");
+                pathWindow.Close();
                 await pathVm.CloseAsync();
                 Check(window.IsVisible,"real native window shown before readiness");
                 var ready=(Action?)typeof(AppViewModel).GetField("GameReady",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(vm);

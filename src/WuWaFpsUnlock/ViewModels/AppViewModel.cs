@@ -25,6 +25,7 @@ public sealed class AppViewModel:INotifyPropertyChanged
     private readonly DispatcherTimer _pathCheck=new(){Interval=TimeSpan.FromMilliseconds(700)};
     private string _lastValidExe="";
     private bool _applyingDiscovery;
+    private bool _findingGame;
     private readonly Func<string,IEnumerable<string>,CancellationToken,Task<GameDiscoveryResult>> _discover;
     private Process? _game;
     private readonly CancellationTokenSource _lifetime=new();
@@ -54,7 +55,7 @@ public sealed class AppViewModel:INotifyPropertyChanged
         StartCommand=new(StartAsync,()=>!Busy&&_validFps,ReportError);
         _monitor.Tick+=Monitor;_monitor.Start();
         RememberValidSelection();
-        _pathCheck.Tick+=async(_,_)=>{if(Busy)return;_pathCheck.Stop();try{await FindGameAsync();}catch(Exception e){ReportError(e);}};
+        _pathCheck.Tick+=async(_,_)=>{if(Busy)return;_pathCheck.Stop();if(!CanEditSettings)return;try{await FindGameAsync();}catch(Exception e){ReportError(e);}};
         Log("鸣潮 FPS Unlock 0.1 启动。");
     }
     public bool Busy {get=>_busy;private set{_busy=value;NotifyAll();}}
@@ -114,6 +115,7 @@ public sealed class AppViewModel:INotifyPropertyChanged
     public AsyncCommand CleanCommand{get;}
     public AsyncCommand StartCommand{get;}
     public AsyncCommand FindGameCommand{get;}
+    public string FindGameLabel=>_findingGame?"正在查找…":"自动查找鸣潮";
     public void Log(string text)
     {
         if(!_dispatcher.CheckAccess()){_dispatcher.Invoke(()=>Log(text));return;}
@@ -147,8 +149,8 @@ public sealed class AppViewModel:INotifyPropertyChanged
     }
     public async Task RefreshAsync()
     {
-        if(Busy)return;Busy=true;
-        try{await EnsureGameSelectionAsync();await RefreshCore();}finally{Busy=false;}
+        if(Busy)return;_pathCheck.Stop();Busy=true;
+        try{if(!IsGameRunning)await EnsureGameSelectionAsync();await RefreshCore();}finally{Busy=false;}
     }
     private async Task RefreshCore()
     {
@@ -222,23 +224,25 @@ public sealed class AppViewModel:INotifyPropertyChanged
     }
     private async Task FindGameAsync()
     {
-        if(Busy)return;Busy=true;
-        try{await EnsureGameSelectionAsync();await RefreshCore();}
-        finally{Busy=false;}
+        if(!CanEditSettings)return;_pathCheck.Stop();_findingGame=true;Notify(nameof(FindGameLabel));Busy=true;
+        bool alreadyValid=GameDiscoveryService.TryValidateSelection(GameRoot,GameExe,out _,out _);
+        try{await EnsureGameSelectionAsync();if(!alreadyValid)await RefreshCore();}
+        finally{_findingGame=false;Notify(nameof(FindGameLabel));Busy=false;}
     }
     private async Task EnsureGameSelectionAsync()
     {
         if(GameDiscoveryService.TryValidateSelection(GameRoot,GameExe,out var current,out _))
         {
-            _lastValidExe=current!.ShippingExePath;return;
+            _lastValidExe=current!.ShippingExePath;Status="当前鸣潮路径有效，已复用，无需重新搜索。";Log(Status);return;
         }
         string rootAtStart=GameRoot,exeAtStart=GameExe;
+            Status="当前路径为空或无效，正在自动查找鸣潮…";Log(Status);
             var result=await _discover(rootAtStart,[exeAtStart,_lastValidExe],_lifetime.Token);
             if(GameRoot!=rootAtStart||GameExe!=exeAtStart){SchedulePathCheck();return;}
             foreach(var line in result.Diagnostics)Log(line);
-            if(result.Candidates.Count==0){Status="未找到可验证的鸣潮安装，请使用手动选择。";return;}
+            if(result.Candidates.Count==0){Status="未找到可验证的鸣潮安装，请使用手动选择。";Log(Status);return;}
             GameDiscoveryCandidate? chosen=result.Candidates.Count==1?result.Candidates[0]:GameSelection.Show(result.Candidates);
-            if(chosen is null){Status="未选择安装，保留当前路径。";return;}
+            if(chosen is null){Status="未选择安装，保留当前路径。";Log(Status);return;}
             _applyingDiscovery=true;
             try{GameRoot=chosen.GameRoot;GameExe=chosen.ShippingExePath;_lastValidExe=chosen.ShippingExePath;}
             finally{_applyingDiscovery=false;}
