@@ -20,6 +20,25 @@ internal static class Program
             try
             {
                 void Check(bool ok,string name){if(!ok)throw new Exception(name);passed++;Console.WriteLine("PASS "+name);}
+                var fixture=System.IO.Path.Combine(AppContext.BaseDirectory,"path-fixture",Guid.NewGuid().ToString("N"));
+                var shipping=System.IO.Path.Combine(fixture,"Client","Binaries","Win64","Client-Win64-Shipping.exe");
+                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(shipping)!);
+                var pe=new byte[128];BitConverter.GetBytes((ushort)0x5a4d).CopyTo(pe,0);BitConverter.GetBytes(64).CopyTo(pe,0x3c);BitConverter.GetBytes(0x4550).CopyTo(pe,64);BitConverter.GetBytes((ushort)0x8664).CopyTo(pe,68);BitConverter.GetBytes((ushort)0x0022).CopyTo(pe,86);
+                System.IO.File.WriteAllBytes(shipping,pe);System.IO.File.WriteAllText(System.IO.Path.Combine(fixture,"Wuthering Waves.exe"),"fixture only");
+                int searches=0;
+                var pathVm=new AppViewModel((root,hints,token)=>{searches++;return Task.FromResult(new WuWaFpsUnlock.Core.GameDiscoveryResult([new(fixture,shipping,["fixture"])],[]));});
+                pathVm.GameRoot=fixture;pathVm.GameExe=shipping;
+                await Task.Delay(1000);
+                Check(searches==0,"valid current pair skips discovery after edit debounce");
+                pathVm.GameRoot="C:\\invalid-cinebench";pathVm.GameExe="C:\\invalid-cinebench\\Other.exe";
+                await Task.Delay(1200);
+                Check(searches==1&&pathVm.GameRoot==fixture&&pathVm.GameExe==shipping,"invalid edited pair automatically searches and replaces both fields");
+                pathVm.GameRoot="";pathVm.GameExe="";
+                await Task.Delay(1200);
+                Check(searches==2&&pathVm.GameRoot==fixture&&pathVm.GameExe==shipping,"cleared pair automatically searches and restores both fields");
+                await Task.Delay(1000);
+                Check(searches==2,"applying discovery does not cause another search loop");
+                await pathVm.CloseAsync();
                 Check(window.IsVisible,"real native window shown before readiness");
                 var ready=(Action?)typeof(AppViewModel).GetField("GameReady",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(vm);
                 ready!();

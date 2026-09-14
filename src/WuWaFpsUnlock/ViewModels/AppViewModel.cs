@@ -22,12 +22,17 @@ public sealed class AppViewModel:INotifyPropertyChanged
     private string _status="请先在设置中确认游戏路径。",_logs="",_fpsInput="240",_reShade="未设置游戏路径",_deployState="未检测",_packageState="";
     private readonly Dispatcher _dispatcher=Application.Current.Dispatcher;
     private readonly DispatcherTimer _monitor=new(){Interval=TimeSpan.FromSeconds(1)};
+    private readonly DispatcherTimer _pathCheck=new(){Interval=TimeSpan.FromMilliseconds(700)};
+    private string _lastValidExe="";
+    private bool _applyingDiscovery;
+    private readonly Func<string,IEnumerable<string>,CancellationToken,Task<GameDiscoveryResult>> _discover;
     private Process? _game;
     private readonly CancellationTokenSource _lifetime=new();
     private readonly string _logFile;
     private readonly object _logLock=new();
-    public AppViewModel()
+    public AppViewModel(Func<string,IEnumerable<string>,CancellationToken,Task<GameDiscoveryResult>>? discover=null)
     {
+        _discover=discover??((root,hints,token)=>GameDiscoveryService.DiscoverAsync(root,hints,true,token));
         Directory.CreateDirectory(AppPaths.Data);Directory.CreateDirectory(Path.Combine(AppPaths.Data,"logs"));
         _logFile=Path.Combine(AppPaths.Data,"logs",DateTime.Now.ToString("yyyyMMdd-HHmmss",CultureInfo.InvariantCulture)+".log");
         try{_settings=File.Exists(AppPaths.Settings)?JsonFiles.Read<UserSettings>(AppPaths.Settings):new();}
@@ -48,6 +53,8 @@ public sealed class AppViewModel:INotifyPropertyChanged
         CleanCommand=new(CleanAsync,()=>!Busy&&!IsGameRunning,ReportError);
         StartCommand=new(StartAsync,()=>!Busy&&_validFps,ReportError);
         _monitor.Tick+=Monitor;_monitor.Start();
+        RememberValidSelection();
+        _pathCheck.Tick+=async(_,_)=>{if(Busy)return;_pathCheck.Stop();try{await FindGameAsync();}catch(Exception e){ReportError(e);}};
         Log("鸣潮 FPS Unlock 0.1 启动。内置 FPS 核心；状态来自真实检测。");
     }
     public bool Busy {get=>_busy;private set{_busy=value;NotifyAll();}}
@@ -77,15 +84,17 @@ public sealed class AppViewModel:INotifyPropertyChanged
             NotifyAll();
         }
     }
-    public string GameRoot{get=>_settings.GameRoot;set{_settings.GameRoot=value;Save();Notify();}}
-    public string GameExe{get=>_settings.GameExe;set{_settings.GameExe=value;Save();Notify();}}
+    public string GameRoot{get=>_settings.GameRoot;set{RememberValidSelection();_settings.GameRoot=value;Save();Notify();SchedulePathCheck();}}
+    public string GameExe{get=>_settings.GameExe;set{RememberValidSelection();_settings.GameExe=value;Save();Notify();SchedulePathCheck();}}
+    private void RememberValidSelection(){if(GameDiscoveryService.TryValidateSelection(_settings.GameRoot,_settings.GameExe,out var current,out _))_lastValidExe=current!.ShippingExePath;}
+    private void SchedulePathCheck(){if(_applyingDiscovery)return;_pathCheck.Stop();_pathCheck.Start();}
     public string Status{get=>_status;private set{_status=value;Notify();}}
     public string Logs=>_logs;
     public string Gpu=>_hardware.Gpu;
     public string Driver=>_hardware.DriverText;
     public string Os=>_hardware.Os;
     public string Hags=>_hardware.Hags;
-    public string DynamicStatus=>_hardware.DynamicText;
+    public string DynamicStatus=>_hardware.DynamicText.Replace("；游戏内能力待确认","");
     public string DynamicBackground=>_hardware.IsAdaGeForce&&_hardware.Driver>=59541?"#E2F7EC":"#FFF3DF";
     public string DynamicForeground=>_hardware.IsAdaGeForce&&_hardware.Driver>=59541?"#058853":"#956B1F";
     public string DynamicDetail=>_hardware.Driver is int d?$"当前驱动 {d/100}.{d%100:00}；Dynamic 门槛 ≥ 595.41。部署≠游戏内已生效。":"无法确认驱动条件；不会把未知标成支持。";
@@ -139,7 +148,7 @@ public sealed class AppViewModel:INotifyPropertyChanged
     public async Task RefreshAsync()
     {
         if(Busy)return;Busy=true;
-        try{await RefreshCore();}finally{Busy=false;}
+        try{await EnsureGameSelectionAsync();await RefreshCore();}finally{Busy=false;}
     }
     private async Task RefreshCore()
     {
@@ -214,16 +223,26 @@ public sealed class AppViewModel:INotifyPropertyChanged
     private async Task FindGameAsync()
     {
         if(Busy)return;Busy=true;
-        try
+        try{await EnsureGameSelectionAsync();await RefreshCore();}
+        finally{Busy=false;}
+    }
+    private async Task EnsureGameSelectionAsync()
+    {
+        if(GameDiscoveryService.TryValidateSelection(GameRoot,GameExe,out var current,out _))
         {
-            var result=await GameDiscoveryService.DiscoverAsync(GameRoot,[GameExe],true,_lifetime.Token);
+            _lastValidExe=current!.ShippingExePath;return;
+        }
+        string rootAtStart=GameRoot,exeAtStart=GameExe;
+            var result=await _discover(rootAtStart,[exeAtStart,_lastValidExe],_lifetime.Token);
+            if(GameRoot!=rootAtStart||GameExe!=exeAtStart){SchedulePathCheck();return;}
             foreach(var line in result.Diagnostics)Log(line);
             if(result.Candidates.Count==0){Status="未找到可验证的鸣潮安装，请使用手动选择。";return;}
             GameDiscoveryCandidate? chosen=result.Candidates.Count==1?result.Candidates[0]:GameSelection.Show(result.Candidates);
             if(chosen is null){Status="未选择安装，保留当前路径。";return;}
-            GameRoot=chosen.GameRoot;GameExe=chosen.ShippingExePath;Log("自动查找已选择："+GameExe);await RefreshCore();
-        }
-        finally{Busy=false;}
+            _applyingDiscovery=true;
+            try{GameRoot=chosen.GameRoot;GameExe=chosen.ShippingExePath;_lastValidExe=chosen.ShippingExePath;}
+            finally{_applyingDiscovery=false;}
+            Log("自动查找已更正："+GameExe);
     }
     private async Task StartAsync()
     {
@@ -295,7 +314,7 @@ public sealed class AppViewModel:INotifyPropertyChanged
         IsGameRunning=false;if(_fpsSession is not null)await _fpsSession.DisposeAsync();_fpsSession=null;_game.Dispose();_game=null;
         Status="游戏已退出，可再次开始游戏。";Log(Status);
     }
-    public async Task CloseAsync(){_monitor.Stop();_lifetime.Cancel();if(_fpsSession is not null)await _fpsSession.DisposeAsync();_game?.Dispose();}
+    public async Task CloseAsync(){_pathCheck.Stop();_monitor.Stop();_lifetime.Cancel();if(_fpsSession is not null)await _fpsSession.DisposeAsync();_game?.Dispose();}
 }
 
 
