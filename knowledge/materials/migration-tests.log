@@ -1,0 +1,23 @@
+Migration completed (4 files), source unchanged. Report: E:\yanxin_ws\wuwa-fps-unlock\.agent-worktrees\materials\.tmp\migration-tests-d743c003b88649118082a9bb1ede80e5\normal\新包 空格\migration-reports\migration-20260914-135049-fdc13afafa71492688b22f242306c9b5.json
+PASS internal manifest relocated only to new package
+PASS unknown large numeric JSON preserved exactly
+PASS unknown fields and FPS disabled preserved
+PASS source settings untouched
+PASS deployment receipt byte-identical
+PASS logs and provenance copied, outside data excluded
+Migration completed (4 files), source unchanged. Report: E:\yanxin_ws\wuwa-fps-unlock\.agent-worktrees\materials\.tmp\migration-tests-d743c003b88649118082a9bb1ede80e5\normal\新包 空格\migration-reports\migration-20260914-135050-209a4a2f57284a18b9ce36b3825ab183.json
+PASS repeat migration skips same files with new report
+Migration completed (4 files), source unchanged. Report: E:\yanxin_ws\wuwa-fps-unlock\.agent-worktrees\materials\.tmp\migration-tests-d743c003b88649118082a9bb1ede80e5\external\新包 空格\migration-reports\migration-20260914-135050-3372ec3f0b9044b3b3a245aa3dcf1e9e.json
+PASS external selected manifest settings remain byte-identical
+PASS different destination blocks migration
+PASS conflict causes no data writes or overwrite
+PASS missing target manifest blocks relocation
+PASS bad settings JSON never silently reset
+PASS same package refused
+PASS nested package refused
+PASS relative package root refused
+PASS source data junction refused
+PASS source junction preflight blocks all data copy
+PASS destination data junction refused
+PASS destination junction never receives data writes
+RESULT 19 checks passed. Fixture-only; actual portable data untouched; no program executed. Fixtures retained at E:\yanxin_ws\wuwa-fps-unlock\.agent-worktrees\materials\.tmp\migration-tests-d743c003b88649118082a9bb1ede80e5
