@@ -33,7 +33,7 @@ public static class Program
             var vm=new AppViewModel();vm.FpsEnabled=true;vm.TargetFps=240;
             var main=new MainWindow(vm);var settings=new SettingsWindow(vm);
             // Use approved design DIPs, independently from the locked desktop's current work area.
-            main.Width=590;main.Height=379;settings.Width=1160;settings.Height=806;
+            main.Width=550;main.Height=340;settings.Width=1160;settings.Height=806;
             FrameworkElement MainRoot()=> (FrameworkElement)main.Content;
             FrameworkElement SettingsRoot()=> (FrameworkElement)settings.Content;
             void Layout(Window window)
@@ -122,7 +122,7 @@ public static class Program
             vm.GameRoot="";vm.GameExe="";vm.TargetFps=240;vm.FpsEnabled=true;
             vm.CloseAsync().GetAwaiter().GetResult();
             vm=new AppViewModel();main=new MainWindow(vm);settings=new SettingsWindow(vm);
-            main.Width=590;main.Height=379;settings.Width=1160;settings.Height=806;
+            main.Width=550;main.Height=340;settings.Width=1160;settings.Height=806;
             Test("default render reads actual local environment with empty game paths",()=>{
                 SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext(Dispatcher.CurrentDispatcher));
                 Task refresh=vm.RefreshAsync();var watch=System.Diagnostics.Stopwatch.StartNew();
@@ -162,6 +162,7 @@ public static class Program
         yield return root;for(int i=0;i<VisualTreeHelper.GetChildrenCount(root);i++)foreach(var child in Tree(VisualTreeHelper.GetChild(root,i)))yield return child;
     }
 }
+
 
 
 
