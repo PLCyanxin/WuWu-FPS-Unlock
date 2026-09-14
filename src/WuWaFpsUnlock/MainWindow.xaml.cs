@@ -48,6 +48,7 @@ public partial class MainWindow:Window
         catch(Exception e){_vm.Log("收起到通知区失败，保留窗口："+e.Message);Show();WindowState=WindowState.Normal;}
     }
     private void RestoreFromTray(){Show();WindowState=WindowState.Normal;Activate();if(_tray is not null)_tray.Visible=false;}
+    public void RestoreExistingInstance()=>RestoreFromTray();
     private void Minimize_Click(object sender,RoutedEventArgs e)=>SystemCommands.MinimizeWindow(this);
     private void Maximize_Click(object sender,RoutedEventArgs e){if(WindowState==WindowState.Maximized)SystemCommands.RestoreWindow(this);else SystemCommands.MaximizeWindow(this);}
     private void Close_Click(object sender,RoutedEventArgs e)=>Close();
