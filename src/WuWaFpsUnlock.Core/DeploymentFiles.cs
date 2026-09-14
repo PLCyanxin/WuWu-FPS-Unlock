@@ -74,7 +74,8 @@ public static class DeploymentFiles
             token.ThrowIfCancellationRequested();
             bool ownedAddon = f.Kind == "Addon" && f.CreatedByTool && Path.GetFileName(f.Path).Equals("renodx-mfgunlock.addon64", StringComparison.OrdinalIgnoreCase);
             bool ownedVendor = f.Kind == "Vendor" && f.ReplacedByTool && PackageReader.VendorNames.Contains(Path.GetFileName(f.Path));
-            if (!ownedAddon && !ownedVendor) continue;
+            bool ownedReShade = ReShadeOwnership.CanClean(receipt, f);
+            if (!ownedAddon && !ownedVendor && !ownedReShade) continue;
             try
             {
                 SafePaths.EnsureInside(receipt.GameRoot, f.Path); SafePaths.EnsureNoLinks(receipt.GameRoot, f.Path);
@@ -98,7 +99,7 @@ public static class DeploymentFiles
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         { failures = true; log("配置清理失败，保留记录：" + ex.Message); }
         receipt.Status = failures ? "PartialClean" : skipped ? "CleanedWithSkips" : "Cleaned"; receipt.Updated = DateTimeOffset.UtcNow; persist();
-        log(failures ? "部分清除失败，请检查逐项记录后重试。" : skipped ? "清除已结束，部分文件因已变化或登记未完成而保留，详情见日志。" : "清除结束：移除本工具实际替换且哈希匹配的 DLL 与自有插件；保留用户 ReShade/滤镜。未恢复原版，游戏是否补齐文件尚待实测。");
+        log(failures ? "部分清除失败，请检查逐项记录后重试。" : skipped ? "清除已结束，部分文件因已变化或登记未完成而保留，详情见日志。" : "清除结束：移除本工具实际替换且哈希匹配的 DLL 与自有插件；保留用户原有或来源未知的 ReShade/滤镜。未恢复原版，游戏是否补齐文件尚待实测。");
         if (failures) throw new IOException("部分文件或配置清除失败，详情见日志。");
     }
     public static async Task<bool> IsIntactAsync(DeploymentReceipt receipt, CancellationToken token = default)

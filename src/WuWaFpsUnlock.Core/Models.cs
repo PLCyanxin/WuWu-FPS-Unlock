@@ -63,6 +63,9 @@ public sealed class FileReceipt
     public string InstalledHash { get; set; } = "";
     public bool CreatedByTool { get; set; }
     public bool ReplacedByTool { get; set; }
+    public string SourceKind { get; set; } = "LegacyUnknown";
+    public string SourcePath { get; set; } = "";
+    public string SourceHash { get; set; } = "";
     public string Kind { get; set; } = "";
     public bool Completed { get; set; }
 }
@@ -86,6 +89,8 @@ public sealed class DeploymentReceipt
     public List<FileReceipt> Files { get; set; } = [];
     public List<string> SkippedVendorNames { get; set; } = [];
     public List<IniReceipt> IniEdits { get; set; } = [];
+    public DeploymentNoticeState? Notice { get; set; }
+    public List<DeploymentHistoryEntry> History { get; set; } = [];
 }
 public static class JsonFiles
 {

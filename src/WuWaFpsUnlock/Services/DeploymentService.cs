@@ -45,7 +45,7 @@ public sealed class DeploymentService(Action<string> log)
         if(plan.Receipt is not null)
         {
             lines.Add("有本工具所有权登记（仅哈希仍匹配且登记完成时删除）：");
-            lines.AddRange(plan.Receipt.Files.Where(f=>(f.Kind=="Vendor"&&f.ReplacedByTool)||(f.Kind=="Addon"&&f.CreatedByTool)).Select(f=>f.Path));
+            lines.AddRange(plan.Receipt.Files.Where(f=>(f.Kind=="Vendor"&&f.ReplacedByTool)||(f.Kind=="Addon"&&f.CreatedByTool)||ReShadeOwnership.CanClean(plan.Receipt,f)).Select(f=>f.Path));
         }
         if(plan.Materials is not null)
         {
@@ -53,7 +53,7 @@ public sealed class DeploymentService(Action<string> log)
             lines.AddRange(plan.Materials.Candidates.Select(f=>$"{f.Path}  SHA-256={f.Sha256}"));
             lines.AddRange(plan.Materials.Preserved);
         }
-        lines.Add("保留 ReShade 本体、滤镜、EXE、其他插件及未知来源文件；没有所有权的 INI 项保持不动。不恢复原版，也不保证游戏自动补齐。是否按以上完整清单清除？");
+        lines.Add("保留用户已有或来源未知的 ReShade、滤镜、EXE、其他插件；仅清单中本工具新建且来源/哈希明确的 ReShade 本体可移除；没有所有权的 INI 项保持不动。不恢复原版，也不保证游戏自动补齐。是否按以上完整清单清除？");
         return string.Join(Environment.NewLine,lines);
     }
     public async Task DeployAsync(UserSettings s,bool upgradeApproved,CancellationToken token=default)
@@ -77,9 +77,12 @@ public sealed class DeploymentService(Action<string> log)
         log($"DLL 同名映射：{plan.Count(f=>f.Kind==PayloadKind.Vendor)} 个实际目标；{skippedVendors.Count} 个材料名称无同名目标而跳过。"+(skippedVendors.Count>0?" 跳过："+string.Join("、",skippedVendors):""));
         foreach(var f in plan){WriteProbe.Check(f.Target);if(File.Exists(f.Target)){using var lockTest=new FileStream(f.Target,FileMode.Open,FileAccess.ReadWrite,FileShare.None);}}
         WriteProbe.Check(before.Ini);WriteProbe.Check(before.Proxy??Path.Combine(Path.GetDirectoryName(exe)!,manifest.ReShade.ProxyApi+".dll"));
+        var initialIniHash=File.Exists(before.Ini)?await SafePaths.HashAsync(before.Ini,token):null;
+        var initialProxyHash=before.Proxy is not null&&File.Exists(before.Proxy)?await SafePaths.HashAsync(before.Proxy,token):null;
         var previousReceipt=AppPaths.LoadReceipt(s);
+        if(previousReceipt is not null)DeploymentNoticeStore.InitializeLegacy(previousReceipt);
         // A clean cycle ends ownership. Do not inherit ownership over files another tool installs later.
-        var receipt=previousReceipt is not null && !previousReceipt.Status.StartsWith("Cleaned",StringComparison.Ordinal)?previousReceipt:new(){GameRoot=Path.GetFullPath(s.GameRoot),GameExe=exe};
+        var receipt=previousReceipt is not null && !previousReceipt.Status.StartsWith("Cleaned",StringComparison.Ordinal)?previousReceipt:previousReceipt is not null?DeploymentNoticeStore.BeginAfterClean(previousReceipt,Path.GetFullPath(s.GameRoot),exe):new(){GameRoot=Path.GetFullPath(s.GameRoot),GameExe=exe,Notice=new()};
         if(!receipt.GameRoot.Equals(Path.GetFullPath(s.GameRoot),StringComparison.OrdinalIgnoreCase))throw new InvalidDataException("部署记录与当前游戏根目录不匹配。");
         ApprovalFingerprint="";
         receipt.SkippedVendorNames=skippedVendors;
@@ -93,7 +96,8 @@ public sealed class DeploymentService(Action<string> log)
             receipt.IniPath=ready.Ini;
             receipt.ProxyPath=ready.Proxy ?? throw new IOException("没有确认 ReShade 代理。");
             var proxyEntry=receipt.Files.FirstOrDefault(f=>f.Path.Equals(receipt.ProxyPath,StringComparison.OrdinalIgnoreCase));
-            if(proxyEntry is null){proxyEntry=new(){Path=receipt.ProxyPath,Kind="ReShade",CreatedByTool=false};receipt.Files.Add(proxyEntry);}
+            if(proxyEntry is null){proxyEntry=new(){Path=receipt.ProxyPath,Kind="ReShade",CreatedByTool=false,SourceKind="UserExisting"};receipt.Files.Add(proxyEntry);}
+            else if(before.State=="Reusable"&&!proxyEntry.InstalledHash.Equals(await SafePaths.HashAsync(receipt.ProxyPath,token),StringComparison.OrdinalIgnoreCase)){proxyEntry.CreatedByTool=false;proxyEntry.SourceKind="LegacyUnknown";}
             proxyEntry.InstalledHash=await SafePaths.HashAsync(receipt.ProxyPath,token);proxyEntry.Completed=true;
             var ini=IniDocument.Load(ready.Ini);
             foreach(var pair in manifest.MfgConfig)ini.ApplyOwned("RenoDX.MFGUnlock",pair.Key,pair.Value,receipt);
@@ -106,6 +110,9 @@ public sealed class DeploymentService(Action<string> log)
             AppPaths.SaveReceipt(receipt);ini.Save(ready.Ini);
             receipt.Status="Deployed";AppPaths.SaveReceipt(receipt);
             if(!await DeploymentFiles.IsIntactAsync(receipt,token))throw new IOException("最终文件或配置校验失败。");
+            bool actualChanges=plan.Any(f=>f.ExpectedTargetHash!=f.Sha256)||initialIniHash!=await SafePaths.HashAsync(ready.Ini,token)||initialProxyHash!=proxyEntry.InstalledHash;
+            DeploymentNoticeStore.CompleteSuccessfulDeployment(receipt,actualChanges);AppPaths.SaveReceipt(receipt);
+            log(actualChanges?"本次实际部署变化已完成，首次部署须知等待确认。":"本次仅复用相同文件/配置，未重置须知确认。");
             log($"匹配项部署完成：{plan.Count(f=>f.Kind==PayloadKind.Vendor)} 个 DLL 目标与 addon/配置已校验，{skippedVendors.Count} 个材料名称因无同名目标未部署；MFG 实际启用仍待游戏内确认。");
         }
         catch
@@ -119,7 +126,7 @@ public sealed class DeploymentService(Action<string> log)
         var plan=await PrepareCleanAsync(s,token);
         if(string.IsNullOrEmpty(ApprovalFingerprint)||ApprovalFingerprint!=CleanFingerprint(s,plan))throw new IOException("清除材料、文件或记录与确认时不同，请重新预览并确认；没有扩大清除范围。");
         var receipt=plan.Receipt??new DeploymentReceipt{GameRoot=Path.GetFullPath(s.GameRoot),GameExe=Path.GetFullPath(s.GameExe)};
-        foreach(var f in receipt.Files.Where(f=>(f.Kind=="Addon"&&f.CreatedByTool)||(f.Kind=="Vendor"&&f.ReplacedByTool)))WriteProbe.Check(f.Path);
+        foreach(var f in receipt.Files.Where(f=>(f.Kind=="Addon"&&f.CreatedByTool)||(f.Kind=="Vendor"&&f.ReplacedByTool)||ReShadeOwnership.CanClean(receipt,f)))WriteProbe.Check(f.Path);
         if(plan.Materials is not null)foreach(var f in plan.Materials.Candidates)WriteProbe.Check(f.Path);
         if(!string.IsNullOrWhiteSpace(receipt.IniPath))WriteProbe.Check(receipt.IniPath);
         ApprovalFingerprint="";
@@ -132,6 +139,7 @@ public sealed class DeploymentService(Action<string> log)
             await DeploymentFiles.CleanOwnedAddonsAsync(receipt,()=>AppPaths.SaveReceipt(receipt),log,token);
             if(materialResult?.Failed>0)throw new IOException("部分既有用户材料移除失败；详情见逐文件日志，可重新预览后重试。");
             if(materialResult?.Preserved>0){receipt.Status="CleanedWithSkips";AppPaths.SaveReceipt(receipt);}
+            DeploymentNoticeStore.MarkCleaned(receipt);AppPaths.SaveReceipt(receipt);
             log($"既有用户材料清除结果：移除 {materialResult?.Removed??0}，变化保留 {materialResult?.Preserved??0}；没有把材料相同当成本工具安装证明。");
         }
         catch{receipt.Status="PartialClean";AppPaths.SaveReceipt(receipt);throw;}

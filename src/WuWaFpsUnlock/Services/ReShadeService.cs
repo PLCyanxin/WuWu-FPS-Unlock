@@ -83,7 +83,9 @@ public sealed class ReShadeService(Action<string> log)
         string hash=await SafePaths.HashAsync(after.Proxy,token);
         if(!string.IsNullOrEmpty(spec.FullRuntimeSha256)&&!hash.Equals(spec.FullRuntimeSha256,StringComparison.OrdinalIgnoreCase))throw new InvalidDataException("ReShade runtime SHA-256 与包清单不匹配。");
         var entry=receipt.Files.FirstOrDefault(f=>f.Path.Equals(expected,StringComparison.OrdinalIgnoreCase));
-        if(entry is null){entry=new(){Path=expected,CreatedByTool=wasMissing,Kind="ReShade"};receipt.Files.Add(entry);}
+        if(entry is null){entry=new(){Path=expected,CreatedByTool=wasMissing,Kind="ReShade",SourceKind=wasMissing?"ToolInstalled":"UserExisting"};receipt.Files.Add(entry);}
+        if(wasMissing){entry.CreatedByTool=true;entry.SourceKind="ToolInstalled";}
+        entry.SourcePath=setup;entry.SourceHash=spec.SetupSha256;
         entry.InstalledHash=hash;entry.Completed=true;AppPaths.SaveReceipt(receipt);
         log("ReShade 本体检查完成。没有安装滤镜包。");return after;
     }
