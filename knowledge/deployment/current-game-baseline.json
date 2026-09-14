@@ -1,0 +1,89 @@
+{
+  "SchemaVersion": 1,
+  "GameRoot": "D:\\Wuthering Waves\\Wuthering Waves Game",
+  "CapturedAt": "2026-09-14T17:54:25.1042809+08:00",
+  "ReadOnly": true,
+  "Files": [
+    {
+      "Name": "nvngx_dlss.dll",
+      "RelativePath": "Engine\\Plugins\\Runtime\\Nvidia\\DLSS\\Binaries\\ThirdParty\\Win64\\nvngx_dlss.dll",
+      "Path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\DLSS\\Binaries\\ThirdParty\\Win64\\nvngx_dlss.dll",
+      "Size": 58956912,
+      "Sha256": "3975567b8943c53acce397f2b72380092f84f162d00b0d2c7d08a1025c563983"
+    },
+    {
+      "Name": "nvngx_dlssd.dll",
+      "RelativePath": "Engine\\Plugins\\Runtime\\Nvidia\\DLSS\\Binaries\\ThirdParty\\Win64\\nvngx_dlssd.dll",
+      "Path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\DLSS\\Binaries\\ThirdParty\\Win64\\nvngx_dlssd.dll",
+      "Size": 48343664,
+      "Sha256": "4bc7ea5fcb2f32cf86bc2cb072e8d2860914a0be511cbdcb2fc206c1d9d83b80"
+    },
+    {
+      "Name": "nvngx_deepdvc.dll",
+      "RelativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\nvngx_deepdvc.dll",
+      "Path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\nvngx_deepdvc.dll",
+      "Size": 3104880,
+      "Sha256": "dc9562c67594fa06b763fe5d78f4aa53452c5344f8b43e6e2b81264320588500"
+    },
+    {
+      "Name": "nvngx_dlssg.dll",
+      "RelativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\nvngx_dlssg.dll",
+      "Path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\nvngx_dlssg.dll",
+      "Size": 7460976,
+      "Sha256": "ff6e90eb78b827927dff5b4ecc6b1c870c2e9bca29ed9f48c7d348cc9e170b82"
+    },
+    {
+      "Name": "sl.common.dll",
+      "RelativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.common.dll",
+      "Path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.common.dll",
+      "Size": 843392,
+      "Sha256": "82924a8954dd671e09351c5de0eb87ad0eb25b944cc9f9ab955ca1d9950de15d"
+    },
+    {
+      "Name": "sl.deepdvc.dll",
+      "RelativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.deepdvc.dll",
+      "Path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.deepdvc.dll",
+      "Size": 376448,
+      "Sha256": "e4b7e83c9e67eab7023222af13de239241e8a09bdb63faf26f803e9fd0f3e9c9"
+    },
+    {
+      "Name": "sl.dlss_g.dll",
+      "RelativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.dlss_g.dll",
+      "Path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.dlss_g.dll",
+      "Size": 636032,
+      "Sha256": "f4a6b2b14dcc0b1485989e430d3b4e3a44ac1800b92ba1ad74f476e64fb2b09c"
+    },
+    {
+      "Name": "sl.interposer.dll",
+      "RelativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.interposer.dll",
+      "Path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.interposer.dll",
+      "Size": 652928,
+      "Sha256": "8c87c9499461da561edd529aa9bf7831d67d7b94ebb1c1a5ed54ef4934e1ea4c"
+    },
+    {
+      "Name": "sl.pcl.dll",
+      "RelativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.pcl.dll",
+      "Path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.pcl.dll",
+      "Size": 360064,
+      "Sha256": "f13d51cfa05f4cd514df2026049e2db8adf359221713170ad386fd499915b582"
+    },
+    {
+      "Name": "sl.reflex.dll",
+      "RelativePath": "Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.reflex.dll",
+      "Path": "D:\\Wuthering Waves\\Wuthering Waves Game\\Engine\\Plugins\\Runtime\\Nvidia\\StreamlineCore\\Binaries\\ThirdParty\\Win64\\sl.reflex.dll",
+      "Size": 388736,
+      "Sha256": "0ce9725e3e03ea9e7f81d008b57f33ee365973d2e349131c8b1c3e3378fe2db0"
+    }
+  ],
+  "AbsentNamesForReferenceOnly": [
+    "NvLowLatencyVk.dll",
+    "nvngx_dlssnr.dll",
+    "sl.directsr.dll",
+    "sl.dlss_d.dll",
+    "sl.dlss_nr.dll",
+    "sl.dlss.dll",
+    "sl.nis.dll",
+    "sl.nvperf.dll"
+  ],
+  "GameExe": "D:\\Wuthering Waves\\Wuthering Waves Game\\Client\\Binaries\\Win64\\Client-Win64-Shipping.exe"
+}
