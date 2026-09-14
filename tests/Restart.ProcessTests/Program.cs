@@ -124,6 +124,23 @@ await Test("actual newly started process reference survives FPS attachment cance
     var error=await Failure(()=>Run(Actions(attach:(_,_)=>throw new OperationCanceledException("fake attachment cancellation")),true));
     Check(error.StartedProcess is not null&&!error.StartedProcess.HasExited&&error.Phase=="AttachingFps"&&error.InnerException is OperationCanceledException);
 });
+await Test("actual no-running FPS ON starts exactly once and attaches captured current FPS",async()=>{
+    int currentTargetFps=333,oldSessionFps=120,starts=0,attaches=0,received=0;
+    int snapshotFps=currentTargetFps;
+    var result=await Run(Actions(notice:(identities,_)=>{Check(identities.Count==0);return Task.FromResult(true);},start:async(path,_)=>{starts++;return await StartOwned(path);},attach:(_,_)=>{attaches++;received=snapshotFps;return Task.CompletedTask;}),true);
+    Check(result is not null&&starts==1&&attaches==1&&received==333&&received!=oldSessionFps);
+});
+await Test("actual repeated restart delegates attach fresh FPS snapshot instead of previous session value",async()=>{
+    var controller=new RestartController();var attached=new List<int>();int starts=0,currentTargetFps=144;
+    RestartActions CaptureCurrent()
+    {
+        int snapshot=currentTargetFps;
+        return Actions(start:async(path,_)=>{starts++;return await StartOwned(path);},attach:(_,_)=>{attached.Add(snapshot);return Task.CompletedTask;});
+    }
+    var first=await Run(CaptureCurrent(),true,controller:controller);Check(first is not null&&attached.SequenceEqual(new[]{144}));
+    currentTargetFps=360;var second=await Run(CaptureCurrent(),true,controller:controller);
+    Check(first!.HasExited&&second is not null&&starts==2&&attached.SequenceEqual(new[]{144,360}));
+});
 Console.WriteLine($"TOTAL passed={passed} failed={failed}; only self-built owned fixture processes started/terminated. No game, FPS DLL or UAC executed.");Environment.ExitCode=failed==0?0:1;
 
 sealed class FakeCatalog:IRestartProcessCatalog
