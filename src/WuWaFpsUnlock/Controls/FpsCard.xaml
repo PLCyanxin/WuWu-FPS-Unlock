@@ -2,7 +2,7 @@
 <Border Style="{StaticResource Card}"><Grid>
 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="12"/><RowDefinition Height="40"/><RowDefinition Height="8"/><RowDefinition Height="24"/></Grid.RowDefinitions>
 <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="46"/><ColumnDefinition Width="*"/><ColumnDefinition Width="46"/></Grid.ColumnDefinitions>
-<Viewbox Width="36" Height="36" Stretch="Uniform"><Canvas Width="24" Height="24"><Path Data="M3,7 L10,7 M2,12 L8,12 M3,17 L10,17 M13,6 L19,12 L13,18" Stroke="{StaticResource Blue}" StrokeThickness="1.7" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Canvas></Viewbox>
+<Viewbox Width="36" Height="36" Stretch="Uniform"><Canvas Width="24" Height="24"><Path Data="M3,16 A9,9 0 0 1 21,16 M6,10 L7.2,11.2 M12,8.5 L12,10 M18,10 L16.8,11.2 M12,16 L16,12" Stroke="{StaticResource Blue}" StrokeThickness="1.7" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/><Ellipse Canvas.Left="10.7" Canvas.Top="14.7" Width="2.6" Height="2.6" Fill="{StaticResource Blue}"/></Canvas></Viewbox>
 <StackPanel Grid.Column="1" VerticalAlignment="Center"><TextBlock Text="解锁帧率上限" Style="{StaticResource SectionTitle}"/><TextBlock Text="开启后下一次启动生效" Style="{StaticResource MutedText}" Margin="0,4,0,0"/></StackPanel>
 <CheckBox Grid.Column="2" Style="{StaticResource Switch}" IsChecked="{Binding FpsEnabled}" IsEnabled="{Binding CanChangeFpsMode}" AutomationProperties.Name="解锁帧率上限" ToolTip="FPS 开关及目标值在下次启动生效；未验证实时调帧接口。"/>
 </Grid>
