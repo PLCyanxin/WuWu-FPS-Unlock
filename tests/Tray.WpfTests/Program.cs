@@ -32,12 +32,12 @@ internal static class Program
                 Check(searches==0,"valid current pair skips discovery after edit debounce");
                 pathVm.GameRoot="C:\\invalid-cinebench";pathVm.GameExe="C:\\invalid-cinebench\\Other.exe";
                 await Task.Delay(1200);
-                Check(searches==1&&pathVm.GameRoot==fixture&&pathVm.GameExe==shipping,"invalid edited pair automatically searches and replaces both fields");
+                Check(searches==0&&pathVm.GameRoot=="C:\\invalid-cinebench","invalid path edits do not trigger discovery");
                 pathVm.GameRoot="";pathVm.GameExe="";
                 await Task.Delay(1200);
-                Check(searches==2&&pathVm.GameRoot==fixture&&pathVm.GameExe==shipping,"cleared pair automatically searches and restores both fields");
+                Check(searches==0&&pathVm.GameRoot==""&&pathVm.GameExe=="","clearing paths does not trigger discovery");
                 await Task.Delay(1000);
-                Check(searches==2,"applying discovery does not cause another search loop");
+                await pathVm.RefreshAsync();Check(searches==0,"refresh does not trigger discovery");
                 var pathWindow=new SettingsWindow(pathVm);pathWindow.Show();pathWindow.UpdateLayout();
                 System.Windows.Controls.Button? FindButton(System.Windows.DependencyObject node){
                     if(node is System.Windows.Controls.Button button&&ReferenceEquals(button.Command,pathVm.FindGameCommand))return button;
@@ -46,8 +46,8 @@ internal static class Program
                 var findButton=FindButton(pathWindow)!;
                 var peer=new System.Windows.Automation.Peers.ButtonAutomationPeer(findButton);
                 ((System.Windows.Automation.Provider.IInvokeProvider)peer.GetPattern(System.Windows.Automation.Peers.PatternInterface.Invoke)).Invoke();
-                await Task.Delay(200);
-                Check(searches==2&&pathVm.Logs.Contains("当前鸣潮路径有效，已复用")&&!pathVm.Busy,"native find button reports valid reuse immediately without searching");
+                await Task.Delay(200);for(int wait=0;pathVm.Busy&&wait<100;wait++)await Task.Delay(100);
+                Check(searches==1&&pathVm.GameRoot==fixture&&pathVm.GameExe==shipping&&!pathVm.Busy&&pathVm.FindGameLabel=="帮我查找鸣潮","native renamed find button performs exactly one discovery and fills both fields");pathVm.MfgSelected=false;pathVm.FpsEnabled=true;pathVm.DeployCommand.Execute(null);Check(pathVm.Logs.Contains("FPS 解锁无需部署，点击开始游戏即可。"),"FPS-only deploy click gives visible log feedback without deploying");
                 pathWindow.Close();
                 await pathVm.CloseAsync();
                 Check(window.IsVisible,"real native window shown before readiness");
@@ -101,5 +101,6 @@ internal static class Program
         window.Show();timer.Start();return app.Run();
     }
 }
+
 
 
