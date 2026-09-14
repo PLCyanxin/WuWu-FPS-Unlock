@@ -102,7 +102,7 @@ public sealed class AppViewModel:INotifyPropertyChanged
     public string ReShadeStatus=>_reShade;
     public string DeploymentState=>_deployState;
     public string PackageStatus=>_packageState;
-    public string StartLabel=>Busy?"处理中…":"开始游戏";
+    public string StartLabel=>Busy?"处理中…":IsGameRunning?"游戏中":"开始游戏";
     public string DeployLabel=>Busy?"处理中…":"开始部署";
     public RelayCommand OpenSettingsCommand{get;}
     public RelayCommand BrowseDirectoryCommand{get;}
@@ -143,9 +143,8 @@ public sealed class AppViewModel:INotifyPropertyChanged
     }
     private void BrowseExe()
     {
-        var dlg=new OpenFileDialog{Title="选择真正运行游戏的 EXE（ReShade 安装目标）",Filter="游戏程序 (*.exe)|*.exe",CheckFileExists=true};
-        if(Directory.Exists(GameRoot))dlg.InitialDirectory=GameRoot;
-        if(dlg.ShowDialog()==true){GameExe=dlg.FileName;_ =RefreshAsync();}
+        var selected=GameExecutablePicker.Show(Directory.Exists(GameRoot)?GameRoot:GameExe);
+        if(selected is not null){GameExe=selected;_ =RefreshAsync();}
     }
     public async Task RefreshAsync()
     {
@@ -201,6 +200,8 @@ public sealed class AppViewModel:INotifyPropertyChanged
             catch(NeedsElevationException){await ElevatedWorker.RunFromUi("deploy",snapshot,upgrade,Log,service.ApprovalFingerprint);}
             Status="文件部署及校验完成；MFG 游戏内实际效果待确认。";await RefreshCore();
         }
+        catch(IOException e) when(e.Message.StartsWith(GameFileBaselineStore.MissingFilesMessage,StringComparison.Ordinal))
+        {Status=GameFileBaselineStore.MissingFilesMessage;Log(e.Message);MessageBox.Show(Status,"文件缺失",MessageBoxButton.OK,MessageBoxImage.Warning);}
         finally{Busy=false;}
     }
     private async Task CleanAsync()
@@ -262,7 +263,11 @@ public sealed class AppViewModel:INotifyPropertyChanged
                     if(snapshot.TargetFps is <30 or >420)throw new InvalidDataException("目标FPS无效。");
                     var receipt=AppPaths.LoadReceipt(snapshot);
                     if(receipt?.Status is "PartialFailure" or "Installing" or "PartialClean")throw new IOException("部署维护尚未完成，请在设置处理后再开始。");
-                    if(receipt?.Status=="Deployed"&&!await DeploymentFiles.IsIntactAsync(receipt,token))throw new IOException("部署文件或配置发生变化，请先在设置重新检查；未结束游戏。");
+                    if(receipt?.Status=="Deployed"){
+                        var integrity=await DeploymentFiles.InspectIntegrityAsync(receipt,token);
+                        foreach(var difference in integrity.Differences)Log(difference.Message);
+                        if(!integrity.CanLaunch)throw new IOException("部署文件校验未通过，请查看日志中的具体路径；未结束游戏。");
+                    }
                     if(snapshot.MfgSelected&&(receipt is null||receipt.Status.StartsWith("Cleaned")))throw new IOException("已选择多帧生成但尚未部署，请先部署或关闭部署选择。");
                     if(snapshot.FpsEnabled)await BuiltinFpsService.PreflightAsync(token);
                 },
@@ -273,7 +278,7 @@ public sealed class AppViewModel:INotifyPropertyChanged
                     bool fpsPending=snapshot.FpsEnabled&&BuiltinFpsService.RequiresNotice(snapshot.GameExe);
                     if(!mfgPending&&!fpsPending)return Task.FromResult(true);
                     const string notice="第三方组件可能存在兼容性问题、崩溃及账号风险；无法保证所有游戏版本兼容。\n\n开始游戏会直接结束同一安装的现有游戏并重新启动，可能中断当前操作或丢失尚未保存的状态。\n\n目标FPS不是实际帧率保证。\n\n清除DLL后可能需要官方文件校验；普通启动自动补齐尚未取得独立成功证据。\n\n确认后保存本次部署须知；后续日常启动不再提示。";
-                    if(!OperationReview.Show("首次启动风险与须知",notice))return Task.FromResult(false);
+                    if(!OperationReview.Show("首次启动风险与须知",notice,fitContent:true))return Task.FromResult(false);
                     token.ThrowIfCancellationRequested();
                     if(mfgPending){DeploymentNoticeStore.Acknowledge(receipt!);AppPaths.SaveReceipt(receipt!);}
                     if(fpsPending)BuiltinFpsService.Acknowledge(snapshot.GameExe);
@@ -283,13 +288,16 @@ public sealed class AppViewModel:INotifyPropertyChanged
                 Start=(exe,token)=>
                 {
                     token.ThrowIfCancellationRequested();
-                    var process=Process.Start(new ProcessStartInfo(exe){UseShellExecute=true,WorkingDirectory=Path.GetDirectoryName(exe)!})??throw new IOException("系统未返回游戏进程。");
+                    var startInfo=new ProcessStartInfo(exe){UseShellExecute=true,WorkingDirectory=Path.GetDirectoryName(exe)!};
+                    if(snapshot.MfgSelected){startInfo.ArgumentList.Add("-dx12");Log("多帧生成启动参数：-dx12；实际D3D12加载以游戏日志为准。");}
+                    var process=Process.Start(startInfo)??throw new IOException("系统未返回游戏进程。");
                     Log($"仅启动所选Shipping一次：{exe}；PID={process.Id}；FPS={(snapshot.FpsEnabled?"ON":"OFF")}；目标={snapshot.TargetFps}");
                     return Task.FromResult(process);
                 },
                 AttachFps=async (process,token)=>
                 {
-                    await BuiltinFpsService.WaitForRendererAsync(process,snapshot.GameExe,token);
+                    await BuiltinFpsService.WaitForRendererAsync(process,snapshot.GameExe,token,Log);
+                    _game=process;IsGameRunning=!process.HasExited;GameReady?.Invoke();
                     _fpsSession=new FpsSession();
                     await _fpsSession.ConnectAsync(process,AppPaths.FpsCore,Log,token);
                     await _fpsSession.SetFpsAsync(snapshot.TargetFps,token);
@@ -298,9 +306,8 @@ public sealed class AppViewModel:INotifyPropertyChanged
             },phase=>{Status=phase switch{"Preflight"=>"正在检查路径与组件…","AwaitingNotice"=>"检查首次部署须知…","ReleaseOldSession"=>"释放旧游戏会话…","Stopping"=>"正在结束同一安装的旧游戏…","Rechecking"=>"确认旧实例已退出…","Starting"=>"正在启动游戏…","AttachingFps"=>"等待游戏并连接内置FPS核心…","Cancelled"=>"已取消，未继续启动。",_=>"正在检查游戏状态…"};},TimeSpan.FromSeconds(15),_lifetime.Token);
             if(process is null){Status="已取消须知，未结束或启动游戏。";return;}
             _game=process;IsGameRunning=!process.HasExited;
-            if(!snapshot.FpsEnabled)await BuiltinFpsService.WaitForRendererAsync(process,snapshot.GameExe,_lifetime.Token);
+            if(!snapshot.FpsEnabled){await BuiltinFpsService.WaitForRendererAsync(process,snapshot.GameExe,_lifetime.Token,Log);GameReady?.Invoke();}
             Status=snapshot.FpsEnabled?"游戏已启动 · 内置FPS已连接，实际效果以游戏为准":"游戏已启动 · FPS关闭";Log(Status);
-            GameReady?.Invoke();
         }
         catch(RestartFailureException e)
         {

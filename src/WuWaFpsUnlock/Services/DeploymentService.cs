@@ -2,6 +2,14 @@ using WuWaFpsUnlock.Core;
 namespace WuWaFpsUnlock.Services;
 public sealed class DeploymentService(Action<string> log)
 {
+    private static async Task CheckBaselineAsync(UserSettings s,CancellationToken token)
+    {
+        var path=AppPaths.Baseline(s.GameExe);
+        if(File.Exists(path))GameFileBaselineStore.RequirePresent(JsonFiles.Read<GameFileBaseline>(path),s.GameRoot,s.GameExe);
+        var observed=await GameFileBaselineStore.CaptureAsync(s.GameRoot,s.GameExe,token);
+        var baseline=GameFileBaselineStore.MergeAndSave(path,observed);
+        GameFileBaselineStore.RequirePresent(baseline,s.GameRoot,s.GameExe);
+    }
     public string ApprovalFingerprint { get; private set; } = "";
     public void UseApprovedFingerprint(string fingerprint) => ApprovalFingerprint = fingerprint;
     private static string Fingerprint(object value) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(value, JsonFiles.Options)));
@@ -10,6 +18,7 @@ public sealed class DeploymentService(Action<string> log)
     {
         string exe=GameProcesses.ValidateExe(s);GameProcesses.RequireStopped(s.GameRoot);
         if(!s.MfgSelected)return "未选多帧生成，不写入游戏文件。";
+        await CheckBaselineAsync(s,token);
         var manifest=PackageReader.Load(s.PackageManifest);var before=new ReShadeService(log).Inspect(s,manifest.ReShade);
         if(before.State=="Conflict")throw new IOException(before.Description);
         var plan=await PackageReader.PlanAsync(manifest,s.PackageManifest,s.GameRoot,Path.GetDirectoryName(exe)!,before.AddonDirectory,token);
@@ -60,6 +69,7 @@ public sealed class DeploymentService(Action<string> log)
     {
         string exe=GameProcesses.ValidateExe(s);GameProcesses.RequireStopped(s.GameRoot);
         if(!s.MfgSelected){log("没有选择多帧生成部署：未改动 ReShade、DLSS 和 Streamline。");return;}
+        await CheckBaselineAsync(s,token);
         if(!File.Exists(s.PackageManifest))throw new FileNotFoundException("尚未提供完整的 MFG 文件包清单。");
         var manifest=PackageReader.Load(s.PackageManifest);var hardware=EnvironmentProbe.Read(log);
         if(!hardware.IsAdaGeForce)throw new InvalidOperationException("未确认 GeForce RTX 40 系显卡。仅阻止 MFG 部署，不影响普通 FPS 启动。");

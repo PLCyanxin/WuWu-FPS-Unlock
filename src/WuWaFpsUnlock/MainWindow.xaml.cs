@@ -23,7 +23,7 @@ public partial class MainWindow:Window
     }
     private void OnClosing(object? sender,CancelEventArgs e)
     {
-        if(!_exitRequested){e.Cancel=true;MinimizeToTray();return;}
+        if(!_exitRequested&&_vm.IsGameRunning){e.Cancel=true;MinimizeToTray();return;}
         if(_vm.Busy){e.Cancel=true;_vm.Log("当前操作仍在进行，不能在文件写入/启动过程中关闭窗口。");return;}
     }
     private void ExitFromTray(){_exitRequested=true;try{Close();}finally{_exitRequested=false;}}

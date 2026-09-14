@@ -123,7 +123,7 @@ public static class Program
             vm.CloseAsync().GetAwaiter().GetResult();
             vm=new AppViewModel();main=new MainWindow(vm);settings=new SettingsWindow(vm);
             main.Width=490;main.Height=370;settings.Width=1160;settings.Height=806;
-            Test("default render reads actual local environment with empty game paths",()=>{
+            Test("default render reads actual environment and validates discovered game paths",()=>{
                 SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext(Dispatcher.CurrentDispatcher));
                 Task refresh=vm.RefreshAsync();var watch=System.Diagnostics.Stopwatch.StartNew();
                 while(!refresh.IsCompleted)
@@ -132,7 +132,7 @@ public static class Program
                     Dispatcher.CurrentDispatcher.Invoke(()=>{},DispatcherPriority.ContextIdle);Thread.Sleep(10);
                 }
                 refresh.GetAwaiter().GetResult();Layout(main);Layout(settings);
-                Check(vm.GameRoot==""&&vm.GameExe==""&&vm.TargetFps==240,"default screenshot contains fixture path or FPS");
+                Check(((vm.GameRoot==""&&vm.GameExe=="")||WuWaFpsUnlock.Core.GameDiscoveryService.TryValidateSelection(vm.GameRoot,vm.GameExe,out _,out _))&&vm.TargetFps==240,"discovery returned invalid game pair or fixture FPS");
                 Write($"ACTUAL ENV GPU={vm.Gpu}; DRIVER={vm.Driver}; OS={vm.Os}; HAGS={vm.Hags}; DYNAMIC={vm.DynamicStatus}");
             });
             foreach(double scale in new[]{1.0,1.5,2.0})
@@ -162,6 +162,7 @@ public static class Program
         yield return root;for(int i=0;i<VisualTreeHelper.GetChildrenCount(root);i++)foreach(var child in Tree(VisualTreeHelper.GetChild(root,i)))yield return child;
     }
 }
+
 
 
 

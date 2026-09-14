@@ -51,6 +51,8 @@ internal static class Program
                 pathWindow.Close();
                 await pathVm.CloseAsync();
                 Check(window.IsVisible,"real native window shown before readiness");
+                typeof(AppViewModel).GetProperty("IsGameRunning")!.SetValue(vm,true);
+                Check(vm.StartLabel=="游戏中","running game changes start label");
                 var ready=(Action?)typeof(AppViewModel).GetField("GameReady",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(vm);
                 ready!();
                 var tray=(System.Windows.Forms.NotifyIcon?)typeof(MainWindow).GetField("_tray",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(window);
@@ -74,8 +76,24 @@ internal static class Program
                 Check(window.IsVisible&&!tray!.Visible&&!closed,"activation channel restores same tray window without game launch");
                 typeof(MainWindow).GetMethod("RestoreFromTray",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(window,null);
                 Check(window.IsVisible&&!closed,"window restores after close-to-tray");
-                typeof(MainWindow).GetMethod("ExitFromTray",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(window,null);
-                Check(closed,"explicit tray exit really closes window");
+                typeof(AppViewModel).GetProperty("IsGameRunning")!.SetValue(vm,false);
+                Check(vm.StartLabel=="开始游戏","game exit restores start label");
+                var pickerTimer=new DispatcherTimer{Interval=TimeSpan.FromMilliseconds(500)};
+                pickerTimer.Tick+=(_,_)=>{
+                    pickerTimer.Stop();
+                    var picker=app.Windows.OfType<Window>().First(w=>w.Title=="选择鸣潮游戏 EXE");
+                    var rightClick=new System.Windows.Input.MouseButtonEventArgs(System.Windows.Input.Mouse.PrimaryDevice,Environment.TickCount,System.Windows.Input.MouseButton.Right){RoutedEvent=System.Windows.Input.Mouse.PreviewMouseDownEvent};
+                    picker.RaiseEvent(rightClick);
+                    Check(rightClick.Handled&&picker.IsVisible,"managed EXE picker handles right click without shell menu or crash");
+                    picker.Close();
+                };
+                pickerTimer.Start();
+                Check(WuWaFpsUnlock.Services.GameExecutablePicker.Show(fixture)==null,"cancel managed EXE picker leaves selection unchanged");
+                var notice=WuWaFpsUnlock.Services.OperationReview.CreateWindow("首次启动风险与须知","第三方组件可能存在兼容性问题、崩溃及账号风险；无法保证所有游戏版本兼容。\n\n开始游戏会直接结束同一安装的现有游戏并重新启动，可能中断当前操作或丢失尚未保存的状态。\n\n目标FPS不是实际帧率保证。\n\n清除DLL后可能需要官方文件校验；普通启动自动补齐尚未取得独立成功证据。\n\n确认后保存本次部署须知；后续日常启动不再提示。",true);
+                notice.Show();notice.UpdateLayout();
+                Check(notice.ActualHeight<500&&notice.SizeToContent==SizeToContent.Height,"first notice sizes to actual text without fixed large blank area");
+                notice.Close();window.Close();
+                Check(closed,"close without running game really exits window");
                 Console.WriteLine($"TOTAL passed={passed} failed=0; notification lifecycle, not real-game readiness acceptance");app.Shutdown(0);
             }
             catch(Exception e){Console.WriteLine(e);app.Shutdown(1);}
