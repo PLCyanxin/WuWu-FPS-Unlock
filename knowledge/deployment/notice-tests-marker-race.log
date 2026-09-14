@@ -93,11 +93,23 @@ PASS duplicate controlled INI key refuses without overwrite
 PASS invalid bool configuration refuses
 PASS FPS range validation
 PASS actual fixture single process FPS OFF and Chinese path
-PASS actual fixture single process FPS ON and Chinese path
+FAIL actual fixture single process FPS ON and Chinese path: System.IO.IOException: The process cannot access the file 'E:\yanxin_ws\wuwa-fps-unlock\.agent-worktrees\deployment\artifacts\test-work\真实子进程 空格-e976366f948a490db21627526d32d6a7\b7e0609c-81f3-4d41-96dc-e739c02cc471 中文 marker.txt' because it is being used by another process.
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+   at System.IO.Strategies.OSFileStreamStrategy..ctor(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+   at System.IO.Strategies.FileStreamHelpers.ChooseStrategyCore(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+   at System.IO.StreamReader.ValidateArgsAndOpenPath(String path, Int32 bufferSize)
+   at System.IO.File.ReadAllLines(String path, Encoding encoding)
+   at LaunchProcessTests.<>c__DisplayClass1_2.<<RunAsync>b__14>d.MoveNext() in E:\yanxin_ws\wuwa-fps-unlock\.agent-worktrees\deployment\tests\WuWaFpsUnlock.Tests\LaunchProcessTests.cs:line 45
+--- End of stack trace from previous location ---
+   at WuWaFpsUnlock.Core.LaunchExecution.RunAsync(LaunchPlan plan, Func`1 prepare, Func`1 start, Func`3 waitForRenderer, Action`1 state, TimeSpan timeout, CancellationToken cancellationToken) in E:\yanxin_ws\wuwa-fps-unlock\.agent-worktrees\deployment\src\WuWaFpsUnlock.Core\LaunchExecution.cs:line 31
+   at LaunchProcessTests.<>c__DisplayClass1_1.<<RunAsync>b__11>d.MoveNext() in E:\yanxin_ws\wuwa-fps-unlock\.agent-worktrees\deployment\tests\WuWaFpsUnlock.Tests\LaunchProcessTests.cs:line 44
+--- End of stack trace from previous location ---
+   at Program.<>c__DisplayClass0_0.<<<Main>$>g__Test|0>d.MoveNext() in E:\yanxin_ws\wuwa-fps-unlock\.agent-worktrees\deployment\tests\WuWaFpsUnlock.Tests\Program.cs:line 10
 PASS actual fixture starts but no renderer: timeout is failure, no second launch
 PASS actual fixture exits before renderer: exit is not game success
 PASS missing configuration stops before actual process creation
 PASS actual running same-name fixture blocks unsafe external route
 PASS actual fixture concurrent double start blocked
 PASS actual fixture monitoring cancellation leaves child alive
-RESULT: 102 passed, 0 failed. No Windows/game integration was exercised.
+RESULT: 101 passed, 1 failed. No Windows/game integration was exercised.

@@ -90,6 +90,7 @@ public sealed class DeploymentReceipt
     public List<string> SkippedVendorNames { get; set; } = [];
     public List<IniReceipt> IniEdits { get; set; } = [];
     public DeploymentNoticeState? Notice { get; set; }
+    public bool PendingDeploymentChanges { get; set; }
     public List<DeploymentHistoryEntry> History { get; set; } = [];
 }
 public static class JsonFiles

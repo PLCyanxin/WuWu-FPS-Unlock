@@ -58,6 +58,7 @@ public static class DeploymentFiles
                     }
                     else if (f.ExpectedTargetHash is null) File.Move(temp, f.Target, false);
                     else File.Replace(temp, f.Target, null);
+                    receipt.PendingDeploymentChanges = true;
                     if (await SafePaths.HashAsync(f.Target, token) != f.Sha256) throw new IOException("写入后校验失败：" + f.Target);
                     entry.Completed = true; persist(); log("已写入并校验：" + f.Target);
                 }

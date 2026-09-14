@@ -62,6 +62,7 @@ public sealed class ReShadeService(Action<string> log)
         string setup=await ResolveLocalSetupAsync(s.PackageManifest,spec,token);
         GameProcesses.RequireStopped(s.GameRoot);
         bool wasMissing=!File.Exists(expected);
+        string? initialRuntimeHash=wasMissing?null:await SafePaths.HashAsync(expected,token);
         byte[]? originalIni=File.Exists(info.Ini)?File.ReadAllBytes(info.Ini):null; // Transient preservation, no backup file.
         receipt.ProxyPath=expected;receipt.Status="InstallingReShade";AppPaths.SaveReceipt(receipt);
         var psi=new ProcessStartInfo(setup){UseShellExecute=false,CreateNoWindow=true,WorkingDirectory=Path.GetDirectoryName(setup)!};
@@ -77,6 +78,8 @@ public sealed class ReShadeService(Action<string> log)
             log($"ReShade Setup 仍在运行（PID {process.Id}），可能正在等待官方兼容表。继续等待真实退出；未报告成功。");
         try { await exit; }
         finally { if(originalIni is not null)File.WriteAllBytes(info.Ini,originalIni); }
+        string? observedRuntimeHash=File.Exists(expected)?await SafePaths.HashAsync(expected,token):null;
+        if(observedRuntimeHash!=initialRuntimeHash){receipt.PendingDeploymentChanges=true;AppPaths.SaveReceipt(receipt);}
         if(process.ExitCode!=0)throw new IOException($"ReShade Setup 退出码 {process.ExitCode}，未将部署标记成功。");
         var after=Inspect(s,spec);
         if(after.State!="Reusable"||after.Proxy is null||!File.Exists(expected)||!after.Proxy.Equals(expected,StringComparison.OrdinalIgnoreCase))throw new IOException("ReShade Setup 已退出，但代理文件/完整 Add-on 特征/目标布局未通过检查。");
@@ -85,6 +88,7 @@ public sealed class ReShadeService(Action<string> log)
         var entry=receipt.Files.FirstOrDefault(f=>f.Path.Equals(expected,StringComparison.OrdinalIgnoreCase));
         if(entry is null){entry=new(){Path=expected,CreatedByTool=wasMissing,Kind="ReShade",SourceKind=wasMissing?"ToolInstalled":"UserExisting"};receipt.Files.Add(entry);}
         if(wasMissing){entry.CreatedByTool=true;entry.SourceKind="ToolInstalled";}
+        receipt.PendingDeploymentChanges|=initialRuntimeHash!=hash;
         entry.SourcePath=setup;entry.SourceHash=spec.SetupSha256;
         entry.InstalledHash=hash;entry.Completed=true;AppPaths.SaveReceipt(receipt);
         log("ReShade 本体检查完成。没有安装滤镜包。");return after;

@@ -78,7 +78,6 @@ public sealed class DeploymentService(Action<string> log)
         foreach(var f in plan){WriteProbe.Check(f.Target);if(File.Exists(f.Target)){using var lockTest=new FileStream(f.Target,FileMode.Open,FileAccess.ReadWrite,FileShare.None);}}
         WriteProbe.Check(before.Ini);WriteProbe.Check(before.Proxy??Path.Combine(Path.GetDirectoryName(exe)!,manifest.ReShade.ProxyApi+".dll"));
         var initialIniHash=File.Exists(before.Ini)?await SafePaths.HashAsync(before.Ini,token):null;
-        var initialProxyHash=before.Proxy is not null&&File.Exists(before.Proxy)?await SafePaths.HashAsync(before.Proxy,token):null;
         var previousReceipt=AppPaths.LoadReceipt(s);
         if(previousReceipt is not null)DeploymentNoticeStore.InitializeLegacy(previousReceipt);
         // A clean cycle ends ownership. Do not inherit ownership over files another tool installs later.
@@ -108,9 +107,10 @@ public sealed class DeploymentService(Action<string> log)
             string early=ini.MergeCsv("ADDON","LoadFromDllMain","renodx-mfgunlock.addon64");
             ini.ApplyOwned("ADDON","LoadFromDllMain",early,receipt);
             AppPaths.SaveReceipt(receipt);ini.Save(ready.Ini);
+            receipt.PendingDeploymentChanges|=initialIniHash!=await SafePaths.HashAsync(ready.Ini,token);
             receipt.Status="Deployed";AppPaths.SaveReceipt(receipt);
             if(!await DeploymentFiles.IsIntactAsync(receipt,token))throw new IOException("最终文件或配置校验失败。");
-            bool actualChanges=plan.Any(f=>f.ExpectedTargetHash!=f.Sha256)||initialIniHash!=await SafePaths.HashAsync(ready.Ini,token)||initialProxyHash!=proxyEntry.InstalledHash;
+            bool actualChanges=receipt.PendingDeploymentChanges;
             DeploymentNoticeStore.CompleteSuccessfulDeployment(receipt,actualChanges);AppPaths.SaveReceipt(receipt);
             log(actualChanges?"本次实际部署变化已完成，首次部署须知等待确认。":"本次仅复用相同文件/配置，未重置须知确认。");
             log($"匹配项部署完成：{plan.Count(f=>f.Kind==PayloadKind.Vendor)} 个 DLL 目标与 addon/配置已校验，{skippedVendors.Count} 个材料名称因无同名目标未部署；MFG 实际启用仍待游戏内确认。");

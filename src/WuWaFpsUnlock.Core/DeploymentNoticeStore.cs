@@ -26,7 +26,9 @@ public static class DeploymentNoticeStore
     {
         if (receipt.Status != "Deployed") throw new InvalidOperationException("只有已完成校验的部署才能设置须知状态。");
         receipt.Notice ??= new();
+        actualChanges |= receipt.PendingDeploymentChanges;
         if (!actualChanges) return;
+        receipt.PendingDeploymentChanges = false;
         receipt.Notice.InstallationGeneration++;
         receipt.Notice.Pending = true;
         receipt.Notice.Cleared = false;
@@ -42,6 +44,7 @@ public static class DeploymentNoticeStore
     public static void MarkCleaned(DeploymentReceipt receipt)
     {
         InitializeLegacy(receipt);
+        receipt.PendingDeploymentChanges = false;
         receipt.Notice!.Cleared = true;
         receipt.Notice.Pending = false;
     }
