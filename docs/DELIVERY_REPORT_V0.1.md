@@ -20,7 +20,7 @@
 | Restart.ProcessTests | 25/25 | 自建真实假进程、临时目录；ON/OFF单启动、路径隔离、重复点击、退出竞态、超时/权限模拟、取消、新FPS快照 |
 | Windows/ReShade | 12/12 | 用户真实Setup与18DLL在工程假目录实际安装/替换/校验/清除 |
 | WPF离屏 | 19/19 | 真实WPF绑定/布局/按钮状态/版本/编译路线；不是桌面截图 |
-| WPF通知区生命周期 | 4/4 | 实际窗口显示、隐藏、图标、恢复；GameReady由测试模拟 |
+| WPF通知区生命周期 | 7/7 | 实际窗口显示、隐藏、图标、恢复；GameReady由测试模拟 |
 | 数据迁移 | 19/19 | 临时目录冲突/链接保护、字段保留；另实际迁移8文件 |
 | Windows x64自包含发布 | 成功 | 真实dotnet publish日志 |
 
@@ -53,3 +53,6 @@
 材料版本/哈希：payload/source-manifest.json；逐文件游戏映射：artifacts/real-game-candidate-map.md（历史扫描，不代表当前修复后的路径状态）；新版逐文件包哈希：artifacts/v0.1/portable-file-hashes.json；ZIP哈希：DELIVERY_SHA256.txt。
 
 新版WPF离屏图：artifacts/v0.1/native-offscreen；旧版实际桌面截图：artifacts/real-run/screenshots。没有把离屏图或旧版图当作新版真实游戏截图。
+
+最新托盘补充：主窗口×收起托盘；游戏就绪自动收起；双击恢复；右键退出启动器才真正退出。使用用户最新图标透明版.png原件生成32位ICO，无新增圆角或抠图。实际原生托盘回归7/7，游戏就绪事件仍为测试模拟。
+

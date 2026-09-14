@@ -27,7 +27,14 @@ internal static class Program
                 Check(tray?.Icon is not null&&tray.Text=="鸣潮 FPS Unlock v0.1","original-color icon and version assigned");
                 typeof(MainWindow).GetMethod("RestoreFromTray",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(window,null);
                 Check(window.IsVisible&&window.WindowState==WindowState.Normal&&tray!.Visible==false,"restore returns window without starting a process");
-                window.Close();Console.WriteLine($"TOTAL passed={passed} failed=0; notification lifecycle, not real-game readiness acceptance");app.Shutdown(0);
+                bool closed=false;window.Closed+=(_,_)=>closed=true;
+                window.Close();
+                Check(!closed&&!window.IsVisible&&tray!.Visible,"close button hides to tray without closing application");
+                typeof(MainWindow).GetMethod("RestoreFromTray",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(window,null);
+                Check(window.IsVisible&&!closed,"window restores after close-to-tray");
+                typeof(MainWindow).GetMethod("ExitFromTray",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(window,null);
+                Check(closed,"explicit tray exit really closes window");
+                Console.WriteLine($"TOTAL passed={passed} failed=0; notification lifecycle, not real-game readiness acceptance");app.Shutdown(0);
             }
             catch(Exception e){Console.WriteLine(e);app.Shutdown(1);}
         };

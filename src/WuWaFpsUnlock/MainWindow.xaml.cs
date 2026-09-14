@@ -7,6 +7,7 @@ public partial class MainWindow:Window
     private readonly AppViewModel _vm;private SettingsWindow? _settings;
     private System.Windows.Forms.NotifyIcon? _tray;
     private System.Drawing.Icon? _trayIcon;
+    private bool _exitRequested;
     public MainWindow(AppViewModel vm)
     {
         InitializeComponent();_vm=vm;DataContext=vm;vm.SettingsRequested+=OpenSettings;
@@ -22,8 +23,10 @@ public partial class MainWindow:Window
     }
     private void OnClosing(object? sender,CancelEventArgs e)
     {
+        if(!_exitRequested){e.Cancel=true;MinimizeToTray();return;}
         if(_vm.Busy){e.Cancel=true;_vm.Log("当前操作仍在进行，不能在文件写入/启动过程中关闭窗口。");return;}
     }
+    private void ExitFromTray(){_exitRequested=true;try{Close();}finally{_exitRequested=false;}}
     private void MinimizeToTray()
     {
         try
@@ -36,11 +39,11 @@ public partial class MainWindow:Window
                 _tray.DoubleClick+=(_,_)=>Dispatcher.Invoke(RestoreFromTray);
                 var menu=new System.Windows.Forms.ContextMenuStrip();
                 menu.Items.Add("显示启动器",null,(_,_)=>Dispatcher.Invoke(RestoreFromTray));
-                menu.Items.Add("退出启动器",null,(_,_)=>Dispatcher.Invoke(()=>Close()));
+                menu.Items.Add("退出启动器",null,(_,_)=>Dispatcher.Invoke(ExitFromTray));
                 _tray.ContextMenuStrip=menu;
             }
             _tray.Visible=true;_settings?.Hide();WindowState=WindowState.Minimized;Hide();
-            _vm.Log("游戏已就绪，启动器已收起到通知区；双击头像可恢复。折叠位置由Windows控制。");
+            _vm.Log("启动器已收起到通知区；双击头像可恢复，右键菜单可退出。折叠位置由Windows控制。");
         }
         catch(Exception e){_vm.Log("收起到通知区失败，保留窗口："+e.Message);Show();WindowState=WindowState.Normal;}
     }
