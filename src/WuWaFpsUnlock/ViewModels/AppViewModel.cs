@@ -55,7 +55,7 @@ public sealed class AppViewModel:INotifyPropertyChanged
         _monitor.Tick+=Monitor;_monitor.Start();
         RememberValidSelection();
         _pathCheck.Tick+=async(_,_)=>{if(Busy)return;_pathCheck.Stop();try{await FindGameAsync();}catch(Exception e){ReportError(e);}};
-        Log("鸣潮 FPS Unlock 0.1 启动。内置 FPS 核心；状态来自真实检测。");
+        Log("鸣潮 FPS Unlock 0.1 启动。");
     }
     public bool Busy {get=>_busy;private set{_busy=value;NotifyAll();}}
     public bool IsGameRunning {get=>_running;private set{_running=value;NotifyAll();}}
@@ -316,5 +316,6 @@ public sealed class AppViewModel:INotifyPropertyChanged
     }
     public async Task CloseAsync(){_pathCheck.Stop();_monitor.Stop();_lifetime.Cancel();if(_fpsSession is not null)await _fpsSession.DisposeAsync();_game?.Dispose();}
 }
+
 
 
