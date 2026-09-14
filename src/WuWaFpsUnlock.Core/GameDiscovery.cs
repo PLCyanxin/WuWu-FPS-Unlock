@@ -29,6 +29,46 @@ public static class GameDiscoveryService
         return new GameDiscoveryResult(result.Candidates, diagnostics.Concat(result.Diagnostics).ToArray());
     }, token);
 
+    /// <summary>Checks the exact selected pair without discovering or substituting another executable.</summary>
+    public static bool TryValidateSelection(string? selectedRoot, string? selectedExe,
+        out GameDiscoveryCandidate? candidate, out string reason)
+    {
+        candidate = null;
+        reason = "请先选择鸣潮游戏根目录与原装Shipping。";
+        try
+        {
+            if (string.IsNullOrWhiteSpace(selectedRoot) || string.IsNullOrWhiteSpace(selectedExe) ||
+                !Path.IsPathFullyQualified(selectedRoot) || !Path.IsPathFullyQualified(selectedExe)) return false;
+            var root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(selectedRoot));
+            var exe = Path.GetFullPath(selectedExe);
+            var expected = Path.GetFullPath(Path.Combine(root, ShippingRelative));
+            if (!exe.Equals(expected, StringComparison.OrdinalIgnoreCase))
+            {
+                reason = "所选EXE不是此游戏根内Client\\Binaries\\Win64\\Client-Win64-Shipping.exe；需要重新查找或手选。";
+                return false;
+            }
+            var entry = Path.Combine(root, "Wuthering Waves.exe");
+            AssertPlainAncestors(exe); AssertPlainAncestors(entry);
+            if (!File.Exists(exe) || !File.Exists(entry))
+            {
+                reason = "所选鸣潮路径不完整：Shipping或根入口Wuthering Waves.exe不存在。";
+                return false;
+            }
+            if (!IsAmd64Executable(exe))
+            {
+                reason = "所选Shipping不是可读取的x64 PE可执行文件。";
+                return false;
+            }
+            candidate = new(root, exe, ["已核验当前根目录与Shipping精确对应、x64 PE及无链接"]);
+            reason = "当前鸣潮根目录与Shipping路径有效，可复用；未验证文件官方来源或游戏运行。";
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or System.Security.SecurityException)
+        {
+            reason = $"所选鸣潮路径无法验证：{ex.Message}";
+            return false;
+        }
+    }
     public static GameDiscoveryResult DiscoverFromHints(IEnumerable<GameDiscoveryHint> hints, CancellationToken token = default)
     {
         var found = new Dictionary<string, (string Shipping, HashSet<string> Sources)>(StringComparer.OrdinalIgnoreCase);
@@ -53,11 +93,13 @@ public static class GameDiscoveryService
                     foreach (var root in new[] { path, Path.Combine(path, "Wuthering Waves Game") })
                     {
                         var shipping = Path.GetFullPath(Path.Combine(root, ShippingRelative));
-                        var entry = Path.Combine(root, "Wuthering Waves.exe");
-                        if (!File.Exists(shipping) || !File.Exists(entry)) continue;
-                        AssertPlainAncestors(shipping); AssertPlainAncestors(entry);
-                        if (!IsAmd64Executable(shipping)) { diagnostics.Add($"跳过非x64 PE Shipping：{shipping}"); continue; }
-                        var fullRoot = Path.TrimEndingDirectorySeparator(Path.GetFullPath(root));
+                        // Recheck each candidate; no cached candidate survives a changed file.
+                        if (!TryValidateSelection(root, shipping, out var validated, out var reason))
+                        {
+                            if (File.Exists(shipping)) diagnostics.Add($"跳过候选 {shipping}：{reason}");
+                            continue;
+                        }
+                        var fullRoot = validated!.GameRoot;
                         if (!found.TryGetValue(fullRoot, out var item)) item = (shipping, new(StringComparer.Ordinal));
                         item.Sources.Add($"{hint.Source}：{hint.Path}"); found[fullRoot] = item;
                     }

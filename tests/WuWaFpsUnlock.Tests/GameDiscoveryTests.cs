@@ -19,6 +19,52 @@ public static class GameDiscoveryTests
         try
         {
             var a = MakeGame("游戏A"); var b = MakeGame("游戏B");
+            string Shipping(string game) => Path.Combine(game,"Client","Binaries","Win64","Client-Win64-Shipping.exe");
+            await test("discovery exact selected pair can be reused without searching", () => Run(() =>
+            {
+                Check(GameDiscoveryService.TryValidateSelection(a,Shipping(a),out var current,out var reason));
+                Check(current!.GameRoot == a && current.ShippingExePath == Shipping(a) && reason.Contains("可复用"));
+            }));
+            await test("discovery correct root with Cinebench executable cannot be reused", () => Run(() =>
+            {
+                var wrong=Path.Combine(root,"Cinebench.exe");File.Copy(Shipping(a),wrong);
+                Check(!GameDiscoveryService.TryValidateSelection(a,wrong,out var current,out _) && current is null);
+            }));
+            await test("discovery existing wrong root with correct executable cannot be reused", () => Run(() =>
+                Check(!GameDiscoveryService.TryValidateSelection(b,Shipping(a),out _,out _))));
+            await test("discovery same-name EXE outside canonical layout is rejected", () => Run(() =>
+            {
+                var fake=Path.Combine(root,"Client-Win64-Shipping.exe");File.Copy(Shipping(a),fake);
+                Check(!GameDiscoveryService.TryValidateSelection(root,fake,out _,out _));
+            }));
+            await test("discovery renamed fake Shipping with no game layout is rejected", () => Run(() =>
+            {
+                var fakeRoot=Path.Combine(root,"Cinebench masquerade");var fake=Shipping(fakeRoot);
+                Directory.CreateDirectory(Path.GetDirectoryName(fake)!);File.Copy(Shipping(a),fake);
+                Check(!GameDiscoveryService.TryValidateSelection(fakeRoot,fake,out _,out _));
+                Check(GameDiscoveryService.DiscoverFromHints([new(fakeRoot,"incorrect user choice"),new(a,"saved valid game")]).Candidates.Single().GameRoot==a);
+            }));
+            await test("discovery wrong selection does not suppress fresh valid saved hint", async () =>
+            {
+                var wrong=Path.Combine(root,"Cinebench");Directory.CreateDirectory(wrong);
+                var result=await GameDiscoveryService.DiscoverAsync(wrong,[a],false);
+                Check(result.Candidates.Single().GameRoot==a);
+            });
+            await test("discovery rechecks on-disk selection and never reuses cached success", () => Run(() =>
+            {
+                var changed=MakeGame("changed after discovery");
+                Check(GameDiscoveryService.TryValidateSelection(changed,Shipping(changed),out _,out _));
+                Check(GameDiscoveryService.DiscoverFromHints([new(changed,"selected")]).Candidates.Count==1);
+                File.WriteAllText(Shipping(changed),"renamed non-PE file");
+                Check(!GameDiscoveryService.TryValidateSelection(changed,Shipping(changed),out _,out _));
+                Check(GameDiscoveryService.DiscoverFromHints([new(changed,"selected")]).Candidates.Count==0);
+            }));
+            await test("discovery empty partial and root-launcher selections cannot be reused", () => Run(() =>
+            {
+                Check(!GameDiscoveryService.TryValidateSelection(a,null,out _,out _));
+                Check(!GameDiscoveryService.TryValidateSelection(null,Shipping(a),out _,out _));
+                Check(!GameDiscoveryService.TryValidateSelection(a,Path.Combine(a,"Wuthering Waves.exe"),out _,out _));
+            }));
             await test("discovery validates exact Shipping layout from selected root", () => Run(() =>
                 Check(GameDiscoveryService.DiscoverFromHints([new(a,"selected")]).Candidates.Single().GameRoot == a)));
             await test("discovery resolves saved Shipping and merges evidence", () => Run(() =>

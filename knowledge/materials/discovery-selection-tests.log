@@ -1,0 +1,102 @@
+PASS reject path ../outside.dll
+PASS reject path ..\outside.dll
+PASS reject path /absolute.dll
+PASS reject path \absolute.dll
+PASS reject path C:\x.dll
+PASS reject path x.dll:stream
+PASS reject path a//b.dll
+PASS reject path NUL.dll
+PASS reject path COM1.dll
+PASS reject path dir./x.dll
+PASS reject path dir /x.dll
+PASS reject path a/./b.dll
+PASS reject path a/*/x.dll
+PASS allow Chinese and spaces
+PASS reject sibling-prefix target
+PASS manifest round trip
+PASS missing payload rejected
+PASS hash mismatch prevents plan
+PASS duplicate target rejected
+PASS unknown vendor rejected
+PASS missing addon rejected
+PASS dynamic floor cannot be lowered
+PASS fixed does not inherit dynamic floor
+PASS ReShade proxy not inferred
+PASS multi-line INI injection rejected
+PASS INI preserves other sections
+PASS INI duplicate keys fail closed
+PASS merge early-load list without duplicates
+PASS owned keys restore previous value only
+PASS later user key edits are retained
+PASS re-deploy retains original key ownership
+PASS copy and post-write SHA validation
+PASS idempotent deployment retains created ownership
+PASS pre-existing files never become owned
+PASS cleanup removes replaced vendor and own addon
+PASS cleanup preserves modified addon
+PASS cleanup preserves pre-existing addon
+PASS cleanup refuses arbitrary receipt filename
+PASS journal intent is emitted before copy
+PASS driver 591.86 not Dynamic
+PASS driver 595.40 not Dynamic
+PASS driver 595.41 requires runtime verification
+PASS unknown driver never marked supported
+PASS driver formatting
+PASS all 18 vendor names accepted
+PASS no same name means no vendor creation
+PASS same names in nested directories all explicitly mapped
+PASS same-hash pre-existing vendor is never claimed or cleaned
+PASS modified replaced vendor is preserved during clean
+PASS changed target after planning blocks all writes
+PASS missing target after planning is never recreated
+PASS locked target fails preflight before any copy
+PASS partial write failure persists actual completed files
+PASS repeat cleanup is safe
+PASS locked owned file reports partial cleanup and supports retry
+PASS out-of-root receipt refuses deletion
+PASS unmatched material still receives full hash validation
+PASS incomplete journal ownership cannot delete later file
+PASS addon added after approval blocks all writes
+PASS same-hash addon added after approval also requires new preview
+PASS addon arriving during copy is not overwritten
+PASS handle-based deletion preserves a nonmatching file
+PASS integrity checks all owned INI keys and early-load CSV
+PASS same-plan retry cannot overwrite user change after a completed addon
+PASS confirmed material cleanup can remove existing same-hash manual files without ownership
+PASS material cleanup preserves mismatched vendor and unknown addon names
+PASS material cleanup revalidates every source even without matching target
+PASS material cleanup revalidates entire target plan before first delete
+PASS material cleanup maps duplicate nested files explicitly
+PASS material cleanup refuses arbitrary manually forged candidate names
+PASS notice is pending only after changed successful deployment
+PASS notice cancellation is not acknowledgement; same reuse preserves acknowledgement
+PASS notice changes reset per-installation pending
+PASS legacy deployed notice migrates without clearing evidence
+PASS clean and redeploy archives receipt and resets notice only on actual change
+PASS notice acknowledgement persists across JSON restart
+PASS partial write retained until a successful no-op retry completes notice
+PASS settings unknown JSON survives clone edit and disk roundtrip
+PASS receipt and nested unknown JSON survive acknowledgement and clean-cycle archive
+PASS ReShade cleanup provenance ToolInstalled
+PASS ReShade cleanup provenance UserExisting
+PASS ReShade cleanup provenance LegacyUnknown
+PASS ReShade ownership refuses another load directory
+PASS discovery exact selected pair can be reused without searching
+PASS discovery correct root with Cinebench executable cannot be reused
+PASS discovery existing wrong root with correct executable cannot be reused
+PASS discovery same-name EXE outside canonical layout is rejected
+PASS discovery renamed fake Shipping with no game layout is rejected
+PASS discovery wrong selection does not suppress fresh valid saved hint
+PASS discovery rechecks on-disk selection and never reuses cached success
+PASS discovery empty partial and root-launcher selections cannot be reused
+PASS discovery validates exact Shipping layout from selected root
+PASS discovery resolves saved Shipping and merges evidence
+PASS discovery returns every candidate instead of silently picking first
+PASS discovery supports exact launcher child directory
+PASS discovery does not recursively search unrelated children
+PASS discovery rejects x86 Shipping and DLL masquerading as EXE
+PASS discovery rejects missing entry and malformed PE
+PASS discovery ignores relative and absent saved paths
+PASS discovery supports cancellation without process launch
+PASS discovery async saved-only mode avoids system hints
+RESULT: 101 passed, 0 failed. No Windows/game integration was exercised.
