@@ -4,16 +4,24 @@ using Microsoft.Win32;
 namespace WuWaFpsUnlock.Core;
 
 public sealed record GameDiscoveryHint(string Path, string Source);
-public sealed record GameDiscoveryCandidate(string GameRoot, string ShippingExePath, IReadOnlyList<string> Evidence);
+public sealed record GameDiscoveryCandidate(string GameRoot, string ShippingExePath, IReadOnlyList<string> Evidence)
+{
+    public string RelativeShippingExePath => Path.GetRelativePath(GameRoot, ShippingExePath);
+}
+public sealed record GameDirectorySearchOptions(int MaxDirectories = 100_000, int MaxDepth = 16,
+    int MaxSeconds = 20, int MaxPendingDirectories = 20_000);
 public sealed record GameDiscoveryResult(IReadOnlyList<GameDiscoveryCandidate> Candidates, IReadOnlyList<string> Diagnostics);
 
-/// <summary>Read-only, bounded discovery from explicit hints. Never searches drive roots or executes a candidate.</summary>
+/// <summary>Read-only discovery: exact selected root, local hints, then authorized bounded directory-name search. Never executes a candidate.</summary>
 public static class GameDiscoveryService
 {
-    private const string ShippingRelative = "Client/Binaries/Win64/Client-Win64-Shipping.exe";
+    public const string ShippingRelativePath = "Client/Binaries/Win64/Client-Win64-Shipping.exe";
     public static Task<GameDiscoveryResult> DiscoverAsync(string? selectedRoot, IEnumerable<string>? savedPaths = null,
         bool includeSystemHints = true, CancellationToken token = default) => Task.Run(() =>
     {
+        token.ThrowIfCancellationRequested();
+        if (TryResolveGameRoot(selectedRoot, out var selected, out _))
+            return new GameDiscoveryResult([selected!], ["已从当前正确游戏目录直接定位EXE，未搜索磁盘。"]);
         var hints = new List<GameDiscoveryHint>();
         var diagnostics = new List<string>();
         if (!string.IsNullOrWhiteSpace(selectedRoot)) hints.Add(new(selectedRoot, "当前已选路径"));
@@ -26,9 +34,91 @@ public static class GameDiscoveryService
             ReadEpicHints(hints, diagnostics, token);
         }
         var result = DiscoverFromHints(hints, token);
-        return new GameDiscoveryResult(result.Candidates, diagnostics.Concat(result.Diagnostics).ToArray());
+        diagnostics.AddRange(result.Diagnostics);
+        if (result.Candidates.Count != 0 || !includeSystemHints || !OperatingSystem.IsWindows())
+            return new GameDiscoveryResult(result.Candidates, diagnostics);
+        var drives = new List<string>();
+        foreach (var drive in DriveInfo.GetDrives())
+        {
+            token.ThrowIfCancellationRequested();
+            try { if (drive.DriveType == DriveType.Fixed && drive.IsReady) drives.Add(drive.RootDirectory.FullName); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            { diagnostics.Add($"无法读取本机磁盘 {drive.Name}：{ex.Message}"); }
+        }
+        var diskResult = SearchDirectoriesByName(drives, ["Wuthering Waves Game", "Wuthering Waves"], token: token);
+        return new GameDiscoveryResult(diskResult.Candidates, diagnostics.Concat(diskResult.Diagnostics).ToArray());
     }, token);
 
+    /// <summary>Derives only the verified canonical EXE from this exact root; never walks parents or searches a disk.</summary>
+    public static bool TryResolveGameRoot(string? selectedRoot, out GameDiscoveryCandidate? candidate, out string reason)
+    {
+        candidate = null; reason = "请选择鸣潮游戏目录。";
+        if (string.IsNullOrWhiteSpace(selectedRoot) || !Path.IsPathFullyQualified(selectedRoot)) return false;
+        try { return TryValidateSelection(selectedRoot, Path.Combine(Path.GetFullPath(selectedRoot), ShippingRelativePath), out candidate, out reason); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        { reason = ex.Message; return false; }
+    }
+
+    /// <summary>Searches only directories under explicit roots, by exact leaf name. All caps are cooperative and cancellation is checked between filesystem calls.</summary>
+    public static GameDiscoveryResult SearchDirectoriesByName(IEnumerable<string> searchRoots, IEnumerable<string> directoryNames,
+        GameDirectorySearchOptions? options = null, CancellationToken token = default)
+    {
+        options ??= new();
+        if (options.MaxDirectories < 1 || options.MaxDepth < 0 || options.MaxSeconds < 1 || options.MaxPendingDirectories < 1)
+            throw new ArgumentOutOfRangeException(nameof(options));
+        var names = new HashSet<string>(directoryNames.Where(n => !string.IsNullOrWhiteSpace(n) && n != "." && n != ".." &&
+            n.IndexOfAny([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar]) < 0), StringComparer.OrdinalIgnoreCase);
+        if (names.Count == 0) return new([], ["没有有效的游戏目录名，未搜索磁盘。"]);
+        var queue = new Queue<(string Path, int Depth)>();
+        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var found = new Dictionary<string, GameDiscoveryCandidate>(StringComparer.OrdinalIgnoreCase);
+        var diagnostics = new List<string>();
+        int scanned = 0, denied = 0, links = 0, depthSkipped = 0;
+        bool capped = false;
+        var timer = System.Diagnostics.Stopwatch.StartNew();
+        foreach (var root in searchRoots.Take(64))
+        {
+            token.ThrowIfCancellationRequested();
+            try
+            {
+                if (!Path.IsPathFullyQualified(root) || !Directory.Exists(root)) continue;
+                var full = Path.GetFullPath(root); AssertPlainAncestors(full);
+                if (visited.Add(full)) queue.Enqueue((full, 0));
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or System.Security.SecurityException) { denied++; }
+        }
+        while (queue.Count != 0 && !capped)
+        {
+            token.ThrowIfCancellationRequested();
+            if (scanned >= options.MaxDirectories || timer.Elapsed.TotalSeconds >= options.MaxSeconds) { capped = true; break; }
+            var item = queue.Dequeue(); scanned++;
+            try
+            {
+                if ((File.GetAttributes(item.Path) & FileAttributes.ReparsePoint) != 0) { links++; continue; }
+                if (names.Contains(Path.GetFileName(Path.TrimEndingDirectorySeparator(item.Path))) &&
+                    TryResolveGameRoot(item.Path, out var candidate, out _))
+                    found[candidate!.GameRoot] = candidate with { Evidence = [$"本机目录名查找：{item.Path}"] };
+                if (item.Depth >= options.MaxDepth) { depthSkipped++; continue; }
+                foreach (var child in Directory.EnumerateDirectories(item.Path, "*", SearchOption.TopDirectoryOnly))
+                {
+                    token.ThrowIfCancellationRequested();
+                    if (timer.Elapsed.TotalSeconds >= options.MaxSeconds) { capped = true; break; }
+                    try
+                    {
+                        if ((File.GetAttributes(child) & FileAttributes.ReparsePoint) != 0) { links++; continue; }
+                        if (queue.Count >= options.MaxPendingDirectories || visited.Count >= options.MaxDirectories)
+                        { capped = true; break; }
+                        if (visited.Add(child)) queue.Enqueue((child, item.Depth + 1));
+                    }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException) { denied++; }
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException) { denied++; }
+        }
+        diagnostics.Add($"本机目录名查找已检查{scanned}个目录，找到{found.Count}项；跳过链接{links}项，访问失败{denied}项，深度限制跳过{depthSkipped}项。");
+        if (capped || depthSkipped > 0) diagnostics.Add($"搜索达到范围限制，结果可能不完整：最多{options.MaxDirectories}目录、{options.MaxDepth}层、{options.MaxSeconds}秒、{options.MaxPendingDirectories}待查目录；可手动指定游戏目录。");
+        return new(found.Values.OrderBy(c => c.GameRoot, StringComparer.OrdinalIgnoreCase).ToArray(), diagnostics);
+    }
     /// <summary>Checks the exact selected pair without discovering or substituting another executable.</summary>
     public static bool TryValidateSelection(string? selectedRoot, string? selectedExe,
         out GameDiscoveryCandidate? candidate, out string reason)
@@ -41,7 +131,7 @@ public static class GameDiscoveryService
                 !Path.IsPathFullyQualified(selectedRoot) || !Path.IsPathFullyQualified(selectedExe)) return false;
             var root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(selectedRoot));
             var exe = Path.GetFullPath(selectedExe);
-            var expected = Path.GetFullPath(Path.Combine(root, ShippingRelative));
+            var expected = Path.GetFullPath(Path.Combine(root, ShippingRelativePath));
             if (!exe.Equals(expected, StringComparison.OrdinalIgnoreCase))
             {
                 reason = "所选EXE不是此游戏根内Client\\Binaries\\Win64\\Client-Win64-Shipping.exe；需要重新查找或手选。";
@@ -92,7 +182,7 @@ public static class GameDiscoveryService
                     token.ThrowIfCancellationRequested();
                     foreach (var root in new[] { path, Path.Combine(path, "Wuthering Waves Game") })
                     {
-                        var shipping = Path.GetFullPath(Path.Combine(root, ShippingRelative));
+                        var shipping = Path.GetFullPath(Path.Combine(root, ShippingRelativePath));
                         // Recheck each candidate; no cached candidate survives a changed file.
                         if (!TryValidateSelection(root, shipping, out var validated, out var reason))
                         {

@@ -65,6 +65,48 @@ public static class GameDiscoveryTests
                 Check(!GameDiscoveryService.TryValidateSelection(null,Shipping(a),out _,out _));
                 Check(!GameDiscoveryService.TryValidateSelection(a,Path.Combine(a,"Wuthering Waves.exe"),out _,out _));
             }));
+            await test("discovery correct selected folder resolves EXE and relative path directly", () => Run(() =>
+            {
+                Check(GameDiscoveryService.TryResolveGameRoot(a,out var direct,out _));
+                Check(direct!.ShippingExePath==Shipping(a));
+                Check(direct.RelativeShippingExePath.Replace(Path.DirectorySeparatorChar,'/')==GameDiscoveryService.ShippingRelativePath);
+            }));
+            await test("discovery valid root never enumerates saved hints or starts fallback", async () =>
+            {
+                IEnumerable<string> Unexpected(){yield return Throw();} string Throw()=>throw new Exception("saved enumeration should not execute");
+                var direct=await GameDiscoveryService.DiscoverAsync(a,Unexpected(),false);
+                Check(direct.Candidates.Count==1&&direct.Diagnostics.Any(d=>d.Contains("未搜索磁盘")));
+            });
+            await test("directory-name search finds moved official folders at varying depths", () => Run(() =>
+            {
+                var scan=Path.Combine(root,"scan");
+                var one=MakeGame(Path.Combine("scan","launcherA","Wuthering Waves Game"));
+                var two=MakeGame(Path.Combine("scan","资料","另一位置","Wuthering Waves Game"));
+                var result=GameDiscoveryService.SearchDirectoriesByName([scan],["Wuthering Waves Game"]);
+                Check(result.Candidates.Count==2&&result.Candidates.Any(c=>c.GameRoot==one)&&result.Candidates.Any(c=>c.GameRoot==two));
+            }));
+            await test("directory-name search rejects matching name without valid game and ignores other names", () => Run(() =>
+            {
+                var scan=Path.Combine(root,"scan-exact");Directory.CreateDirectory(Path.Combine(scan,"Wuthering Waves Game"));
+                MakeGame(Path.Combine("scan-exact","Wuthering Waves Game fake"));
+                Check(GameDiscoveryService.SearchDirectoriesByName([scan],["Wuthering Waves Game"]).Candidates.Count==0);
+            }));
+            await test("directory-name search directory cap reports incomplete instead of success", () => Run(() =>
+            {
+                var result=GameDiscoveryService.SearchDirectoriesByName([root],["Wuthering Waves Game"],new(MaxDirectories:1));
+                Check(result.Candidates.Count==0&&result.Diagnostics.Any(d=>d.Contains("可能不完整")));
+            }));
+            await test("directory-name search depth cap prevents descending to hidden candidates", () => Run(() =>
+            {
+                var result=GameDiscoveryService.SearchDirectoriesByName([root],["Wuthering Waves Game"],new(MaxDepth:0));
+                Check(result.Candidates.Count==0&&result.Diagnostics.Any(d=>d.Contains("可能不完整")));
+            }));
+            await test("directory-name search cancellation stops before reading roots", () => Run(() =>
+            {
+                using var cancel=new CancellationTokenSource();cancel.Cancel();
+                try{GameDiscoveryService.SearchDirectoriesByName([root],["Wuthering Waves Game"],token:cancel.Token);}
+                catch(OperationCanceledException){return;}throw new Exception("expected search cancellation");
+            }));
             await test("discovery validates exact Shipping layout from selected root", () => Run(() =>
                 Check(GameDiscoveryService.DiscoverFromHints([new(a,"selected")]).Candidates.Single().GameRoot == a)));
             await test("discovery resolves saved Shipping and merges evidence", () => Run(() =>
@@ -101,7 +143,7 @@ public static class GameDiscoveryTests
                 throw new Exception("expected cancellation");
             }));
             await test("discovery async saved-only mode avoids system hints", async () =>
-                Check((await GameDiscoveryService.DiscoverAsync(a,[b],false)).Candidates.Count == 2));
+                Check((await GameDiscoveryService.DiscoverAsync(a,[b],false)).Candidates.Single().GameRoot == a));
         }
         finally { Directory.Delete(root, true); }
     }
