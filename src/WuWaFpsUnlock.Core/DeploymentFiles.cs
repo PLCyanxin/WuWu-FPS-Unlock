@@ -103,28 +103,7 @@ public static class DeploymentFiles
         log(failures ? "部分清除失败，请检查逐项记录后重试。" : skipped ? "清除已结束，部分文件因已变化或登记未完成而保留，详情见日志。" : "清除结束：移除本工具实际替换且哈希匹配的 DLL 与自有插件；保留用户原有或来源未知的 ReShade/滤镜。未恢复原版，游戏是否补齐文件尚待实测。");
         if (failures) throw new IOException("部分文件或配置清除失败，详情见日志。");
     }
-    public static async Task<bool> IsIntactAsync(DeploymentReceipt receipt, CancellationToken token = default)
-    {
-        if (receipt.Status != "Deployed" || receipt.Files.Count == 0) return false;
-        foreach (var f in receipt.Files)
-        {
-            SafePaths.EnsureInside(receipt.GameRoot, f.Path); SafePaths.EnsureNoLinks(receipt.GameRoot, f.Path);
-            if (!f.Completed || !File.Exists(f.Path) || await SafePaths.HashAsync(f.Path, token) != f.InstalledHash) return false;
-        }
-        if (!File.Exists(receipt.IniPath)) return false;
-        SafePaths.EnsureInside(receipt.GameRoot, receipt.IniPath); SafePaths.EnsureNoLinks(receipt.GameRoot, receipt.IniPath);
-        var ini = IniDocument.Load(receipt.IniPath);
-        if (receipt.IniEdits.Count == 0 || ini.Get("RenoDX.MFGUnlock", "Enabled") != "1") return false;
-        foreach (var edit in receipt.IniEdits)
-        {
-            var current = ini.Get(edit.Section, edit.Key);
-            if (edit.Section.Equals("ADDON", StringComparison.OrdinalIgnoreCase) && edit.Key.Equals("LoadFromDllMain", StringComparison.OrdinalIgnoreCase))
-            {
-                var actual = (current ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToHashSet(StringComparer.OrdinalIgnoreCase);
-                if (!edit.Written.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).All(actual.Contains)) return false;
-            }
-            else if (!string.Equals(current, edit.Written, StringComparison.Ordinal)) return false;
-        }
-        return true;
-    }
+    public static Task<DeploymentIntegrityReport> InspectIntegrityAsync(DeploymentReceipt receipt, CancellationToken token = default) => DeploymentIntegrity.InspectAsync(receipt, token);
+    public static async Task<bool> IsIntactAsync(DeploymentReceipt receipt, CancellationToken token = default) =>
+        (await InspectIntegrityAsync(receipt, token)).IsStrictlyIntact;
 }
