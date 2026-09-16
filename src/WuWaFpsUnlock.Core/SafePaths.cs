@@ -68,7 +68,6 @@ public static class PackageReader
         foreach (var f in m.Files)
         {
             if (!Enum.IsDefined(f.Anchor) || !Enum.IsDefined(f.Kind)) throw new InvalidDataException("文件锚点或类型无效。");
-            if (f.Size <= 0 || !Regex.IsMatch(f.Sha256, "^[a-fA-F0-9]{64}$")) throw new InvalidDataException("文件大小或哈希缺失：" + f.Source);
             var name = f.Target.Replace('\\','/').Split('/').Last();
             if (f.Kind == PayloadKind.Vendor && !vendorInputs.Add(name)) throw new InvalidDataException("重复的运行库输入：" + name);
             if (f.Kind == PayloadKind.Vendor && (!VendorNames.Contains(name) || f.Anchor == TargetAnchor.AddonDir)) throw new InvalidDataException("拒绝未知运行库：" + name);
@@ -88,8 +87,7 @@ public static class PackageReader
             token.ThrowIfCancellationRequested();
             var source = SafePaths.Under(sourceRoot, f.Source);
             var anchor = f.Anchor switch { TargetAnchor.GameRoot => gameRoot, TargetAnchor.ExeDir => exeDir, _ => addonDir };
-            if (!File.Exists(source) || new FileInfo(source).Length != f.Size || !string.Equals(await SafePaths.HashAsync(source, token), f.Sha256, StringComparison.OrdinalIgnoreCase))
-                throw new InvalidDataException("源文件缺失或 SHA-256 不匹配：" + f.Source);
+            var actual = await ReadSourceFingerprintAsync(source, token);
             // Latest user rule: flat vendor materials replace every existing same-name file
             // strictly under the selected root. Missing names are never newly deployed.
             var targets = f.Kind == PayloadKind.Vendor
@@ -99,11 +97,22 @@ public static class PackageReader
             {
                 SafePaths.EnsureInside(gameRoot, target); SafePaths.EnsureNoLinks(gameRoot, target);
                 if (!destinations.Add(target)) throw new InvalidDataException("重复写入目标：" + target);
-                list.Add(new(source, target, f.Sha256.ToLowerInvariant(), f.Size, f.Kind,
+                list.Add(new(source, target, actual.Sha256, actual.Size, f.Kind,
                     File.Exists(target) ? await SafePaths.HashAsync(target, token) : null));
             }
         }
         return list;
+    }
+    // Manifest hashes describe the original import; local payload updates are allowed.
+    // Capture both values under one read-only handle. The approved plan and execution
+    // checks still detect changes after preview and record the bytes actually deployed.
+    public static async Task<(string Sha256, long Size)> ReadSourceFingerprintAsync(string source, CancellationToken token = default)
+    {
+        if (!File.Exists(source)) throw new FileNotFoundException("源文件缺失：" + source, source);
+        await using var stream = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.Read, 131072, true);
+        long size = stream.Length;
+        string hash = Convert.ToHexString(await SHA256.HashDataAsync(stream, token)).ToLowerInvariant();
+        return (hash, size);
     }
     public static List<string> FindExistingVendorTargets(string gameRoot, string name)
     {

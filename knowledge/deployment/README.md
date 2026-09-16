@@ -54,3 +54,11 @@ Latest full suite: 102 passed / 0 failed. The immediately preceding run had one 
 
 ## Unknown JSON preservation
 Added JsonExtensionData to UserSettings, DeploymentReceipt, FileReceipt and IniReceipt. Unknown nested objects, arrays, booleans and null fields survive normal saves, UserSettings.Clone, notice acknowledgement and clean-cycle archival; BeginAfterClean carries top-level receipt extension data forward. Two real disk roundtrip regressions passed; latest complete console result 104 passed / 0 failed in json-preservation-tests.log. AppPaths was reviewed only: Receipt still hashes the uppercase absolute Shipping path with SHA-256 and uses the first 24 hex characters under data/deployments; LoadReceipt still resolves through that unchanged function. No receipt filename migration or main VM changes were made by this agent.
+
+## 2026-09-16 — direct payload updates
+
+User requested removal of stale-package validation so local addon/DLL updates do not require regenerating manifest hashes. PackageReader now treats manifest file hash/size fields as import metadata and captures actual source SHA-256 and size using one read-only FileStream. Safe relative paths, file existence, names and anchors remain enforced. Deployment plans therefore contain current source fingerprints; existing preview approval, execution rechecks, write verification and ownership receipts still use those fingerprints.
+
+UserMaterialRemoval planning uses the same current source fingerprint rather than old manifest metadata. Its execution-time source/target checks and hash-protected deletion are unchanged. Old owned receipts retain their installed fingerprints; they are not rewritten to claim an unobserved update.
+
+No build or tests were run, as explicitly requested. No actual game file was accessed or modified. Older tests expecting stale manifest hash/size to reject source updates now describe superseded behavior and have not been rerun.

@@ -14,17 +14,15 @@ public static class UserMaterialRemoval
         var manifest = PackageReader.Load(manifestPath);
         string sourceRoot = Path.GetDirectoryName(Path.GetFullPath(manifestPath))!;
         var candidates = new List<MaterialRemovalCandidate>(); var preserved = new List<string>();
-        var validated = new List<(PayloadFile File, string Source)>();
+        var validated = new List<(PayloadFile File, string Source, string Sha256, long Size)>();
         foreach (var file in manifest.Files)
         {
             token.ThrowIfCancellationRequested();
             string source = SafePaths.Under(sourceRoot, file.Source);
-            if (!File.Exists(source) || new FileInfo(source).Length != file.Size ||
-                !string.Equals(await SafePaths.HashAsync(source, token), file.Sha256, StringComparison.OrdinalIgnoreCase))
-                throw new InvalidDataException("清除材料来源未通过完整大小/SHA-256校验：" + source);
-            validated.Add((file, source));
+            var actual = await PackageReader.ReadSourceFingerprintAsync(source, token);
+            validated.Add((file, source, actual.Sha256, actual.Size));
         }
-        foreach (var (file, source) in validated)
+        foreach (var (file, source, sha256, size) in validated)
         {
             string name = Path.GetFileName(file.Target.Replace('\\', '/'));
             var matches = PackageReader.FindExistingMaterialTargets(gameRoot, name);
@@ -32,8 +30,8 @@ public static class UserMaterialRemoval
             foreach (var path in matches)
             {
                 token.ThrowIfCancellationRequested(); SafePaths.EnsureNoLinks(gameRoot, path);
-                if (new FileInfo(path).Length == file.Size && string.Equals(await SafePaths.HashAsync(path, token), file.Sha256, StringComparison.OrdinalIgnoreCase))
-                    candidates.Add(new(source, path, file.Sha256.ToLowerInvariant(), file.Size, file.Kind));
+                if (new FileInfo(path).Length == size && string.Equals(await SafePaths.HashAsync(path, token), sha256, StringComparison.OrdinalIgnoreCase))
+                    candidates.Add(new(source, path, sha256, size, file.Kind));
                 else preserved.Add("保留，材料哈希不匹配：" + path);
             }
         }
