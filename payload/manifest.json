@@ -1,6 +1,6 @@
 {
   "dynamicMinimumDriver": 59541,
-  "packageId": "user-local-20260914",
+  "packageId": "user-local-20260916",
   "files": [
     {
       "anchor": "GameRoot",
@@ -149,10 +149,10 @@
     {
       "anchor": "AddonDir",
       "target": "renodx-mfgunlock.addon64",
-      "sha256": "64184bb370f223c3cabb359010a9a64e114cdae6b62d8b014a731a602af0a0da",
+      "sha256": "f9f10c685e3e89077f751df2394a1629615a56b58d111dff26b39894e772d50e",
       "source": "files/addon/renodx-mfgunlock.addon64",
       "kind": "Addon",
-      "size": 601088
+      "size": 710144
     }
   ],
   "fixedMinimumDriver": null,

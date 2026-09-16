@@ -145,8 +145,8 @@
   },
   {
     "name": "renodx-mfgunlock.addon64",
-    "source": "E:\\yanxin_ws\\wuwa-fps-unlock\\input\\desktop-materials\\renodx-mfgunlock.addon64",
-    "sha256": "64184bb370f223c3cabb359010a9a64e114cdae6b62d8b014a731a602af0a0da",
+    "source": "C:\\Users\\StrixZ16\\Desktop\\鸣潮 FPS Unlock v0.1RC\\GitHub发布版\\payload\\files\\addon\\renodx-mfgunlock.addon64",
+    "sha256": "f9f10c685e3e89077f751df2394a1629615a56b58d111dff26b39894e772d50e",
     "targetPolicy": "经验证ReShade AddonDir/renodx-mfgunlock.addon64",
     "actualGameTargets": [],
     "gameMappingStatus": "待用户指定游戏路径并确认；未扫描真实游戏"

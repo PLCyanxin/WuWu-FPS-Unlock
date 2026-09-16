@@ -157,7 +157,7 @@ public sealed class AppViewModel:INotifyPropertyChanged
             {
                 var info=await Task.Run(()=>new ReShadeService(Log).Inspect(_settings.Clone()));_reShade=info.Description;
                 var receipt=AppPaths.LoadReceipt(_settings);
-                _deployState=receipt is null?"未部署":receipt.Status=="PartialFailure"?"上次部署未完成":receipt.Status=="Cleaned"?"已清除本工具插件":receipt.Status=="CleanedWithSkips"?"清除结束 · 部分已变化项目保留":await DeploymentFiles.IsIntactAsync(receipt)?"已部署 · 文件校验通过":"文件已变化 · 需重新检查";
+                _deployState=receipt is null?"未部署":receipt.Status=="PartialFailure"?"上次部署未完成":receipt.Status=="Cleaned"?"已清除本工具插件":receipt.Status=="CleanedWithSkips"?"清除结束 · 部分已变化项目保留":"已有部署记录";
             }
             else{_reShade="未设置游戏路径";_deployState="请先选择路径";}
         }
@@ -256,11 +256,6 @@ public sealed class AppViewModel:INotifyPropertyChanged
                     if(snapshot.TargetFps is <30 or >420)throw new InvalidDataException("目标FPS无效。");
                     var receipt=AppPaths.LoadReceipt(snapshot);
                     if(receipt?.Status is "PartialFailure" or "Installing" or "PartialClean")throw new IOException("部署维护尚未完成，请在设置处理后再开始。");
-                    if(receipt?.Status=="Deployed"){
-                        var integrity=await DeploymentFiles.InspectIntegrityAsync(receipt,token);
-                        foreach(var difference in integrity.Differences)Log(difference.Message);
-                        if(!integrity.CanLaunch)throw new IOException("部署文件校验未通过，请查看日志中的具体路径；未结束游戏。");
-                    }
                     if(snapshot.MfgSelected&&(receipt is null||receipt.Status.StartsWith("Cleaned")))throw new IOException("已选择多帧生成但尚未部署，请先部署或关闭部署选择。");
                     if(snapshot.FpsEnabled)await BuiltinFpsService.PreflightAsync(token);
                 },

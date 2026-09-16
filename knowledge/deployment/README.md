@@ -62,3 +62,5 @@ User requested removal of stale-package validation so local addon/DLL updates do
 UserMaterialRemoval planning uses the same current source fingerprint rather than old manifest metadata. Its execution-time source/target checks and hash-protected deletion are unchanged. Old owned receipts retain their installed fingerprints; they are not rewritten to claim an unobserved update.
 
 No build or tests were run, as explicitly requested. No actual game file was accessed or modified. Older tests expecting stale manifest hash/size to reject source updates now describe superseded behavior and have not been rerun.
+
+主整合补充：2026-09-16 移除 VM 启动/刷新部署完整性检查，安装到 D:\software\鸣潮 FPS Unlock 并迁移44项data；桌面鸣潮.lnk已更新。build成功，无测试/实机操作。材料更新说明见 artifacts/update-20260916/更新说明.txt。
