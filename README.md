@@ -2,7 +2,7 @@
 
 用于《鸣潮》的 Windows 启动工具，提供帧率上限解锁和可选的多帧生成组件部署。使用原生 WPF 界面，当前版本为 **v0.1**。
 
-[下载 Windows x64 便携版](https://github.com/PLCyanxin/yanxin/releases/latest) · [查看所有版本](https://github.com/PLCyanxin/yanxin/releases)
+[下载 Windows x64 便携版](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/latest) · [查看所有版本](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases)
 
 ## 快速开始
 
