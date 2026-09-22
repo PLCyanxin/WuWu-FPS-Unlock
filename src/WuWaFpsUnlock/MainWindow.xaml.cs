@@ -11,7 +11,9 @@ public partial class MainWindow:Window
     public MainWindow(AppViewModel vm)
     {
         InitializeComponent();_vm=vm;DataContext=vm;vm.SettingsRequested+=OpenSettings;
-        vm.GameReady+=MinimizeToTray;
+        vm.GameStarted+=MinimizeToTray;
+        vm.LaunchFailed+=RestoreFromTray;
+        vm.GameExited+=ExitFromTray;
         Width=Math.Min(Width,SystemParameters.WorkArea.Width-36);Height=Math.Min(Height,SystemParameters.WorkArea.Height-36);
         Closing+=OnClosing;Closed+=async(_,_)=>{_tray?.Dispose();_trayIcon?.Dispose();await vm.CloseAsync();};
         Loaded+=async(_,_)=>{try{await vm.RefreshAsync();}catch(Exception e){vm.ReportError(e);}};

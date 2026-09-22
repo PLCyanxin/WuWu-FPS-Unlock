@@ -53,10 +53,10 @@ internal static class Program
                 Check(window.IsVisible,"real native window shown before readiness");
                 typeof(AppViewModel).GetProperty("IsGameRunning")!.SetValue(vm,true);
                 Check(vm.StartLabel=="游戏中","running game changes start label");
-                var ready=(Action?)typeof(AppViewModel).GetField("GameReady",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(vm);
+                var ready=(Action?)typeof(AppViewModel).GetField("GameStarted",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(vm);
                 ready!();
                 var tray=(System.Windows.Forms.NotifyIcon?)typeof(MainWindow).GetField("_tray",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(window);
-                Check(!window.IsVisible&&tray?.Visible==true,"game-ready event hides window and exposes notification icon");
+                Check(!window.IsVisible&&tray?.Visible==true,"process-start event hides window without waiting for renderer or FPS connection");
                 Check(tray?.Icon is not null&&tray.Text=="鸣潮 FPS Unlock v0.1","original-color icon and version assigned");
                 typeof(MainWindow).GetMethod("RestoreFromTray",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(window,null);
                 Check(window.IsVisible&&window.WindowState==WindowState.Normal&&tray!.Visible==false,"restore returns window without starting a process");
@@ -92,8 +92,10 @@ internal static class Program
                 var notice=WuWaFpsUnlock.Services.OperationReview.CreateWindow("首次启动风险与须知","第三方组件可能存在兼容性问题、崩溃及账号风险；无法保证所有游戏版本兼容。\n\n开始游戏会直接结束同一安装的现有游戏并重新启动，可能中断当前操作或丢失尚未保存的状态。\n\n目标FPS不是实际帧率保证。\n\n清除DLL后可能需要官方文件校验；普通启动自动补齐尚未取得独立成功证据。\n\n确认后保存本次部署须知；后续日常启动不再提示。",true);
                 notice.Show();notice.UpdateLayout();
                 Check(notice.ActualHeight<500&&notice.SizeToContent==SizeToContent.Height,"first notice sizes to actual text without fixed large blank area");
-                notice.Close();window.Close();
-                Check(closed,"close without running game really exits window");
+                notice.Close();
+                var gameExited=(Action?)typeof(AppViewModel).GetField("GameExited",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(vm);
+                gameExited!();
+                Check(closed,"confirmed game exit closes launcher window");
                 Console.WriteLine($"TOTAL passed={passed} failed=0; notification lifecycle, not real-game readiness acceptance");app.Shutdown(0);
             }
             catch(Exception e){Console.WriteLine(e);app.Shutdown(1);}
