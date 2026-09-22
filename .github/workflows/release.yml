@@ -1,0 +1,62 @@
+name: Publish portable release
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: windows-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Build launcher
+        shell: pwsh
+        run: |
+          dotnet publish src/WuWaFpsUnlock -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o build
+          if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
+      - name: Package with unchanged release components
+        shell: pwsh
+        run: |
+          gh release download v0.1RC --repo $env:GITHUB_REPOSITORY --pattern WuWaFPSUnlock-0.1RC-win-x64.zip --dir baseline
+          if ($LASTEXITCODE -ne 0) { throw 'Component package download failed' }
+          Expand-Archive baseline/WuWaFPSUnlock-0.1RC-win-x64.zip baseline/extracted
+          New-Item package -ItemType Directory | Out-Null
+          foreach ($name in @('payload','components','licenses','App.ico')) {
+            Copy-Item "baseline/extracted/$name" package -Recurse
+          }
+          Get-ChildItem build | Where-Object Extension -ne '.pdb' | Copy-Item -Destination package -Recurse -Force
+          Copy-Item README.md package
+          Compress-Archive package/* WuWaFPSUnlock-1.1RC-win-x64.zip
+          $hash=(Get-FileHash WuWaFPSUnlock-1.1RC-win-x64.zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          @"
+          鸣潮 FPS Unlock v1.1RC
+
+          下载 WuWaFPSUnlock-1.1RC-win-x64.zip，完整解压后运行 WuWaFpsUnlock.exe。
+
+          - 游戏进程启动后立即收起到托盘，不再等待渲染窗口识别。
+          - 确认游戏退出后自动关闭启动器；重启期间不会因旧实例退出而误关。
+          - 启动或 FPS 连接失败时恢复窗口显示错误。
+          - 保留允许更新 MFG 材料的功能。
+          - 程序显示 v1.1RC，自有程序集和文件版本 1.1.0.0。
+
+          完整 Windows x64 便携包，包含 .NET 运行时及与 v0.1RC 相同的第三方组件。不含个人配置、部署记录和日志。升级请先退出旧程序并保留 data 目录。
+
+          已完成构建；本次发布未运行真实游戏验收。源码提交：$env:GITHUB_SHA
+
+          ZIP SHA-256：$hash
+          "@ | Set-Content release-notes.md -Encoding utf8
+      - name: Upload and publish
+        shell: pwsh
+        run: |
+          gh release view v1.1RC --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create v1.1RC --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title '鸣潮 FPS Unlock v1.1RC' --notes-file release-notes.md --draft
+            if ($LASTEXITCODE -ne 0) { throw 'Draft creation failed' }
+          }
+          gh release upload v1.1RC WuWaFPSUnlock-1.1RC-win-x64.zip --repo $env:GITHUB_REPOSITORY
+          if ($LASTEXITCODE -ne 0) { throw 'Asset upload failed; draft retained' }
+          gh release edit v1.1RC --repo $env:GITHUB_REPOSITORY --title '鸣潮 FPS Unlock v1.1RC' --notes-file release-notes.md --draft=false --latest
+          if ($LASTEXITCODE -ne 0) { throw 'Publication failed' }
