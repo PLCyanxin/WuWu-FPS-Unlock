@@ -14,6 +14,11 @@ public sealed class AppViewModel:INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
     public event Action? SettingsRequested;
     public event Action? GameReady;
+    public event Action? GameStarted;
+    public event Action? GameExited;
+    public event Action? LaunchFailed;
+    private bool _closing;
+    private Task _sessionCleanup=Task.CompletedTask;
     private readonly RestartController _restart=new();
     private FpsSession? _fpsSession;
     private UserSettings _settings;
@@ -244,7 +249,8 @@ public sealed class AppViewModel:INotifyPropertyChanged
     }
     private async Task StartAsync()
     {
-        if(Busy)return;Busy=true;
+        if(Busy||_closing)return;Busy=true;
+        bool startedThisAttempt=false;
         var snapshot=_settings.Clone();
         try
         {
@@ -272,20 +278,21 @@ public sealed class AppViewModel:INotifyPropertyChanged
                     if(fpsPending)BuiltinFpsService.Acknowledge(snapshot.GameExe);
                     return Task.FromResult(true);
                 },
-                ReleaseOldSession=async _=>{if(_fpsSession is not null)await _fpsSession.DisposeAsync();_fpsSession=null;_game?.Dispose();_game=null;IsGameRunning=false;},
+                ReleaseOldSession=async _=>{await ReleaseFpsSessionAsync();_game?.Dispose();_game=null;IsGameRunning=false;},
                 Start=(exe,token)=>
                 {
                     token.ThrowIfCancellationRequested();
                     var startInfo=new ProcessStartInfo(exe){UseShellExecute=true,WorkingDirectory=Path.GetDirectoryName(exe)!};
                     if(snapshot.MfgSelected){startInfo.ArgumentList.Add("-dx12");Log("多帧生成启动参数：-dx12；实际D3D12加载以游戏日志为准。");}
                     var process=Process.Start(startInfo)??throw new IOException("系统未返回游戏进程。");
+                    _game=process;startedThisAttempt=true;IsGameRunning=true;GameStarted?.Invoke();
                     Log($"仅启动所选Shipping一次：{exe}；PID={process.Id}；FPS={(snapshot.FpsEnabled?"ON":"OFF")}；目标={snapshot.TargetFps}");
                     return Task.FromResult(process);
                 },
                 AttachFps=async (process,token)=>
                 {
                     await BuiltinFpsService.WaitForRendererAsync(process,snapshot.GameExe,token,Log);
-                    _game=process;IsGameRunning=!process.HasExited;GameReady?.Invoke();
+                    GameReady?.Invoke();
                     _fpsSession=new FpsSession();
                     await _fpsSession.ConnectAsync(process,AppPaths.FpsCore,Log,token);
                     await _fpsSession.SetFpsAsync(snapshot.TargetFps,token);
@@ -293,29 +300,52 @@ public sealed class AppViewModel:INotifyPropertyChanged
                 }
             },phase=>{Status=phase switch{"Preflight"=>"正在检查路径与组件…","AwaitingNotice"=>"检查首次部署须知…","ReleaseOldSession"=>"释放旧游戏会话…","Stopping"=>"正在结束同一安装的旧游戏…","Rechecking"=>"确认旧实例已退出…","Starting"=>"正在启动游戏…","AttachingFps"=>"等待游戏并连接内置FPS核心…","Cancelled"=>"已取消，未继续启动。",_=>"正在检查游戏状态…"};},TimeSpan.FromSeconds(15),_lifetime.Token);
             if(process is null){Status="已取消须知，未结束或启动游戏。";return;}
-            _game=process;IsGameRunning=!process.HasExited;
             if(!snapshot.FpsEnabled){await BuiltinFpsService.WaitForRendererAsync(process,snapshot.GameExe,_lifetime.Token,Log);GameReady?.Invoke();}
             Status=snapshot.FpsEnabled?"游戏已启动 · 内置FPS已连接，实际效果以游戏为准":"游戏已启动 · FPS关闭";Log(Status);
         }
-        catch(RestartFailureException e)
+        catch
         {
-            if(e.StartedProcess is not null){_game=e.StartedProcess;IsGameRunning=!_game.HasExited;}
-            if(_fpsSession is not null){await _fpsSession.DisposeAsync();_fpsSession=null;}
+            if(startedThisAttempt)
+            {
+                LaunchFailed?.Invoke();
+                try{await ReleaseFpsSessionAsync();}
+                catch(Exception cleanupError){Log("释放失败启动会话失败："+cleanupError.Message);}
+            }
             throw;
         }
         finally{Busy=false;}
     }
+    private Task ReleaseFpsSessionAsync()
+    {
+        var session=_fpsSession;_fpsSession=null;
+        if(session is not null)_sessionCleanup=DisposeAfterAsync(_sessionCleanup,session);
+        return _sessionCleanup;
+    }
+    private static async Task DisposeAfterAsync(Task previous,FpsSession session)
+    {
+        try{await previous;}finally{await session.DisposeAsync();}
+    }
     private async void Monitor(object? sender,EventArgs e)
     {
-        if(_game is null||!IsGameRunning||Busy)return;
-        bool exited;try{exited=_game.HasExited;}catch{exited=true;}
+        if(_closing||_game is null||Busy)return;
+        var game=_game;
+        bool exited;
+        try{exited=game.HasExited;}catch{return;} // Unreadable identity is not evidence of exit.
         if(!exited)return;
-        IsGameRunning=false;if(_fpsSession is not null)await _fpsSession.DisposeAsync();_fpsSession=null;_game.Dispose();_game=null;
-        Status="游戏已退出，可再次开始游戏。";Log(Status);
+        Busy=true;_game=null;IsGameRunning=false;
+        try
+        {
+            await ReleaseFpsSessionAsync();
+            Status="游戏已退出，启动器即将退出。";Log(Status);
+        }
+        catch(Exception error){Log("释放游戏会话失败："+error.Message);}
+        finally{game.Dispose();Busy=false;}
+        if(!_closing)GameExited?.Invoke();
     }
-    public async Task CloseAsync(){_monitor.Stop();_lifetime.Cancel();if(_fpsSession is not null)await _fpsSession.DisposeAsync();_game?.Dispose();}
+    public async Task CloseAsync()
+    {
+        _closing=true;_monitor.Stop();_lifetime.Cancel();
+        await ReleaseFpsSessionAsync();
+        _game?.Dispose();_game=null;
+    }
 }
-
-
-
-
