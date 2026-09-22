@@ -1,12 +1,12 @@
 # 鸣潮 FPS Unlock
 
-用于《鸣潮》的 Windows 启动工具，提供帧率上限解锁和可选的多帧生成组件部署。使用原生 WPF 界面，当前版本为 **v0.1**。
+用于《鸣潮》的 Windows 启动工具，提供帧率上限解锁和可选的多帧生成组件部署。使用原生 WPF 界面，当前版本为 **v1.1RC**。
 
 [下载 Windows x64 便携版](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/latest) · [查看所有版本](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases)
 
 ## 快速开始
 
-1. 在 Release 页面下载 `WuWaFPSUnlock-0.1RC-win-x64.zip`，完整解压后运行 `WuWaFpsUnlock.exe`，按 Windows 提示授予管理员权限。
+1. 在 Release 页面下载 `WuWaFPSUnlock-1.1RC-win-x64.zip`，完整解压后运行 `WuWaFpsUnlock.exe`，按 Windows 提示授予管理员权限。
 2. 打开“设置”，点击“帮我查找鸣潮”，或手动选择游戏根目录。正确的游戏程序是 `Client\Binaries\Win64\Client-Win64-Shipping.exe`；选择正确目录后会自动填写。
 3. 开启“解锁帧率上限”，设置目标 FPS，返回主窗口点击“开始游戏”。
 
@@ -86,7 +86,7 @@ payload/
 开发环境：Windows x64、.NET SDK 10.0.100（见 `global.json`）。在仓库根目录运行：
 
 ```powershell
-dotnet publish ./src/WuWaFpsUnlock/WuWaFpsUnlock.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./artifacts/v0.1/win-x64
+dotnet publish ./src/WuWaFpsUnlock/WuWaFpsUnlock.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./artifacts/v1.1RC/win-x64
 ```
 
 FPS 核心与许可证随项目发布。源码仓库不包含完整的 MFG 材料包；需要多帧生成时，还应将准备好的完整 `payload` 目录复制到发布目录。构建成功不代表组件已经在游戏内生效。

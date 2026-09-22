@@ -57,7 +57,7 @@ internal static class Program
                 ready!();
                 var tray=(System.Windows.Forms.NotifyIcon?)typeof(MainWindow).GetField("_tray",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(window);
                 Check(!window.IsVisible&&tray?.Visible==true,"process-start event hides window without waiting for renderer or FPS connection");
-                Check(tray?.Icon is not null&&tray.Text=="鸣潮 FPS Unlock v0.1","original-color icon and version assigned");
+                Check(tray?.Icon is not null&&tray.Text=="鸣潮 FPS Unlock v1.1RC","original-color icon and version assigned");
                 typeof(MainWindow).GetMethod("RestoreFromTray",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(window,null);
                 Check(window.IsVisible&&window.WindowState==WindowState.Normal&&tray!.Visible==false,"restore returns window without starting a process");
                 bool closed=false;window.Closed+=(_,_)=>closed=true;

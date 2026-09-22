@@ -59,7 +59,7 @@ public sealed class AppViewModel:INotifyPropertyChanged
         StartCommand=new(StartAsync,()=>!Busy&&_validFps,ReportError);
         _monitor.Tick+=Monitor;_monitor.Start();
         RememberValidSelection();
-        Log("鸣潮 FPS Unlock 0.1 启动。");
+        Log("鸣潮 FPS Unlock 1.1RC 启动。");
     }
     public bool Busy {get=>_busy;private set{_busy=value;NotifyAll();}}
     public bool IsGameRunning {get=>_running;private set{_running=value;NotifyAll();}}
