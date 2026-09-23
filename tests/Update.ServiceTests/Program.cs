@@ -46,7 +46,16 @@ try
  await Test("cancelled download rejected",()=>Reject(()=>Service(Package(Files())).StageAsync(release,root,new CancellationToken(true))));
  await Test("safe path rules",()=>{foreach(var path in new[]{"a/../b","/abs","C:/x","a\\b","licenses/NUL.txt","licenses/a.","licenses/a ","a::b"}){try{UpdatePackageProtocol.ValidatePath(path);throw new Exception(path);}catch(InvalidDataException){}}return Task.CompletedTask;});
  await Test("tamper and undeclared files rejected by worker shared validator",async()=>{string exe=await Service(Package(Files())).StageAsync(release,root);string dir=Path.GetDirectoryName(exe)!;File.AppendAllText(exe,"tamper");await Reject(()=>{UpdatePackageProtocol.ValidateDirectory(dir);return Task.CompletedTask;});File.WriteAllBytes(exe,Files()["更新.exe"]);File.WriteAllText(Path.Combine(dir,"unlisted.txt"),"x");await Reject(()=>{UpdatePackageProtocol.ValidateDirectory(dir);return Task.CompletedTask;});});
- Console.WriteLine($"{passed}/{passed} passed. Fake HTTP and inert bytes only; no updater or game execution.");
+ if(args.Length==2&&args[0]=="--package")
+ {
+  await Test("locally built release zip stages through launcher download pipeline",async()=>
+  {
+   byte[] zip=await File.ReadAllBytesAsync(args[1]);
+   string exe=await Service(zip).StageAsync(release,root);
+   Require(File.Exists(exe));UpdatePackageProtocol.ValidateDirectory(Path.GetDirectoryName(exe)!,release.Version);
+  });
+ }
+ Console.WriteLine($"{passed}/{passed} passed. Fake HTTP only; no updater or game execution.");
 }
 finally{Directory.Delete(root,true);}
 sealed class FixtureHandler(Func<Uri,byte[]> fixture):HttpMessageHandler

@@ -5,12 +5,14 @@
 > [!WARNING]
 > **使用本工具有被官方封号的风险。使用工具后录制视频或分享截图等，请遮挡 UID，请勿跳脸官方。**（维护者实测可以正常与他人联机；能正常联机不代表没有封号风险。）
 
-**当前版本：v1.1.1RC · Windows x64**
+**当前版本：v1.1.1 · Windows x64**
 
-[下载完整版](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/download/v1.1.1RC/WuWaFPSUnlock-1.1.1RC-win-x64.zip) · [下载更新包](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/download/v1.1.1RC/WuWaFPSUnlock-1.1.1RC-update.zip) · [所有版本](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases)
+[下载完整版](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/download/v1.1.1/WuWaFPSUnlock-1.1.1-win-x64.zip) · [下载更新包](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/download/v1.1.1/WuWaFPSUnlock-1.1.1-update.zip) · [所有版本](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases)
 
-## v1.1.1RC 有什么新变化
+## v1.1.1 有什么新变化
 
+- 启动器支持检查更新，可在设置中选择是否启动时自动检测。发现新版时显示更新说明，可选择立即更新、暂不更新，或勾选跳过这个版本。
+- 在线下载后自动校验更新包，由独立更新器等待启动器退出后安装，继续保留备份、回退和桌面快捷方式维护。
 - 更新多帧生成插件，可在游戏内的 MFG Unlock 面板查看 **Dynamic 当前实际生成倍率**。
 - 新增部分实验性画面调优选项，可按需尝试，具体效果取决于游戏场景和设备。
 - 更新包支持自动查找原安装目录，并在更新前备份用户自己的软件文件。
@@ -27,12 +29,22 @@
 
 ## 已有版本如何更新
 
+### 在启动器中更新
+
+从 v1.1.1 起，设置中提供“启动时自动检测更新”和“检查更新”。自动检测默认开启，只查询版本，不会自动下载或安装。网络异常不会影响启动游戏，关闭自动检测后仍可手动检查。
+
+检测到新版本时，窗口会展示版本号与更新说明。选择“立即更新”后下载并校验；选择“暂不更新”则继续使用当前版本。勾选“跳过这个版本”后不再自动提醒该版本，更高版本仍会提示，手动检查也可重新查看被跳过的版本。RC 同样属于正常更新渠道。
+
+游戏运行时不能安装更新。下载可取消；校验通过后启动器退出，由独立更新器接手安装。**更新后仍需打开启动器，在设置中重新部署一次。**
+
+### 使用离线更新包
+
 GitHub、百度网盘分发的本项目旧版都可以使用更新包，不要求旧版本号或文件哈希相同。更新包需要已有安装；首次使用请选择完整版。
 
 1. 正常退出游戏，再退出系统托盘中的启动器。
-2. 下载并解压 `WuWaFPSUnlock-1.1.1RC-update.zip`。
+2. 下载并解压 `WuWaFPSUnlock-1.1.1-update.zip`。
 3. 找到原启动器目录。若平时使用桌面快捷方式，可右键快捷方式，选择“打开文件所在的位置”。
-4. 把解压后的**整个更新文件夹**放进原启动器目录，双击里面的 **`更新.exe`**。不用先覆盖主程序。
+4. 把解压后的**整个更新文件夹**放进原启动器目录，双击里面的 **`更新.exe`**。请保留独立文件夹，不要把新协议包平铺混进原安装目录，也不用先覆盖主程序。
 5. 确认更新窗口显示的安装目录正确，等待备份和更新完成。更新器会检查自身目录及最多三层上级目录中的主程序；找不到或出现多个安装时会提示原因。
 6. 更新完成后会刷新当前用户桌面上指向该安装的快捷方式；没有找到时创建一个新的。
 7. **打开启动器，进入设置，重新部署一次。** 更新包修改的是启动器与本地组件材料；重新部署后，新 addon 才会写入游戏目录。
@@ -88,7 +100,7 @@ Dynamic 的驱动预检查门槛为 **595.41**，不是整个工具或 FPS 解�
 
 启动器优先复用当前鸣潮安装中兼容的 ReShade。需要安装时使用随包安装器；升级已有 ReShade 前会提示。不会因为其他游戏装过 ReShade 就认为鸣潮也已安装。
 
-自行更换 MFG addon 时，将文件放到 `payload/files/addon/renodx-mfgunlock.addon64`，然后关闭游戏，在设置中重新部署。工具允许更新本地材料，不要求 addon 与旧清单哈希一致。v1.1.1RC 更新包会替换这个 addon；其他自行维护的 DLSS/Streamline 材料不会随本次更新被换掉。
+自行更换 MFG addon 时，将文件放到 `payload/files/addon/renodx-mfgunlock.addon64`，然后关闭游戏，在设置中重新部署。工具允许更新本地材料，不要求 addon 与旧清单哈希一致。v1.1.1 更新包会替换这个 addon；其他自行维护的 DLSS/Streamline 材料不会随本次更新被换掉。
 
 “清除插件”按部署记录处理本工具负责的文件。用户原有的 ReShade、滤镜和其他 addon 会保留，由本工具安装的 ReShade 按来源记录处理。清除不会恢复官方 DLL；之后可能需要在官方启动器中进行文件校验。**不要依赖普通启动自动补齐文件。**
 
@@ -101,7 +113,7 @@ Dynamic 的驱动预检查门槛为 **595.41**，不是整个工具或 FPS 解�
 开发环境为 Windows x64、.NET SDK 10.0.100。构建命令：
 
 ```powershell
-dotnet publish ./src/WuWaFpsUnlock -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./artifacts/v1.1.1RC/win-x64
+dotnet publish ./src/WuWaFpsUnlock -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./artifacts/v1.1.1/win-x64
 ```
 
 源码构建不包含完整的第三方材料包；普通用户请下载 Release 完整版。第三方组件保持各自的版本与许可，见 [第三方说明](licenses/THIRD_PARTY_NOTICES.md)。

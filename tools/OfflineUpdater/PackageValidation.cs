@@ -21,6 +21,8 @@ internal static partial class Program
             if (required) throw new InvalidDataException("在线更新包缺少 update-manifest.json，已停止更新。");
             return; // Compatibility for older manually extracted offline packages.
         }
+        if (File.Exists(Path.Combine(directory, "WuWaFpsUnlock.exe")))
+            throw new InvalidDataException("请保留完整的独立更新文件夹，将整个文件夹放进启动器目录后运行；不要把新协议包平铺混进原安装目录。");
         UpdatePackageProtocol.ValidateDirectory(directory);
     }
 }

@@ -100,6 +100,7 @@ public sealed partial class AppViewModel
     private async Task<bool> InstallUpdateAsync(UpdateRelease release, CancellationToken cancellation, IProgress<string> progress)
     {
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellation, _lifetime.Token);
+        linked.CancelAfter(TimeSpan.FromMinutes(20));
         RequireGameStoppedForUpdate();
         progress.Report("正在下载并校验更新包…");
         var updater = await _updates.StageAsync(release, AppPaths.Base, linked.Token);

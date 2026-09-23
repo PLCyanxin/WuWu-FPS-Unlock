@@ -1,61 +1,23 @@
-name: Publish universal offline update package
-on:
-  workflow_dispatch:
-    inputs:
-      updater_only:
-        description: Build updater only for local packaging
-        type: boolean
-        default: false
+name: Build standalone updater
+on: workflow_dispatch
 permissions:
-  contents: write
+  contents: read
 jobs:
-  package:
+  build:
     runs-on: windows-latest
-    env:
-      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
-      - name: Build standalone updater
+      - name: Build and test updater
         shell: pwsh
         run: |
           dotnet publish tools/OfflineUpdater -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o updater-build
           if ($LASTEXITCODE -ne 0) { throw 'Updater build failed' }
           & ./updater-build/WuWaUpdater.exe --self-test
-          if ($LASTEXITCODE -ne 0) { throw 'Updater regression failed' }
+          if ($LASTEXITCODE -ne 0) { throw 'Updater tests failed' }
       - uses: actions/upload-artifact@v4
         with:
-          name: offline-updater
+          name: standalone-updater
           path: updater-build/WuWaUpdater.exe
-      - name: Package published launcher and FPS core
-        if: ${{ !inputs.updater_only }}
-        shell: pwsh
-        run: |
-          gh release download v1.1.1RC --repo $env:GITHUB_REPOSITORY --pattern WuWaFPSUnlock-1.1.1RC-win-x64.zip --dir current
-          if ($LASTEXITCODE -ne 0) { throw 'Current release download failed' }
-          Expand-Archive current/WuWaFPSUnlock-1.1.1RC-win-x64.zip current/files
-          $new=(Resolve-Path current/files).Path
-          if ((Get-Item "$new/WuWaFpsUnlock.exe").VersionInfo.FileVersion -ne '1.1.1.0') { throw 'Unexpected destination version' }
-          New-Item update/update-payload/components/fps -ItemType Directory -Force | Out-Null
-          Copy-Item "$new/WuWaFpsUnlock.exe" update/update-payload
-          Copy-Item "$new/components/fps/ww_plugin_base.dll" update/update-payload/components/fps
-          Copy-Item "$new/components/PROVENANCE.json" update/update-payload/components
-          Copy-Item "$new/licenses" update/update-payload -Recurse
-          New-Item update/update-payload/payload/files/addon -ItemType Directory -Force | Out-Null
-          Copy-Item "$new/payload/files/addon/renodx-mfgunlock.addon64" update/update-payload/payload/files/addon
-          Copy-Item "$new/payload/addon-source.json" update/update-payload/payload/addon-source.json
-          Copy-Item updater-build/WuWaUpdater.exe update/更新.exe
-          Copy-Item tools/OfflineUpdater/更新说明.txt update
-          $root=(Resolve-Path update).Path
-          Get-ChildItem $root -Recurse -File | ForEach-Object {
-            '{0}  {1}' -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant(), [IO.Path]::GetRelativePath($root,$_.FullName)
-          } | Set-Content update/SHA256.txt -Encoding utf8
-          Compress-Archive update/* WuWaFPSUnlock-1.1.1RC-update.zip
-      - name: Upload update package
-        if: ${{ !inputs.updater_only }}
-        shell: pwsh
-        run: |
-          gh release upload v1.1.1RC WuWaFPSUnlock-1.1.1RC-update.zip --repo $env:GITHUB_REPOSITORY
-          if ($LASTEXITCODE -ne 0) { throw 'Update package upload failed' }
