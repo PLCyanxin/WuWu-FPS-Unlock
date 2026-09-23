@@ -98,6 +98,7 @@ internal static partial class Program
             Reject(() => RestoreSnapshot(f.Backup, f.Snapshot, () => { }));
             Check(File.ReadAllText(Scoped(f.Root, "WuWaFpsUnlock.exe")).StartsWith("inert new"));
         });
+        GameGuardTests(Test);
         BackupLifecycleTests(Test);
         InventoryTests(Test);
         WaitModeTests(Test);

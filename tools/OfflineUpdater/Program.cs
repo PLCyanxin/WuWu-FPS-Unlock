@@ -4,6 +4,7 @@ using System.Text;
 
 internal static partial class Program
 {
+static string? completedUpdateLauncher;
 [STAThread]
 static int Main(string[] args)
 {
@@ -26,6 +27,7 @@ catch (UnauthorizedAccessException ex)
     result = 1;
 }
 catch (Exception ex) { Console.Error.WriteLine("操作未完成：" + ex.Message); result = 1; }
+if (result == 0 && completedUpdateLauncher is not null) ReopenUpdatedLauncher(completedUpdateLauncher);
 if (!args.Contains("--self-test") && !args.Contains("--self-test-child") && !args.Contains("--validate-package"))
 {
     Console.WriteLine("按任意键退出。");
@@ -34,6 +36,22 @@ if (!args.Contains("--self-test") && !args.Contains("--self-test-child") && !arg
 return result;
 }
 
+static void ReopenUpdatedLauncher(string exe)
+{
+    try
+    {
+        NoLinks(exe);ProductVersion(exe);
+        var start = new ProcessStartInfo(exe) { UseShellExecute = true, WorkingDirectory = Path.GetDirectoryName(exe)! };
+        start.ArgumentList.Add("--update-completed");
+        using var process = Process.Start(start) ?? throw new IOException("无法创建启动器进程。");
+        Console.WriteLine("更新完成，请点击重新部署。已请求打开启动器设置。");
+    }
+    catch (Exception error)
+    {
+        Console.Error.WriteLine("更新已完成，但未能自动打开启动器。请手动打开启动器设置并点击重新部署：" + error.Message);
+        ShowCompletionFallback();
+    }
+}
 static int Update(string? expectedLauncher = null)
 {
     string updaterDirectory = Path.GetFullPath(AppContext.BaseDirectory);
@@ -51,6 +69,7 @@ static int Update(string? expectedLauncher = null)
     string newVersion = ProductVersion(Path.Combine(payload, "WuWaFpsUnlock.exe"));
     Console.WriteLine($"鸣潮 FPS Unlock 离线更新\n安装目录：{root}\n当前版本：{oldVersion}\n包内版本：{newVersion}");
     RejectRunning(exe);
+    RequireGameStopped();
     var entries = new List<Entry>();
     var held = new List<FileStream>();
     string? backup = null;
@@ -103,6 +122,7 @@ static int Update(string? expectedLauncher = null)
         var snapshot = CaptureSnapshot(root, backup, updaterDirectory, entries);
         PrepareRollbackLauncher(backup, updaterDirectory);
         RejectRunning(exe);
+    RequireGameStopped();
         foreach (var entry in entries)
         {
             NoLinks(entry.Target); NoLinks(entry.Staged!);
@@ -121,6 +141,7 @@ static int Update(string? expectedLauncher = null)
         try { PrunePreviousBackups(root,backup); }
         catch(Exception error){Console.WriteLine("更新已完成；旧备份暂未清理："+error.Message);}
         Console.WriteLine("更新完成，最近一次更新前完整快照已保留。可删除更新文件夹，但请保留安装目录中的备份文件夹。\n需要回退时在启动器设置中选择“回退版本”，或使用更新器文件夹中的“回退.cmd”及备份中的 rollback.cmd。\n自动回退恢复旧程序与材料，保留当前配置和部署记录；data 快照仅供人工参考，避免丢失后续部署记录。\n请打开启动器，在设置中重新部署一次");
+        completedUpdateLauncher = exe;
         return 0;
     }
     catch

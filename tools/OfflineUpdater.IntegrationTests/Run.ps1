@@ -23,6 +23,7 @@ $addon=Get-Item "$payload/payload/files/addon/renodx-mfgunlock.addon64"
 & "$repo/scripts/New-UpdateManifest.ps1" -PackageDirectory $package -Version '2.0.0'
 function Worker([string]$Exe,[string[]]$Arguments,[int]$Expected=0){
     $psi=[Diagnostics.ProcessStartInfo]::new($Exe);$psi.UseShellExecute=$false;$psi.CreateNoWindow=$true;$psi.RedirectStandardInput=$true;$psi.RedirectStandardOutput=$true;$psi.RedirectStandardError=$true
+    $psi.Environment['WUWA_FIXTURE_GAME_AT']=[string]$script:ProbeFailAt
     foreach($argument in $Arguments){$psi.ArgumentList.Add($argument)}
     $process=[Diagnostics.Process]::Start($psi);$out=$process.StandardOutput.ReadToEndAsync();$err=$process.StandardError.ReadToEndAsync()
     if(!$process.WaitForExit(60000)){throw 'Fixture worker timed out'}
@@ -39,6 +40,8 @@ $child=StartLauncher
 Worker "$package/更新.exe" @('--wait-for-exit',"$($child.Id)","$root/WuWaFpsUnlock.exe")
 Check ($child.HasExited) 'CLI update waited for real inert launcher natural exit';$child.Dispose()
 Check ((Get-FileHash "$root/WuWaFpsUnlock.exe").Hash -ne $oldHash) 'production update CLI replaced launcher'
+for($i=0;$i -lt 100 -and !(Test-Path "$root/completion-fixture.txt");$i++){Start-Sleep -Milliseconds 50}
+Check ((Get-Content "$root/completion-fixture.txt").Count -eq 1) 'successful update launches completion handoff once'
 $first=@(Get-ChildItem $root -Directory -Filter 'update-backup-*')[0]
 Check ((Get-Content "$($first.FullName)/snapshot.json" -Raw|ConvertFrom-Json).Complete) 'first update creates complete backup'
 Copy-Item "$fixture/third/WuWaFpsUnlock.exe" "$payload/WuWaFpsUnlock.exe" -Force
@@ -58,4 +61,14 @@ Check ((Get-FileHash "$root/data/settings.json").Hash -eq $dataHash) 'update and
 Check ((Test-Path "$backup/rollback.completed") -and !(Get-Content "$backup/snapshot.json" -Raw|ConvertFrom-Json).Complete) 'consumption blocks both new and legacy rollback consumers'
 Worker "$fixture/worker/WuWaUpdaterFixture.exe" @('--rollback',$backup) 1
 Write-Output 'PASS repeated rollback CLI refused'
-Write-Output "RESULT: production CLI integration passed; fixture location $fixture; only desktop shortcut adapter replaced."
+$completionBefore=Get-Content "$root/completion-fixture.txt" -Raw
+$beforeRejected=(Get-FileHash "$root/WuWaFpsUnlock.exe").Hash
+$script:ProbeFailAt=2
+Worker "$package/更新.exe" @() 1
+$script:ProbeFailAt=0
+Check ((Get-FileHash "$root/WuWaFpsUnlock.exe").Hash -eq $beforeRejected) 'game appearing before first replacement prevents installation'
+Check ((Get-Content "$root/completion-fixture.txt" -Raw) -eq $completionBefore) 'game guard refusal never sends success handoff'
+Add-Content "$payload/components/fps/ww_plugin_base.dll" 'corrupt fixture bytes'
+Worker "$package/更新.exe" @() 1
+Check ((Get-Content "$root/completion-fixture.txt" -Raw) -eq $completionBefore) 'failed update never launches success handoff'
+Write-Output "RESULT: production CLI integration passed; fixture location $fixture; desktop shortcut and game probe adapters replaced."
