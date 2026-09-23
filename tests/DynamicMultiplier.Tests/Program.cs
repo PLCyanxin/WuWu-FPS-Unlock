@@ -43,46 +43,51 @@ foreach (string invalid in new[] { "1", "7", "-1", "2147483648", "4.5", "4.0", "
         Check(settings.DynamicMaxMultiplier == 0 && settings.TargetFps == 165 && settings.ExtensionData!.ContainsKey("Future"));
         string path = NewPath("ReShade.ini"); var ini = IniDocument.Load(path);
         MfgDeploymentConfiguration.Create(settings, new(), Hardware(59541)).ApplyOwned(ini, new()); ini.Save(path);
-        Check(IniDocument.Load(path).Get("RenoDX.MFGUnlock", "DynamicMaxMultiplier") == "0");
+        Check(IniDocument.Load(path).Get("RenoDX.MFGUnlock", "DynamicMaxMultiplier") is null);
     }));
-await Test("Dynamic 4x requests native Dynamic with ForceMultiplier zero", () => Sync(() =>
+await Test("Dynamic enables native selection without writing startup cap", () => Sync(() =>
 {
     var ini = IniDocument.Load(NewPath("ReShade.ini")); var receipt = new DeploymentReceipt();
     Configuration(4).ApplyOwned(ini, receipt);
     Check(ini.Get("RenoDX.MFGUnlock", "DynamicMFG") == "1");
     Check(ini.Get("RenoDX.MFGUnlock", "ForceMultiplier") == "0");
-    Check(ini.Get("RenoDX.MFGUnlock", "DynamicMaxMultiplier") == "4");
+    Check(ini.Get("RenoDX.MFGUnlock", "DynamicMaxMultiplier") is null);
     Check(ini.Get("RenoDX.MFGUnlock", "RuntimeSelectionMode") == "1");
-    Check(receipt.IniEdits.Single(e => e.Key == "DynamicMaxMultiplier").Written == "4");
+    Check(!receipt.IniEdits.Any(e => e.Key == "DynamicMaxMultiplier"));
 }));
-await Test("Fixed writes cap zero and preserves existing fixed multiplier", () => Sync(() =>
+await Test("Fixed omits startup cap and preserves fixed multiplier", () => Sync(() =>
 {
     var ini = IniDocument.Load(NewPath("ReShade.ini")); Configuration(6, false).ApplyOwned(ini, new());
     Check(ini.Get("RenoDX.MFGUnlock", "DynamicMFG") == "0" && ini.Get("RenoDX.MFGUnlock", "ForceMultiplier") == "3");
-    Check(ini.Get("RenoDX.MFGUnlock", "DynamicMaxMultiplier") == "0");
+    Check(ini.Get("RenoDX.MFGUnlock", "DynamicMaxMultiplier") is null);
 }));
 await Test("unknown driver and disabled preference preserve existing mode selection", () => Sync(() =>
 {
     Check(!MfgDeploymentConfiguration.Create(new(), new(), Hardware(null)).DynamicEnabled);
     Check(!MfgDeploymentConfiguration.Create(new(), new() { PreferDynamic = false }, Hardware(59541)).DynamicEnabled);
 }));
-await Test("preview reports configured cap and distinguishes Fixed and no override", () => Sync(() =>
+await Test("preview omits retired startup cap and restart instructions", () => Sync(() =>
 {
-    Check(Configuration(4).PreviewText.Contains("Dynamic MFG：将启用") && Configuration(4).PreviewText.Contains("最高 4x"));
-    Check(Configuration(0).PreviewText.Contains("NVIDIA 默认 / 不限制"));
-    Check(Configuration(4, false).PreviewText.Contains("不生效（Fixed）"));
-    Check(Configuration(4).PreviewText.Contains("完全重启游戏") && Configuration(4).PreviewText.Contains("不代表运行时上限已生效"));
+    Check(Configuration(4).PreviewText.Contains("Dynamic MFG：将启用"));
+    Check(Configuration(4, false).PreviewText.Contains("不启用（Fixed）"));
+    Check(Configuration(4).PreviewText == Configuration(0).PreviewText);
+    Check(!Configuration(4).PreviewText.Contains("最大倍率") && !Configuration(4).PreviewText.Contains("重启"));
 }));
-await Test("cap cleanup restores the original value and unrelated ReShade content", () => Sync(() =>
+foreach (bool dynamic in new[] { true, false })
+await Test("deployment removes legacy cap without restoring it on cleanup " + dynamic, () => Sync(() =>
 {
     string path = NewPath("ReShade.ini");
-    File.WriteAllText(path, ";user comment\r\n[GENERAL]\r\nPresetPath=user.ini\r\n[RenoDX.MFGUnlock]\r\nDynamicMaxMultiplier=6\r\nMaxCount=5\r\nDynamicTargetFPS=165\r\nLatencyGuard=1\r\n");
+    File.WriteAllText(path, ";user comment\r\n[GENERAL]\r\nPresetPath=user.ini\r\nDynamicMaxMultiplier=3\r\n[RenoDX.MFGUnlock]\r\nDynamicMaxMultiplier=6\r\ndynamicmaxmultiplier=2\r\nMaxCount=5\r\nDynamicTargetFPS=165\r\nLatencyGuard=1\r\n");
     var ini = IniDocument.Load(path); var receipt = new DeploymentReceipt();
-    Configuration(4).ApplyOwned(ini, receipt); ini.Save(path);
-    var cap = receipt.IniEdits.Single(e => e.Key == "DynamicMaxMultiplier"); Check(cap.Previous == "6" && cap.Written == "4");
-    Configuration(3).ApplyOwned(ini, receipt); Check(cap.Previous == "6" && cap.Written == "3");
+    receipt.IniEdits.Add(new() { Section="RenoDX.MFGUnlock", Key="DynamicMaxMultiplier", Previous="6", Written="4" });
+    Configuration(4, dynamic).ApplyOwned(ini, receipt, new Dictionary<string,string> { ["dynamicmaxmultiplier"]="5", ["ManifestOption"]="keep" }); ini.Save(path);
+    Check(ini.Get("RenoDX.MFGUnlock", "ManifestOption") == "keep");
+    Check(!receipt.IniEdits.Any(e => e.Key == "DynamicMaxMultiplier"));
+    Check(ini.Get("RenoDX.MFGUnlock", "DynamicMaxMultiplier") is null);
+    Configuration(3, dynamic).ApplyOwned(ini, receipt);
     ini.RemoveOwnedEdits(receipt, _ => { }); ini.Save(path);
-    Check(ini.Get("RenoDX.MFGUnlock", "DynamicMaxMultiplier") == "6");
+    Check(ini.Get("RenoDX.MFGUnlock", "DynamicMaxMultiplier") is null);
+    Check(ini.Get("GENERAL", "DynamicMaxMultiplier") == "3");
     Check(ini.Get("RenoDX.MFGUnlock", "MaxCount") == "5" && ini.Get("RenoDX.MFGUnlock", "DynamicTargetFPS") == "165" && ini.Get("RenoDX.MFGUnlock", "LatencyGuard") == "1");
     Check(File.ReadAllText(path).Contains(";user comment\r\n[GENERAL]\r\nPresetPath=user.ini"));
 }));
@@ -94,15 +99,15 @@ await Test("cleanup removes a previously absent cap and preserves later user edi
     receipt = new(); Configuration(4).ApplyOwned(ini, receipt); ini.Set("RenoDX.MFGUnlock", "DynamicMaxMultiplier", "2");
     ini.RemoveOwnedEdits(receipt, _ => { }); Check(ini.Get("RenoDX.MFGUnlock", "DynamicMaxMultiplier") == "2");
 }));
-await Test("Fixed transition restores pre-deployment cap on cleanup", () => Sync(() =>
+await Test("Fixed transition does not restore retired cap", () => Sync(() =>
 {
     var ini = IniDocument.Load(NewPath("ReShade.ini")); ini.Set("RenoDX.MFGUnlock", "DynamicMaxMultiplier", "5");
     var receipt = new DeploymentReceipt(); Configuration(4).ApplyOwned(ini, receipt); Configuration(4, false).ApplyOwned(ini, receipt);
-    Check(ini.Get("RenoDX.MFGUnlock", "DynamicMaxMultiplier") == "0");
-    ini.RemoveOwnedEdits(receipt, _ => { }); Check(ini.Get("RenoDX.MFGUnlock", "DynamicMaxMultiplier") == "5");
+    Check(ini.Get("RenoDX.MFGUnlock", "DynamicMaxMultiplier") is null);
+    ini.RemoveOwnedEdits(receipt, _ => { }); Check(ini.Get("RenoDX.MFGUnlock", "DynamicMaxMultiplier") is null);
 }));
 foreach (bool dynamic in new[] { true, false })
-    await Test("real deployment approval changes with cap in " + (dynamic ? "Dynamic" : "Fixed"), async () =>
+    await Test("real deployment approval ignores legacy cap in " + (dynamic ? "Dynamic" : "Fixed"), async () =>
     {
         string manifest = NewPath("manifest.json"); File.WriteAllText(manifest, "{}");
         var settings = new UserSettings { GameRoot = Path.GetDirectoryName(manifest)!, GameExe = Path.Combine(Path.GetDirectoryName(manifest)!, "Shipping.exe"), PackageManifest = manifest, DynamicMaxMultiplier = 4 };
@@ -112,7 +117,7 @@ foreach (bool dynamic in new[] { true, false })
         string approved = await Fingerprint(Configuration(4, dynamic));
         Check(approved == await Fingerprint(Configuration(4, dynamic)), "Identical plans must remain stable");
         settings.DynamicMaxMultiplier = 6;
-        Check(approved != await Fingerprint(Configuration(settings.DynamicMaxMultiplier, dynamic)), "Changed cap must invalidate approval");
+        Check(approved == await Fingerprint(Configuration(settings.DynamicMaxMultiplier, dynamic)), "Retired cap must not affect approval");
     });
 Console.WriteLine($"RESULT: {passed} passed, {failed} failed. Temporary JSON/INI and deployment-plan checks only; no game or driver changes.");
 try { Directory.Delete(root, true); } catch { Console.WriteLine("Retained fixture directory: " + root); }

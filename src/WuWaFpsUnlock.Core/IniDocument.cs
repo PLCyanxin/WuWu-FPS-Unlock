@@ -40,6 +40,10 @@ public sealed class IniDocument
         }
         return result;
     }
+    public void RemoveKey(string section, string key)
+    {
+        foreach (int index in Find(section, key).OrderDescending()) _lines.RemoveAt(index);
+    }
     public void Set(string section, string key, string? value)
     {
         var found = Find(section, key);

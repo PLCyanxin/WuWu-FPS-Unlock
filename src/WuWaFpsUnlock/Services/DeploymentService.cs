@@ -112,8 +112,7 @@ public sealed class DeploymentService(Action<string> log)
             else if(before.State=="Reusable"&&!proxyEntry.InstalledHash.Equals(await SafePaths.HashAsync(receipt.ProxyPath,token),StringComparison.OrdinalIgnoreCase)){proxyEntry.CreatedByTool=false;proxyEntry.SourceKind="LegacyUnknown";}
             proxyEntry.InstalledHash=await SafePaths.HashAsync(receipt.ProxyPath,token);proxyEntry.Completed=true;
             var ini=IniDocument.Load(ready.Ini);
-            foreach(var pair in manifest.MfgConfig)ini.ApplyOwned("RenoDX.MFGUnlock",pair.Key,pair.Value,receipt);
-            configuration.ApplyOwned(ini,receipt);
+            configuration.ApplyOwned(ini,receipt,manifest.MfgConfig);
             string early=ini.MergeCsv("ADDON","LoadFromDllMain","renodx-mfgunlock.addon64");
             ini.ApplyOwned("ADDON","LoadFromDllMain",early,receipt);
             AppPaths.SaveReceipt(receipt);ini.Save(ready.Ini);
