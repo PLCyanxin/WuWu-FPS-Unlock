@@ -119,6 +119,44 @@ foreach (bool dynamic in new[] { true, false })
         settings.DynamicMaxMultiplier = 6;
         Check(approved == await Fingerprint(Configuration(settings.DynamicMaxMultiplier, dynamic)), "Retired cap must not affect approval");
     });
+foreach (string liveValue in new[] { "0", "2", "3", "4", "5", "6" })
+await Test("repeated Dynamic/Fixed deployment preserves game-owned live cap " + liveValue, () => Sync(() =>
+{
+    string path = NewPath("ReShade.ini");
+    File.WriteAllText(path, ";preserve\r\n[GENERAL]\r\nPresetPath=user.ini\r\n[RenoDX.MFGUnlock]\r\nDynamicMaxMultiplier=4\r\nDynamicLiveMaxMultiplier=" + liveValue + "\r\nDynamicTargetFPS=165\r\n");
+    var receipt = new DeploymentReceipt();
+    receipt.IniEdits.Add(new() { Section = "RenoDX.MFGUnlock", Key = "DynamicMaxMultiplier", Previous = "6", Written = "4" });
+    foreach (bool dynamic in new[] { true, true, false, true })
+    {
+        var ini = IniDocument.Load(path);
+        Configuration(4, dynamic).ApplyOwned(ini, receipt,
+            new Dictionary<string, string> { ["DynamicMaxMultiplier"] = "4", ["OtherDeploymentOption"] = "1" });
+        ini.Save(path);
+        Check(IniDocument.Load(path).Get("RenoDX.MFGUnlock", "DynamicLiveMaxMultiplier") == liveValue,
+            "Deployment must preserve the separately persisted in-game request");
+        Check(!receipt.IniEdits.Any(e => e.Key.Equals("DynamicLiveMaxMultiplier", StringComparison.OrdinalIgnoreCase)),
+            "Deployment must not claim ownership of the game-owned request");
+    }
+    var cleanup = IniDocument.Load(path); cleanup.RemoveOwnedEdits(receipt, _ => { }); cleanup.Save(path);
+    var final = IniDocument.Load(path);
+    Check(final.Get("RenoDX.MFGUnlock", "DynamicLiveMaxMultiplier") == liveValue);
+    Check(final.Get("RenoDX.MFGUnlock", "DynamicMaxMultiplier") is null);
+    Check(final.Get("RenoDX.MFGUnlock", "DynamicTargetFPS") == "165" && final.Get("GENERAL", "PresetPath") == "user.ini");
+}));
+await Test("new deployment leaves missing live cap for addon default and preserves later game selection", () => Sync(() =>
+{
+    string path = NewPath("ReShade.ini"); var receipt = new DeploymentReceipt();
+    var ini = IniDocument.Load(path); Configuration(4).ApplyOwned(ini, receipt); ini.Save(path);
+    Check(IniDocument.Load(path).Get("RenoDX.MFGUnlock", "DynamicLiveMaxMultiplier") is null);
+    foreach (string selected in new[] { "6", "0" })
+    {
+        ini = IniDocument.Load(path); ini.Set("RenoDX.MFGUnlock", "DynamicLiveMaxMultiplier", selected); ini.Save(path);
+        ini = IniDocument.Load(path); Configuration(4).ApplyOwned(ini, receipt); ini.Save(path);
+        Check(IniDocument.Load(path).Get("RenoDX.MFGUnlock", "DynamicLiveMaxMultiplier") == selected);
+    }
+    ini = IniDocument.Load(path); ini.RemoveOwnedEdits(receipt, _ => { }); ini.Save(path);
+    Check(IniDocument.Load(path).Get("RenoDX.MFGUnlock", "DynamicLiveMaxMultiplier") == "0");
+}));
 Console.WriteLine($"RESULT: {passed} passed, {failed} failed. Temporary JSON/INI and deployment-plan checks only; no game or driver changes.");
 try { Directory.Delete(root, true); } catch { Console.WriteLine("Retained fixture directory: " + root); }
 return failed == 0 ? 0 : 1;
