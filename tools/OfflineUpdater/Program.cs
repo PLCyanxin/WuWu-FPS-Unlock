@@ -51,8 +51,9 @@ static int Update()
             entry.SourceHandle = sourceHandle;
             entries.Add(entry);
         }
-        if (!entries.Any(e => e.Relative.Equals("WuWaFpsUnlock.exe", StringComparison.OrdinalIgnoreCase)))
-            throw new InvalidDataException("更新包缺少主程序。");
+        foreach (string required in new[] { "WuWaFpsUnlock.exe", "components/fps/ww_plugin_base.dll", "components/PROVENANCE.json" })
+            if (!entries.Any(e => e.Relative.Equals(required, StringComparison.OrdinalIgnoreCase)))
+                throw new InvalidDataException("更新包不完整，缺少：" + required);
         // Use a GUID directory so every attempt keeps its own original files and staged copy.
         backup = Path.Combine(root, "update-backup-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N"));
         NoLinks(backup);

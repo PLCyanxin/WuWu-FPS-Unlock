@@ -6,7 +6,9 @@
 
 ## 快速开始
 
-**已安装 v0.1？** 下载 [v0.1 → v1.1RC 专用更新包](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/download/v1.1RC/WuWaFPSUnlock-0.1-to-1.1RC-update.zip)。先退出游戏和托盘里的启动器，再把包内 `WuWaFpsUnlock.exe` 覆盖到原程序目录即可。保留原有 `data`、`payload`、`components` 和 `licenses`，无需重新下载完整包或重新部署插件。首次使用请下载下方完整便携版。
+**已有旧版本？** 下载 [升级到 v1.1RC 的通用更新包](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/download/v1.1RC/WuWaFPSUnlock-universal-to-1.1RC-update.zip)。先退出游戏和托盘里的启动器，将更新包解压到原 `WuWaFpsUnlock.exe` 所在目录，双击 `更新.exe`。完成后打开启动器，在设置中重新部署一次。
+
+更新器不要求旧版本号或文件哈希相同，可用于本项目 GitHub 和网盘分发的旧版本；需要保留原程序名称及目录结构。它更新启动器、内置 FPS 核心与随附许可，并备份被替换的文件；保留配置、部署记录和自行更新的 MFG/ReShade 材料，不自动修改游戏文件。不支持的目录或被占用的文件会明确提示。首次使用请下载下方完整便携版。
 
 1. 在 Release 页面下载 `WuWaFPSUnlock-1.1RC-win-x64.zip`，完整解压后运行 `WuWaFpsUnlock.exe`，按 Windows 提示授予管理员权限。
 2. 打开“设置”，点击“帮我查找鸣潮”，或手动选择游戏根目录。正确的游戏程序是 `Client\Binaries\Win64\Client-Win64-Shipping.exe`；选择正确目录后会自动填写。
