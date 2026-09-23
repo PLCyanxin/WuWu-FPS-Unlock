@@ -1,23 +1,23 @@
-# 第三方文件与素材来源
+# 第三方组件与素材
 
-当前便携包面向本次用户本地交付，未公开发布。各组件保留自己的来源与许可，不把整个二进制包统一声明为MIT。
+鸣潮 FPS Unlock 使用以下第三方组件。各组件保留自己的版本、版权与许可，不因随本工具分发而统一采用本项目的许可证。
 
-## 内置FPS核心
+## 帧率模块
 
-v0.1便携包components/fps/ww_plugin_base.dll为用户提供程序input/unlocker/鸣潮.exe中的原始34304字节x64核心，与components/ww_plugin_base.dll逐字节一致。SHA256为844d7552692f53e8a1bfe45edf360a094597c5bf2b26dc058ff59b21d2250c3a，来源核验见components/PROVENANCE.json。没有重写或重新下载该核心。当前程序自行启动所选Shipping并加载核心，不执行外部unlock.exe；历史外部启动代码和原输入仅留作来源审计，不参与运行路线。新版实际游戏兼容性仍待验收。
+`components/fps/ww_plugin_base.dll` 来自维护者提供的 FPS 解锁程序，来源说明见 `components/PROVENANCE.json`，相关 MIT 许可见 `WutherFPSUnlocker-MIT.txt`。本工具启动游戏并加载该模块，不需要运行外部 `unlock.exe`。
 
-用户EXE包含30launchers/WutheringWaves-FPS-unlocker来源引用，附WutherFPSUnlocker-MIT.txt。未做完整可复现构建比对，不将同名仓库许可证视为任意同名二进制所有内容的授权证明。
+## 多帧生成、ReShade 与 NVIDIA 运行库
 
-## 本地图像
+完整版包含维护者提供的 ReShade 6.8.0 Full Add-on 安装器、MFG addon 和 DLSS / Streamline 材料。相关组件的版权与使用条件属于其各自权利人。
 
-Cover.original.png、Icon.original.jpg来自用户交接包；桌面更高分辨率封面保持原件。仅裁剪、等比缩放、渐变；App.ico由原彩色头像做格式转换，未重绘。
+v1.1.1 使用的 addon 来源记录见源码中的 `release-assets/mfg/source.json`；包内 `payload/addon-source.json` 记录相同文件。完整版的 `payload/source-manifest.json` 和 `payload/payload-map.json` 已同步本次 addon 的大小与哈希，其余运行库未因本次更新而更换。使用更新包时保留原有整体清单，新 addon 以独立来源记录为准。
 
-## ReShade、MFG、NVIDIA/Streamline
+这些二进制由维护者提供并按原始字节分发。本地哈希用于区分文件，不表示对上游来源或可复现构建的证明。
 
-包内包含用户提供的ReShade_Setup_6.8.0_Addon.exe、renodx-mfgunlock.addon64和18个替换DLL；未下载另一个版本替换用户包。来源、版本、数字签名实际结果、SHA256在payload/source-manifest.json。NVIDIA DLL和addon各有自身许可，不派生自本工具代码许可。
+## 图片素材
 
-addon静态配置审计使用上游0.9代码与公开发布哈希；相关源码片段保留原版权声明，出处见knowledge/deployment/ADDON_CONFIG_AUDIT.md。公开分发前需单独核对这些文件及原图的再分发授权；本次未公开发布。
+封面和头像由维护者提供。图标使用原彩色头像的透明版本，未重新绘制。素材的版权归原权利人所有。
 
 ## Microsoft .NET
 
-Windows x64自包含使用.NET10.0.0运行库，SDK10.0.100固定，来源及校验记录见knowledge/materials。v0.1不包含或依赖旧外部解锁器的.NET8运行库；历史记录不代表当前交付内容。
+Windows x64 便携包包含 Microsoft .NET 运行时。构建使用项目 `global.json` 指定的 SDK；.NET 组件遵循各自随附许可。

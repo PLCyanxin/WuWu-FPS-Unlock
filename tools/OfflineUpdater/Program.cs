@@ -65,7 +65,7 @@ static int Update()
             entry.SourceHandle = sourceHandle;
             entries.Add(entry);
         }
-        foreach (string required in new[] { "WuWaFpsUnlock.exe", "components/fps/ww_plugin_base.dll", "components/PROVENANCE.json" })
+        foreach (string required in new[] { "WuWaFpsUnlock.exe", "components/fps/ww_plugin_base.dll", "components/PROVENANCE.json", "payload/files/addon/renodx-mfgunlock.addon64", "payload/addon-source.json" })
             if (!entries.Any(e => e.Relative.Equals(required, StringComparison.OrdinalIgnoreCase)))
                 throw new InvalidDataException("更新包不完整，缺少：" + required);
         // Use a GUID directory so every attempt keeps its own original files and staged copy.

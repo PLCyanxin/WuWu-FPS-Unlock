@@ -12,51 +12,82 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
-      - name: Build launcher
+      - name: Build launcher and updater
         shell: pwsh
         run: |
           dotnet publish src/WuWaFpsUnlock -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o build
-          if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
-      - name: Package with unchanged release components
+          if ($LASTEXITCODE -ne 0) { throw 'Launcher build failed' }
+          dotnet publish tools/OfflineUpdater -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o updater-build
+          if ($LASTEXITCODE -ne 0) { throw 'Updater build failed' }
+      - name: Check update and rollback in temporary directories
         shell: pwsh
         run: |
-          gh release download v0.1RC --repo $env:GITHUB_REPOSITORY --pattern WuWaFPSUnlock-0.1RC-win-x64.zip --dir baseline
+          & ./updater-build/WuWaUpdater.exe --self-test
+          if ($LASTEXITCODE -ne 0) { throw 'Updater regression failed' }
+      - name: Package v1.1.1
+        shell: pwsh
+        run: |
+          gh release download v1.1RC --repo $env:GITHUB_REPOSITORY --pattern WuWaFPSUnlock-1.1RC-win-x64.zip --dir baseline
           if ($LASTEXITCODE -ne 0) { throw 'Component package download failed' }
-          Expand-Archive baseline/WuWaFPSUnlock-0.1RC-win-x64.zip baseline/extracted
+          Expand-Archive baseline/WuWaFPSUnlock-1.1RC-win-x64.zip baseline/extracted
           New-Item package -ItemType Directory | Out-Null
-          foreach ($name in @('payload','components','licenses','App.ico')) {
-            Copy-Item "baseline/extracted/$name" package -Recurse
-          }
+          foreach ($name in @('payload','components','licenses','App.ico')) { Copy-Item "baseline/extracted/$name" package -Recurse }
           Get-ChildItem build | Where-Object Extension -ne '.pdb' | Copy-Item -Destination package -Recurse -Force
+          $addon='release-assets/mfg/renodx-mfgunlock.addon64'
+          if ((Get-FileHash $addon).Hash -ne '5D9184D5D690FF5CC1771C07A69331E4A596F8A94FDE5867A5AFC713650F800C') { throw 'Unexpected addon revision' }
+          Copy-Item $addon package/payload/files/addon/renodx-mfgunlock.addon64 -Force
+          Copy-Item release-assets/mfg/source.json package/payload/addon-source.json
+          $manifest=Get-Content package/payload/manifest.json -Raw | ConvertFrom-Json
+          $manifest.packageId='wuwa-fps-unlock-1.1.1'
+          $entry=$manifest.files | Where-Object source -eq 'files/addon/renodx-mfgunlock.addon64'
+          if (!$entry) { throw 'Addon manifest entry missing' }
+          $entry.sha256=(Get-FileHash $addon).Hash.ToLowerInvariant()
+          $entry.size=(Get-Item $addon).Length
+          $manifest | ConvertTo-Json -Depth 30 | Set-Content package/payload/manifest.json -Encoding utf8
+          $source=Get-Content package/payload/source-manifest.json -Raw | ConvertFrom-Json
+          $record=$source.files | Where-Object name -eq 'renodx-mfgunlock.addon64'
+          if (!$record) { throw 'Addon source record missing' }
+          $record.length=(Get-Item $addon).Length
+          $record.sha256=$entry.sha256
+          $record.copySha256=$entry.sha256
+          $record.sourcePath='release-assets/mfg/renodx-mfgunlock.addon64'
+          $record.copiedPath='payload/files/addon/renodx-mfgunlock.addon64'
+          $record.fileVersion=(Get-Item $addon).VersionInfo.FileVersion
+          $source | ConvertTo-Json -Depth 30 | Set-Content package/payload/source-manifest.json -Encoding utf8
+          $map=Get-Content package/payload/payload-map.json -Raw | ConvertFrom-Json
+          $mapped=$map | Where-Object name -eq 'renodx-mfgunlock.addon64'
+          if (!$mapped) { throw 'Addon map missing' }
+          $mapped.sha256=$entry.sha256
+          $mapped.source='payload/files/addon/renodx-mfgunlock.addon64'
+          $map | ConvertTo-Json -Depth 30 | Set-Content package/payload/payload-map.json -Encoding utf8
           Copy-Item README.md package
-          Compress-Archive package/* WuWaFPSUnlock-1.1RC-win-x64.zip
-          $hash=(Get-FileHash WuWaFPSUnlock-1.1RC-win-x64.zip -Algorithm SHA256).Hash.ToLowerInvariant()
-          @"
-          鸣潮 FPS Unlock v1.1RC
-
-          下载 WuWaFPSUnlock-1.1RC-win-x64.zip，完整解压后运行 WuWaFpsUnlock.exe。
-
-          - 游戏进程启动后立即收起到托盘，不再等待渲染窗口识别。
-          - 确认游戏退出后自动关闭启动器；重启期间不会因旧实例退出而误关。
-          - 启动或 FPS 连接失败时恢复窗口显示错误。
-          - 保留允许更新 MFG 材料的功能。
-          - 程序显示 v1.1RC，自有程序集和文件版本 1.1.0.0。
-
-          完整 Windows x64 便携包，包含 .NET 运行时及与 v0.1RC 相同的第三方组件。不含个人配置、部署记录和日志。升级请先退出旧程序并保留 data 目录。
-
-          已完成构建；本次发布未运行真实游戏验收。源码提交：$env:GITHUB_SHA
-
-          ZIP SHA-256：$hash
-          "@ | Set-Content release-notes.md -Encoding utf8
+          Compress-Archive package/* WuWaFPSUnlock-1.1.1-win-x64.zip
+          New-Item update/update-payload/components/fps,update/update-payload/payload/files/addon -ItemType Directory -Force | Out-Null
+          Copy-Item build/WuWaFpsUnlock.exe update/update-payload
+          Copy-Item build/components/fps/ww_plugin_base.dll update/update-payload/components/fps
+          Copy-Item build/components/PROVENANCE.json update/update-payload/components
+          Copy-Item build/licenses update/update-payload -Recurse
+          Copy-Item $addon update/update-payload/payload/files/addon
+          Copy-Item release-assets/mfg/source.json update/update-payload/payload/addon-source.json
+          Copy-Item updater-build/WuWaUpdater.exe update/更新.exe
+          Copy-Item tools/OfflineUpdater/更新说明.txt update
+          Compress-Archive update/* WuWaFPSUnlock-1.1.1-update.zip
+          Get-FileHash WuWaFPSUnlock-1.1.1-win-x64.zip,WuWaFPSUnlock-1.1.1-update.zip | ForEach-Object { '{0}  {1}' -f $_.Hash.ToLowerInvariant(),(Split-Path $_.Path -Leaf) } | Set-Content SHA256SUMS.txt -Encoding ascii
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-v1.1.1
+          path: |
+            WuWaFPSUnlock-1.1.1-*.zip
+            SHA256SUMS.txt
       - name: Upload and publish
         shell: pwsh
         run: |
-          gh release view v1.1RC --repo $env:GITHUB_REPOSITORY *> $null
+          gh release view v1.1.1 --repo $env:GITHUB_REPOSITORY *> $null
           if ($LASTEXITCODE -ne 0) {
-            gh release create v1.1RC --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title '鸣潮 FPS Unlock v1.1RC' --notes-file release-notes.md --draft
+            gh release create v1.1.1 --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title '鸣潮 FPS Unlock v1.1.1' --notes-file docs/RELEASE_v1.1.1.md --draft
             if ($LASTEXITCODE -ne 0) { throw 'Draft creation failed' }
           }
-          gh release upload v1.1RC WuWaFPSUnlock-1.1RC-win-x64.zip --repo $env:GITHUB_REPOSITORY
+          gh release upload v1.1.1 WuWaFPSUnlock-1.1.1-win-x64.zip WuWaFPSUnlock-1.1.1-update.zip SHA256SUMS.txt --repo $env:GITHUB_REPOSITORY
           if ($LASTEXITCODE -ne 0) { throw 'Asset upload failed; draft retained' }
-          gh release edit v1.1RC --repo $env:GITHUB_REPOSITORY --title '鸣潮 FPS Unlock v1.1RC' --notes-file release-notes.md --draft=false --latest
+          gh release edit v1.1.1 --repo $env:GITHUB_REPOSITORY --title '鸣潮 FPS Unlock v1.1.1' --notes-file docs/RELEASE_v1.1.1.md --draft=false --latest
           if ($LASTEXITCODE -ne 0) { throw 'Publication failed' }
