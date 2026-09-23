@@ -69,6 +69,32 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     public bool CanEditSettings=>!Busy&&!IsGameRunning;
     public bool FpsEnabled {get=>_settings.FpsEnabled;set{if(!CanChangeFpsMode)return;_settings.FpsEnabled=value;Save();Status="FPS 开关下次启动生效";NotifyAll();}}
     public bool MfgSelected {get=>_settings.MfgSelected;set{if(!CanEditSettings)return;_settings.MfgSelected=value;Save();NotifyAll();}}
+    public sealed record DynamicMultiplierOption(int Value,string Label);
+    public IReadOnlyList<DynamicMultiplierOption> DynamicMaxMultiplierOptions {get;} =
+    [new(0,"NVIDIA 默认 / 不限制"),new(2,"最高 2x"),new(3,"最高 3x"),new(4,"最高 4x"),new(5,"最高 5x"),new(6,"最高 6x")];
+    public int DynamicMaxMultiplier
+    {
+        get=>_settings.DynamicMaxMultiplier;
+        set
+        {
+            if(!CanEditSettings)return;
+            value=DynamicMultiplierLimit.Normalize(value);
+            if(_settings.DynamicMaxMultiplier==value)return;
+            try
+            {
+                var candidate=_settings.Clone();candidate.DynamicMaxMultiplier=value;
+                JsonFiles.Save(AppPaths.Settings,candidate);_settings=candidate;
+                Status="Dynamic 最大倍率已保存；需要重新部署并完全重启游戏。";
+                Log(Status);
+            }
+            catch(Exception error)
+            {
+                Status="Dynamic 最大倍率未保存："+error.Message;Log(Status);
+                _dispatcher.BeginInvoke(new Action(()=>Notify(nameof(DynamicMaxMultiplier))));
+            }
+            Notify();
+        }
+    }
     public int TargetFps
     {
         get=>_settings.TargetFps;
