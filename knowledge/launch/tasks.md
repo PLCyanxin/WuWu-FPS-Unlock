@@ -81,3 +81,5 @@ Actual validation: WPF build0warnings0errors; tests/FpsIdentity.Tests9passed0fai
 2026-09-14: Completed static FPS lifetime audit; see fps-session-lifetime.md. Exact core has independent 51 ms writer; no heartbeat fix justified. Six static evidence checks passed; no game/native DLL execution; access denied remains unresolved.
 
 2026-09-23: Core update service/protocol ready; online-update.md documents API/limits and fake HTTP tests20/20. Root release target1.1.1 local-only.
+
+2026-09-23: Update preference persistence fixed: save cloned settings before committing memory; failed AutoCheck retains value and refreshes binding; failed skip restores checkbox and displays dialog error. tests/Update.PreferenceTests native unshown WPF + locked fixture settings8/8passed; artifacts/update-preference-tests.log. Initial test harness reflection ambiguity corrected before successful run. No network/game/updater execution.

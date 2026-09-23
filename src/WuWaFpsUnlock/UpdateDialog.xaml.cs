@@ -19,8 +19,22 @@ public partial class UpdateDialog : Window
         ReleaseTitle.Text = "发现新版本 " + version;
         ReleaseNotes.Text = string.IsNullOrWhiteSpace(notes) ? "此版本未提供更新说明。" : notes;
         SkipVersion.IsChecked = skipped;
-        SkipVersion.Checked += (_, _) => skipChanged(true);
-        SkipVersion.Unchecked += (_, _) => skipChanged(false);
+        bool committedSkip = skipped, restoringSkip = false;
+        void SaveSkip(bool requested)
+        {
+            if (restoringSkip) return;
+            try { skipChanged(requested); committedSkip = requested; }
+            catch (Exception error)
+            {
+                restoringSkip = true;
+                try { SkipVersion.IsChecked = committedSkip; }
+                finally { restoringSkip = false; }
+                OperationStatus.Text = "跳过设置未保存：" + error.Message;
+                _log(OperationStatus.Text);
+            }
+        }
+        SkipVersion.Checked += (_, _) => SaveSkip(true);
+        SkipVersion.Unchecked += (_, _) => SaveSkip(false);
         OperationStatus.Text = "点击“立即更新”后才会下载安装包；安装前启动器会退出。";
         Width = Math.Min(Width, SystemParameters.WorkArea.Width - 36);
         MaxHeight = Math.Max(240, SystemParameters.WorkArea.Height - 36);

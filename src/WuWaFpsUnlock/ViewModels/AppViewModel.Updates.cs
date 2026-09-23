@@ -24,9 +24,18 @@ public sealed partial class AppViewModel
         set
         {
             if (_settings.AutoCheckUpdates == value) return;
-            _settings.AutoCheckUpdates = value;
-            Save(); Notify();
-            if (!value && _automaticCheckInProgress) _updateCheckCancellation?.Cancel();
+            try
+            {
+                PersistUpdatePreference(settings => settings.AutoCheckUpdates = value);
+                if (!value && _automaticCheckInProgress) _updateCheckCancellation?.Cancel();
+            }
+            catch (Exception error)
+            {
+                UpdateStatus = "更新设置未保存：" + error.Message; Log(UpdateStatus);
+                // WPF may still be completing a source update; refresh the checkbox afterward.
+                Application.Current?.Dispatcher.BeginInvoke(new Action(() => Notify(nameof(AutoCheckUpdates))));
+            }
+            Notify();
         }
     }
     public string UpdateStatus { get => _updateStatus; private set { _updateStatus = value; Notify(); } }
@@ -71,9 +80,11 @@ public sealed partial class AppViewModel
                     string.Equals(_settings.SkippedUpdateTag, release.Tag, StringComparison.OrdinalIgnoreCase),
                     skipped =>
                     {
-                        if (skipped) _settings.SkippedUpdateTag = release.Tag;
-                        else if (string.Equals(_settings.SkippedUpdateTag, release.Tag, StringComparison.OrdinalIgnoreCase)) _settings.SkippedUpdateTag = "";
-                        Save();
+                        PersistUpdatePreference(settings =>
+                        {
+                            if (skipped) settings.SkippedUpdateTag = release.Tag;
+                            else if (string.Equals(settings.SkippedUpdateTag, release.Tag, StringComparison.OrdinalIgnoreCase)) settings.SkippedUpdateTag = "";
+                        });
                     }, (token, progress) => InstallUpdateAsync(release, token, progress), Log);
                 dialog.Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
                     ?? Application.Current.MainWindow;
@@ -127,6 +138,13 @@ public sealed partial class AppViewModel
             if (processes.Any(process => !process.HasExited)) throw new InvalidOperationException("检测到游戏仍在运行，请退出游戏后再安装更新。");
         }
         finally { foreach (var process in processes) process.Dispose(); }
+    }
+    private void PersistUpdatePreference(Action<UserSettings> change)
+    {
+        var candidate = _settings.Clone();
+        change(candidate);
+        JsonFiles.Save(AppPaths.Settings, candidate);
+        _settings = candidate; // Commit in-memory state only after durable write succeeds.
     }
     private void CancelUpdateWork()
     {
