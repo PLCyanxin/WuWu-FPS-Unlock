@@ -42,6 +42,7 @@ public static class DialogLayoutTests
             }
             ErrorLayout();
             DownloadLayout();
+            DeferredActions();
             SettingsLayoutTests.Run(Check, Pump);
             Console.WriteLine($"{_checks}/{_checks} native WPF layout checks passed; no shown windows, network, updater or game execution.");
             return 0;
@@ -53,6 +54,23 @@ public static class DialogLayoutTests
         Func<CancellationToken, IProgress<string>, Task<bool>>? install = null) =>
         new("1.2RC", notes, false, _ => { }, install ?? ((_, _) => Task.FromResult(false)), _ => { });
 
+    private static void DeferredActions()
+    {
+        int installs = 0;
+        var running = new UpdateDialog("9.0RC", "fixture", true, _ => {},
+            (_, _) => { installs++; return Task.FromResult(false); }, _ => {}, gameRunning: true);
+        Layout(running, running.MinHeight); CheckControls(running);
+        Check(!Named<Button>(running, "InstallButton").IsEnabled, "running game blocks immediate install");
+        Named<Button>(running, "InstallButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Check(installs == 0, "running game guard prevents callback even for routed click");
+        Named<Button>(running, "AfterGameButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Check(running.DeferredRequested && installs == 0, "deferral records choice without installing");
+        var stopped = new UpdateDialog("9.0RC", "fixture", true, _ => {},
+            (_, _) => Task.FromResult(false), _ => {}, allowDefer: false);
+        Check(Named<Button>(stopped, "InstallButton").IsEnabled, "skipped release can still update manually");
+        Check(Named<Button>(stopped, "AfterGameButton").Visibility == Visibility.Collapsed, "automatic after-game flow cannot defer itself");
+        stopped.Close();
+    }
     private static T Named<T>(UpdateDialog dialog, string name) where T : FrameworkElement => (T)dialog.FindName(name);
     private static FrameworkElement Root(UpdateDialog dialog) => (FrameworkElement)dialog.Content;
     private static void Layout(UpdateDialog dialog, double outerHeight, double width = 480)
@@ -74,6 +92,8 @@ public static class DialogLayoutTests
         Check(!dialog.IsVisible, "dialog remains unshown");
         foreach (string name in new[] { "InstallButton", "LaterButton", "SkipVersion", "ReleaseNotes" })
             Inside(Named<FrameworkElement>(dialog, name), Root(dialog), name);
+        var deferred = Named<Button>(dialog, "AfterGameButton");
+        if (deferred.Visibility == Visibility.Visible) Inside(deferred, Root(dialog), "after-game action");
         var install = Named<Button>(dialog, "InstallButton");
         var later = Named<Button>(dialog, "LaterButton");
         Check(install.ActualHeight >= install.MinHeight && later.ActualHeight >= later.MinHeight,

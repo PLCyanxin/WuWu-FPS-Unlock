@@ -8,14 +8,19 @@ public partial class UpdateDialog : Window
     private readonly Func<CancellationToken, IProgress<string>, Task<bool>> _install;
     private readonly Action<string> _log;
     private CancellationTokenSource? _download;
-    private bool _installing, _closeAfterCancel, _closed;
+    private bool _installing, _closeAfterCancel, _closed, _gameRunning;
+    public bool DeferredRequested { get; private set; }
     public bool UpdateStarted { get; private set; }
 
     public UpdateDialog(string version, string notes, bool skipped, Action<bool> skipChanged,
-        Func<CancellationToken, IProgress<string>, Task<bool>> install, Action<string> log)
+        Func<CancellationToken, IProgress<string>, Task<bool>> install, Action<string> log,
+        bool gameRunning = false, bool allowDefer = true, bool autoStart = false)
     {
         InitializeComponent();
-        _install = install; _log = log;
+        _install = install; _log = log; _gameRunning = gameRunning;
+        AfterGameButton.Visibility = allowDefer ? Visibility.Visible : Visibility.Collapsed;
+        InstallButton.IsEnabled = !gameRunning;
+        MinHeight = allowDefer ? 400 : 320;
         ReleaseTitle.Text = "发现新版本 " + version;
         ReleaseNotes.Text = string.IsNullOrWhiteSpace(notes) ? "此版本未提供更新说明。" : notes;
         SkipVersion.IsChecked = skipped;
@@ -35,19 +40,21 @@ public partial class UpdateDialog : Window
         }
         SkipVersion.Checked += (_, _) => SaveSkip(true);
         SkipVersion.Unchecked += (_, _) => SaveSkip(false);
-        OperationStatus.Text = "点击“立即更新”后才会下载安装包；安装前启动器会退出。";
+        OperationStatus.Text = gameRunning ? "游戏正在运行，可预约本次游玩结束后更新。" : "可立即更新，或预约下一次游玩结束后更新。";
         double availableWidth = Math.Max(320, SystemParameters.WorkArea.Width - 36);
         MinWidth = Math.Min(MinWidth, availableWidth);
         Width = Math.Min(Width, availableWidth);
-        MaxHeight = Math.Min(560, Math.Max(320, SystemParameters.WorkArea.Height - 36));
+        MaxHeight = Math.Min(560, Math.Max(MinHeight, SystemParameters.WorkArea.Height - 36));
         MinHeight = Math.Min(MinHeight, MaxHeight);
         // Measure once for a compact opening size. During resize, only the star
         // row changes height; the actions remain outside the scrolling notes.
-        ReleaseNotes.MaxHeight = Math.Max(80, MaxHeight - 260);
+        ReleaseNotes.MaxHeight = Math.Max(80, MaxHeight - (allowDefer ? 302 : 260));
         DialogLayout.Measure(new Size(Width - 2 * SystemParameters.ResizeFrameVerticalBorderWidth, double.PositiveInfinity));
         double chrome = SystemParameters.WindowCaptionHeight + 2 * SystemParameters.ResizeFrameHorizontalBorderHeight;
         Height = Math.Clamp(DialogLayout.DesiredSize.Height + chrome, MinHeight, MaxHeight);
         ReleaseNotes.ClearValue(MaxHeightProperty);
+        bool autoStartAttempted = false;
+        if (autoStart) Loaded += (_, _) => { if (!autoStartAttempted && !_closed && !_gameRunning && !_installing) { autoStartAttempted = true; Install_Click(InstallButton, new RoutedEventArgs()); } };
         Closing += OnClosing;
         Closed += (_, _) => { _closed = true; _download?.Cancel(); };
         PreviewKeyDown += (_, e) => { if (e.Key == System.Windows.Input.Key.Escape) { e.Handled = true; CancelOrClose(); } };
@@ -58,10 +65,10 @@ public partial class UpdateDialog : Window
 
     private async void Install_Click(object sender, RoutedEventArgs e)
     {
-        if (_installing) return;
+        if (_installing || _gameRunning || _closed) return;
         _installing = true; _closeAfterCancel = false;
         using var cancellation = new CancellationTokenSource(); _download = cancellation;
-        InstallButton.IsEnabled = false; SkipVersion.IsEnabled = false;
+        InstallButton.IsEnabled = false; SkipVersion.IsEnabled = false; AfterGameButton.IsEnabled = false;
         LaterButton.Content = "取消下载"; DownloadProgress.Visibility = Visibility.Visible;
         OperationStatus.Text = "正在准备下载…";
         try
@@ -85,13 +92,24 @@ public partial class UpdateDialog : Window
             _installing = false; _download = null;
             if (!_closed)
             {
-                InstallButton.IsEnabled = true; SkipVersion.IsEnabled = true;
+                InstallButton.IsEnabled = !_gameRunning; SkipVersion.IsEnabled = true; AfterGameButton.IsEnabled = true;
                 LaterButton.Content = "暂不更新"; DownloadProgress.Visibility = Visibility.Collapsed;
             }
         }
         if (_closeAfterCancel && !_closed) Close();
     }
 
+    public void SetGameRunning(bool running)
+    {
+        _gameRunning = running;
+        if (!_installing) InstallButton.IsEnabled = !running;
+    }
+    private void AfterGame_Click(object sender, RoutedEventArgs e)
+    {
+        if (_installing || _closed) return;
+        DeferredRequested = true;
+        Close();
+    }
     private void Later_Click(object sender, RoutedEventArgs e) => CancelOrClose();
     private void CancelOrClose()
     {
