@@ -1,6 +1,6 @@
 # Dynamic 最大倍率
 
-您可以在游戏内打开 ReShade 的 **MFG Unlock** 面板，通过 **Experimental live Dynamic maximum** 调整 Dynamic 最大倍率。插件在首次使用时将上限设为 **4x**，此后会自动保存您的选择，并在后续启动时继续使用。
+您可以在游戏内打开 ReShade 的 **MFG Unlock** 面板，通过 **Dynamic maximum multiplier** 调整 Dynamic 最大倍率。插件在首次使用时将上限设为 **4x**，此后会自动保存您的选择，并在后续启动时继续使用。
 
 ## 什么时候需要调整
 
