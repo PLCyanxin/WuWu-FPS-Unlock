@@ -29,7 +29,13 @@ public static class DynamicSettingsTests
             var combo=(ComboBox)window.FindName("DynamicMaxMultiplierBox");Pump();
             Check(vm.DynamicMaxMultiplier==4 && (int)combo.SelectedValue==4,"legacy settings select default 4x");
             Check(vm.DynamicMaxMultiplierOptions.Select(x=>x.Value).SequenceEqual(new[]{0,2,3,4,5,6}),"only supported choices offered");
-            Check(combo.IsEnabled&&!vm.MfgSelected,"cap can be prepared before MFG selection");
+            Check(!combo.IsEnabled,"unknown driver disables cap");
+            var hardware=typeof(AppViewModel).GetField("_hardware",BindingFlags.Instance|BindingFlags.NonPublic)!;
+            void Driver(int? value){hardware.SetValue(vm,new HardwareInfo("fixture",value,true,"Windows","fixture",true));Flag(nameof(AppViewModel.Busy),false);}
+            Driver(59540);vm.DynamicMaxMultiplier=6;
+            Check(!combo.IsEnabled&&vm.DynamicMaxMultiplier==4,"below threshold cannot change saved cap");
+            Driver(59541);
+            Check(combo.IsEnabled&&!vm.MfgSelected,"threshold driver enables cap before MFG selection");
             combo.SelectedValue=6;Pump();
             Check(vm.DynamicMaxMultiplier==6&&JsonFiles.Read<UserSettings>(AppPaths.Settings).DynamicMaxMultiplier==6,"selection persists through WPF binding");
             Check(vm.Status.Contains("重新部署")&&vm.Status.Contains("完全重启"),"saved setting requests deployment and full restart");

@@ -14,6 +14,13 @@ jobs:
         run: dotnet run --project tests/Update.ServiceTests -c Release
       - name: Update preference persistence tests
         run: dotnet run --project tests/Update.PreferenceTests -c Release
+      - name: Update dialog and settings WPF layout
+        run: dotnet run --project tests/Update.DialogLayoutTests -c Release
+      - name: Rollback backup discovery
+        run: dotnet run --project tests/Rollback.CatalogTests -c Release
+      - name: Update and rollback process handoff
+        shell: pwsh
+        run: ./tools/OfflineUpdater.IntegrationTests/Run.ps1
       - name: Compile WPF and publish
         run: dotnet publish src/WuWaFpsUnlock -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=false -o artifacts/win-x64
       - uses: actions/upload-artifact@v4

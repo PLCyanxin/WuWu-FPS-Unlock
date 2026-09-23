@@ -36,9 +36,18 @@ public partial class UpdateDialog : Window
         SkipVersion.Checked += (_, _) => SaveSkip(true);
         SkipVersion.Unchecked += (_, _) => SaveSkip(false);
         OperationStatus.Text = "点击“立即更新”后才会下载安装包；安装前启动器会退出。";
-        Width = Math.Min(Width, SystemParameters.WorkArea.Width - 36);
-        MaxHeight = Math.Max(240, SystemParameters.WorkArea.Height - 36);
+        double availableWidth = Math.Max(320, SystemParameters.WorkArea.Width - 36);
+        MinWidth = Math.Min(MinWidth, availableWidth);
+        Width = Math.Min(Width, availableWidth);
+        MaxHeight = Math.Min(560, Math.Max(320, SystemParameters.WorkArea.Height - 36));
+        MinHeight = Math.Min(MinHeight, MaxHeight);
+        // Measure once for a compact opening size. During resize, only the star
+        // row changes height; the actions remain outside the scrolling notes.
         ReleaseNotes.MaxHeight = Math.Max(80, MaxHeight - 260);
+        DialogLayout.Measure(new Size(Width - 2 * SystemParameters.ResizeFrameVerticalBorderWidth, double.PositiveInfinity));
+        double chrome = SystemParameters.WindowCaptionHeight + 2 * SystemParameters.ResizeFrameHorizontalBorderHeight;
+        Height = Math.Clamp(DialogLayout.DesiredSize.Height + chrome, MinHeight, MaxHeight);
+        ReleaseNotes.ClearValue(MaxHeightProperty);
         Closing += OnClosing;
         Closed += (_, _) => { _closed = true; _download?.Cancel(); };
         PreviewKeyDown += (_, e) => { if (e.Key == System.Windows.Input.Key.Escape) { e.Handled = true; CancelOrClose(); } };

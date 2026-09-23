@@ -40,7 +40,59 @@ public sealed partial class AppViewModel
     }
     public string UpdateStatus { get => _updateStatus; private set { _updateStatus = value; Notify(); } }
     public string UpdateCheckLabel => _checkingUpdates ? "正在检查…" : "检查更新";
-    private void InitializeUpdates() => CheckUpdatesCommand = new(() => CheckForUpdatesAsync(true), () => !Busy && !_checkingUpdates && !_closing, ReportError);
+    private RollbackBackup? _rollbackBackup;
+    private bool _scanningRollback;
+    private string _rollbackStatus = "尚无可回退的更新备份";
+    public string RollbackStatus { get => _rollbackStatus; private set { _rollbackStatus = value; Notify(); } }
+    public AsyncCommand RollbackVersionCommand { get; private set; } = null!;
+    private void InitializeUpdates()
+    {
+        CheckUpdatesCommand = new(() => CheckForUpdatesAsync(true), () => !Busy && !_checkingUpdates && !_closing, ReportError);
+        RollbackVersionCommand = new(RollbackVersionAsync,
+            () => _rollbackBackup is not null && !_scanningRollback && !Busy && !IsGameRunning && !_closing, ReportError);
+        _ = RefreshRollbackAvailabilityAsync();
+    }
+    public async Task RefreshRollbackAvailabilityAsync()
+    {
+        if (_scanningRollback || _closing) return;
+        _scanningRollback = true; _rollbackBackup = null;
+        RollbackStatus = "正在核对回退备份…"; RollbackVersionCommand.Refresh();
+        try
+        {
+            var backup = await Task.Run(() => RollbackBackupCatalog.Find(AppPaths.Base, _lifetime.Token));
+            if (!_closing) { _rollbackBackup = backup; RollbackStatus = backup is null ? "没有可用备份，或此更新已经回退" : "可恢复更新前版本；保留部署记录，回退后请重新部署"; }
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception error) { RollbackStatus = "回退备份不可用：" + error.Message; }
+        finally { _scanningRollback = false; RollbackVersionCommand.Refresh(); }
+    }
+    private async Task RollbackVersionAsync()
+    {
+        if (Busy || IsGameRunning || _closing || _scanningRollback || _rollbackBackup is null) return;
+        var selected = _rollbackBackup;
+        bool started = false;
+        Busy = true;
+        try
+        {
+            RequireGameStoppedForUpdate();
+            if (MessageBox.Show("将恢复更新前的启动器和组件材料，保留当前配置与部署记录。\n回退完成后请在设置中重新部署一次。\n\n启动器将退出并由独立更新器完成回退，是否继续？",
+                "回退版本", MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK) return;
+            await Task.Run(() => RollbackBackupCatalog.Validate(AppPaths.Base, selected.Directory, _lifetime.Token));
+            _lifetime.Token.ThrowIfCancellationRequested();
+            RequireGameStoppedForUpdate();
+            string exe = Path.GetFullPath(Environment.ProcessPath ?? throw new IOException("无法确定启动器路径。"));
+            var start = new ProcessStartInfo(RollbackWorkerResource.Extract()) { UseShellExecute = true };
+            start.ArgumentList.Add("--wait-for-rollback");
+            start.ArgumentList.Add(Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
+            start.ArgumentList.Add(exe); start.ArgumentList.Add(selected.Directory);
+            using var process = Process.Start(start) ?? throw new IOException("回退程序未能启动。");
+            started = true; Log("已交接独立回退程序；保留部署记录，完成后请重新部署。");
+        }
+        catch (OperationCanceledException) { RollbackStatus = "回退已取消"; }
+        catch (Exception error) { RollbackStatus = "回退未开始：" + error.Message; Log(RollbackStatus); }
+        finally { Busy = false; }
+        if (started) UpdateExitRequested?.Invoke();
+    }
     public async Task CheckForUpdatesOnStartupAsync()
     {
         if (_startupUpdateChecked || _closing) return;

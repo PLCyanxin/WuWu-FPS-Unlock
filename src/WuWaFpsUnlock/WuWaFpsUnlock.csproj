@@ -15,6 +15,16 @@
     <Content Include="..\..\components\PROVENANCE.json" Link="components\PROVENANCE.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
     <Content Include="..\..\licenses\**\*" Link="licenses\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
   </ItemGroup>
+  <PropertyGroup>
+    <EmbeddedUpdaterDirectory>$(MSBuildProjectDirectory)\obj\embedded-updater\$(Configuration)\</EmbeddedUpdaterDirectory>
+    <UpdaterDotNetHost Condition="'$(DotNetHostPath)' != ''">$(DotNetHostPath)</UpdaterDotNetHost>
+    <UpdaterDotNetHost Condition="'$(UpdaterDotNetHost)' == ''">dotnet</UpdaterDotNetHost>
+  </PropertyGroup>
+  <ItemGroup>
+    <UpdaterBuildInputs Include="$(MSBuildProjectDirectory)\..\..\tools\OfflineUpdater\*.cs;$(MSBuildProjectDirectory)\..\..\tools\OfflineUpdater\*.csproj;$(MSBuildProjectDirectory)\..\WuWaFpsUnlock.Core\UpdatePackageProtocol.cs" />
+    <EmbeddedResource Include="$(EmbeddedUpdaterDirectory)WuWaUpdater.exe" LogicalName="WuWaFpsUnlock.RollbackWorker.exe" />
+  </ItemGroup>
+  <Target Name="BuildEmbeddedRollbackWorker" BeforeTargets="PrepareResources" Inputs="@(UpdaterBuildInputs)" Outputs="$(EmbeddedUpdaterDirectory)WuWaUpdater.exe" Condition="'$(DesignTimeBuild)' != 'true'">
+    <Exec Command="&quot;$(UpdaterDotNetHost)&quot; publish &quot;$(MSBuildProjectDirectory)\..\..\tools\OfflineUpdater\OfflineUpdater.csproj&quot; -c $(Configuration) -r win-x64 --self-contained true -p:PublishSingleFile=true -o &quot;$(EmbeddedUpdaterDirectory).&quot;" />
+  </Target>
 </Project>
-
-

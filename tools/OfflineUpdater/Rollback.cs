@@ -147,19 +147,20 @@ internal static partial class Program
         string backup = Path.TrimEndingDirectorySeparator(Path.GetFullPath(input));
         NoLinks(backup);
         var snapshot = ReadSnapshot(backup);
-        if (!snapshot.Complete) throw new InvalidDataException("此备份对应的更新未完成；请先检查当时的失败恢复记录。");
+        using var installationLock = AcquireInstallationLock(snapshot.Root);
+        snapshot = ReadSnapshot(backup);RequireUnusedBackup(backup,snapshot);
         string exe = Scoped(snapshot.Root, "WuWaFpsUnlock.exe");
         ProductVersion(exe);
         ProductVersion(Scoped(backup, "snapshot/WuWaFpsUnlock.exe"));
         RejectRunning(exe);
         Console.WriteLine("回退安装目录：" + snapshot.Root + "\n恢复更新前程序和材料；保留当前 data 配置及部署记录，之后需要重新部署。");
-        RestoreSnapshot(backup, snapshot, () => RejectRunning(exe));
+        RestoreSnapshot(backup, snapshot, () => RejectRunning(exe), completed:()=>MarkRollbackCompleted(backup));
         RefreshDesktopShortcut(snapshot.Root);
-        Console.WriteLine("回退完成。程序与材料已恢复更新前状态；当前配置、部署记录和后来新增的其他文件已保留。\n请打开启动器，在设置中重新部署一次");
+        Console.WriteLine("回退完成，此备份不能再次回退。程序与材料已恢复更新前状态；当前配置、部署记录和后来新增的其他文件已保留。\n请打开启动器，在设置中重新部署一次");
         return 0;
     }
 
-    static void RestoreSnapshot(string backup, Snapshot snapshot, Action beforeWrites, Action<int>? afterWrite = null)
+    static void RestoreSnapshot(string backup, Snapshot snapshot, Action beforeWrites, Action<int>? afterWrite = null, Action? completed = null)
     {
         ValidateSnapshot(backup, snapshot);
         var operations = new List<RestoreFile>();
@@ -219,7 +220,7 @@ internal static partial class Program
             }
             foreach (string directory in snapshot.Directories.Where(d => !d.Equals("data", StringComparison.OrdinalIgnoreCase) && !d.StartsWith("data/", StringComparison.OrdinalIgnoreCase)))
                 Directory.CreateDirectory(Scoped(snapshot.Root, directory));
-            Console.WriteLine("回退前状态备份：" + transaction);
+            completed?.Invoke();
         }
         catch
         {
@@ -247,6 +248,7 @@ internal static partial class Program
             throw;
         }
         finally { foreach (var stream in held) stream.Dispose(); }
+        Console.WriteLine("回退前状态备份：" + transaction);
     }
 }
 

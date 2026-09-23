@@ -67,6 +67,10 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     public bool CanChangeFpsMode=>!Busy;
     public bool CanEditFps=>!Busy&&FpsEnabled;
     public bool CanEditSettings=>!Busy&&!IsGameRunning;
+    public bool CanEditDynamicMultiplier=>CanEditSettings && _hardware.Driver is >=59541;
+    public string DynamicMultiplierHint=>_hardware.Driver is not >=59541
+        ? "需要 NVIDIA 驱动 595.41 或更高版本；驱动版本未知时暂不可调节。"
+        : "实验功能，默认 4x，仅对 Dynamic 生效。首次部署在此设定；后续可在游戏内修改，下次启动生效。";
     public bool FpsEnabled {get=>_settings.FpsEnabled;set{if(!CanChangeFpsMode)return;_settings.FpsEnabled=value;Save();Status="FPS 开关下次启动生效";NotifyAll();}}
     public bool MfgSelected {get=>_settings.MfgSelected;set{if(!CanEditSettings)return;_settings.MfgSelected=value;Save();NotifyAll();}}
     public sealed record DynamicMultiplierOption(int Value,string Label);
@@ -77,7 +81,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         get=>_settings.DynamicMaxMultiplier;
         set
         {
-            if(!CanEditSettings)return;
+            if(!CanEditDynamicMultiplier)return;
             value=DynamicMultiplierLimit.Normalize(value);
             if(_settings.DynamicMaxMultiplier==value)return;
             try
@@ -163,7 +167,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         PropertyChanged?.Invoke(this,new(null));
         OpenSettingsCommand?.Refresh();BrowseDirectoryCommand?.Refresh();BrowseExeCommand?.Refresh();IncrementFpsCommand?.Refresh();DecrementFpsCommand?.Refresh();
         StartCommand?.Refresh();DeployCommand?.Refresh();CleanCommand?.Refresh();RefreshCommand?.Refresh();
-        FindGameCommand?.Refresh();CheckUpdatesCommand?.Refresh();
+        FindGameCommand?.Refresh();CheckUpdatesCommand?.Refresh();RollbackVersionCommand?.Refresh();
     }
     private void BrowseRoot()
     {
@@ -183,6 +187,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     private async Task RefreshCore()
     {
         _hardware=await Task.Run(()=>EnvironmentProbe.Read(Log));
+        await RefreshRollbackAvailabilityAsync();
         try
         {
             if(!string.IsNullOrWhiteSpace(GameRoot)&&!string.IsNullOrWhiteSpace(GameExe))

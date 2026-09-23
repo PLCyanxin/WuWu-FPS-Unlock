@@ -41,6 +41,11 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Update service tests failed' }
           dotnet run --project tests/Update.PreferenceTests -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Update preference tests failed' }
+          dotnet run --project tests/Update.DialogLayoutTests -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'WPF layout tests failed' }
+          dotnet run --project tests/Rollback.CatalogTests -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Rollback backup tests failed' }
+          ./tools/OfflineUpdater.IntegrationTests/Run.ps1
           dotnet publish src/WuWaFpsUnlock -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o build
           if ($LASTEXITCODE -ne 0) { throw 'Launcher build failed' }
           dotnet publish tools/OfflineUpdater -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o updater-build

@@ -13,11 +13,12 @@ try
 {
     result = args.Length == 0 ? Update()
         : args.Length == 3 && args[0] == "--wait-for-exit" ? WaitThenUpdate(args[1], args[2])
+        : args.Length == 4 && args[0] == "--wait-for-rollback" ? WaitThenRollback(args[1], args[2], args[3])
         : args.Length == 2 && args[0] == "--rollback" ? Rollback(args[1])
         : args.Length == 1 && args[0] == "--self-test" ? SelfTest()
         : args.Length == 1 && args[0] == "--self-test-child" ? SelfTestChild()
         : args.Length == 3 && args[0] == "--validate-package" ? ValidatePackageCommand(args[1], args[2])
-        : throw new ArgumentException("用法：WuWaUpdater.exe [--rollback <备份目录> | --wait-for-exit <PID> <启动器完整路径> | --validate-package <包目录> <版本>]");
+        : throw new ArgumentException("用法：WuWaUpdater.exe [--rollback <备份目录> | --wait-for-exit <PID> <启动器完整路径> | --wait-for-rollback <PID> <启动器完整路径> <备份目录> | --validate-package <包目录> <版本>]");
 }
 catch (UnauthorizedAccessException ex)
 {
@@ -42,6 +43,7 @@ static int Update(string? expectedLauncher = null)
     ValidateUpdateManifest(updaterDirectory, required: requireManifest);
     if (!Directory.Exists(payload)) throw new DirectoryNotFoundException("更新器旁缺少 update-payload，请保留完整更新包目录结构。");
     string root = FindInstallation(updaterDirectory);
+    using var installationLock = AcquireInstallationLock(root);
     string exe = Path.Combine(root, "WuWaFpsUnlock.exe");
     if (expectedLauncher is not null) MatchExpectedLauncher(exe, expectedLauncher);
     NoLinks(root); NoLinks(payload); NoLinks(exe);
@@ -83,7 +85,7 @@ static int Update(string? expectedLauncher = null)
                 throw new InvalidDataException("更新包不完整，缺少：" + required);
         AddInventoryEntries(root, entries, held, inventoryScratch);
         // Use a GUID directory so every attempt keeps its own original files and staged copy.
-        backup = Path.Combine(root, "update-backup-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N"));
+        backup = Path.Combine(root, "update-backup-" + DateTime.Now.ToString("yyyyMMdd-HHmmss-fffffff") + "-" + Guid.NewGuid().ToString("N"));
         NoLinks(backup);
         Directory.CreateDirectory(backup);
         Console.WriteLine("备份目录：" + backup);
@@ -116,7 +118,9 @@ static int Update(string? expectedLauncher = null)
         }
         WriteSnapshot(backup, snapshot with { Complete = true });
         RefreshDesktopShortcut(root);
-        Console.WriteLine("更新完成，更新前完整快照已保留。可删除更新文件夹，但请保留安装目录中的备份文件夹。\n需要回退时使用更新器文件夹中的“回退.cmd”，或备份中的 rollback.cmd。\n自动回退恢复旧程序与材料，保留当前配置和部署记录；data 快照仅供人工参考，避免丢失后续部署记录。\n请打开启动器，在设置中重新部署一次");
+        try { PrunePreviousBackups(root,backup); }
+        catch(Exception error){Console.WriteLine("更新已完成；旧备份暂未清理："+error.Message);}
+        Console.WriteLine("更新完成，最近一次更新前完整快照已保留。可删除更新文件夹，但请保留安装目录中的备份文件夹。\n需要回退时在启动器设置中选择“回退版本”，或使用更新器文件夹中的“回退.cmd”及备份中的 rollback.cmd。\n自动回退恢复旧程序与材料，保留当前配置和部署记录；data 快照仅供人工参考，避免丢失后续部署记录。\n请打开启动器，在设置中重新部署一次");
         return 0;
     }
     catch
