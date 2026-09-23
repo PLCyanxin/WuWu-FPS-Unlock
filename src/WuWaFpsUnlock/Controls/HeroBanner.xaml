@@ -3,7 +3,7 @@
     <Grid.ColumnDefinitions><ColumnDefinition Width="70"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
     <Border CornerRadius="8" Width="66" Height="66" VerticalAlignment="Center"><Image Source="/WuWaFpsUnlock;component/Assets/Icon.original.jpg" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/></Border>
     <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left">
-      <StackPanel Orientation="Horizontal"><TextBlock Text="鸣潮 FPS Unlock" FontSize="25" FontWeight="SemiBold" Foreground="White"/><TextBlock Text="v1.1RC" FontSize="15" Margin="10,4,0,0" Foreground="#C2D1E6"/></StackPanel>
+      <StackPanel Orientation="Horizontal"><TextBlock Text="鸣潮 FPS Unlock" FontSize="25" FontWeight="SemiBold" Foreground="White"/><TextBlock Text="v1.1.1" FontSize="15" Margin="10,4,0,0" Foreground="#C2D1E6"/></StackPanel>
       <TextBlock Text="为40系显卡解锁帧率并提供多帧生成" Margin="0,4,0,0" Foreground="#DCE7F5" FontSize="12"/>
     </StackPanel>
   </Grid>
