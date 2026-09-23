@@ -12,6 +12,8 @@ jobs:
         run: dotnet run --project tests/WuWaFpsUnlock.Tests -c Release
       - name: Update protocol and fake HTTP tests
         run: dotnet run --project tests/Update.ServiceTests -c Release
+      - name: Update preference persistence tests
+        run: dotnet run --project tests/Update.PreferenceTests -c Release
       - name: Compile WPF and publish
         run: dotnet publish src/WuWaFpsUnlock -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=false -o artifacts/win-x64
       - uses: actions/upload-artifact@v4
