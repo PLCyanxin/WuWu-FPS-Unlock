@@ -15,6 +15,7 @@ try
         : args.Length == 3 && args[0] == "--wait-for-exit" ? WaitThenUpdate(args[1], args[2])
         : args.Length == 2 && args[0] == "--rollback" ? Rollback(args[1])
         : args.Length == 1 && args[0] == "--self-test" ? SelfTest()
+        : args.Length == 1 && args[0] == "--self-test-child" ? SelfTestChild()
         : args.Length == 3 && args[0] == "--validate-package" ? ValidatePackageCommand(args[1], args[2])
         : throw new ArgumentException("用法：WuWaUpdater.exe [--rollback <备份目录> | --wait-for-exit <PID> <启动器完整路径> | --validate-package <包目录> <版本>]");
 }
@@ -24,7 +25,7 @@ catch (UnauthorizedAccessException ex)
     result = 1;
 }
 catch (Exception ex) { Console.Error.WriteLine("操作未完成：" + ex.Message); result = 1; }
-if (!args.Contains("--self-test") && !args.Contains("--validate-package"))
+if (!args.Contains("--self-test") && !args.Contains("--self-test-child") && !args.Contains("--validate-package"))
 {
     Console.WriteLine("按任意键退出。");
     if (!Console.IsInputRedirected) Console.ReadKey(true);
@@ -226,7 +227,7 @@ static void RejectRunning(string target)
         using (process)
         {
             string? path;
-            try { if (process.HasExited) continue; path = process.MainModule?.FileName; }
+            try { using var identity = LauncherProcess.Open(process.Id); if (identity is null || identity.HasExited) continue; path = identity.ExecutablePath; }
             catch (InvalidOperationException) { continue; }
             catch (System.ComponentModel.Win32Exception) { throw new IOException("无法确认正在运行的启动器路径。请先关闭启动器，必要时以管理员身份运行更新器。"); }
             if (path is null || Path.GetFullPath(path).Equals(target, StringComparison.OrdinalIgnoreCase))

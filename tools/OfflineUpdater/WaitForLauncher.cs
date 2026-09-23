@@ -1,4 +1,7 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Text;
+using Microsoft.Win32.SafeHandles;
 
 internal static partial class Program
 {
@@ -52,12 +55,7 @@ internal static partial class Program
     }
 
     static ILauncherProcess? OpenLauncherProcess(int pid)
-    {
-        Process process;
-        try { process = Process.GetProcessById(pid); }
-        catch (ArgumentException) { return null; }
-        return new LauncherProcess(process);
-    }
+        => LauncherProcess.Open(pid);
 }
 
 internal interface ILauncherProcess : IDisposable
@@ -67,10 +65,38 @@ internal interface ILauncherProcess : IDisposable
     bool WaitForExit(int milliseconds);
 }
 
-internal sealed class LauncherProcess(Process process) : ILauncherProcess
+internal sealed class LauncherProcess(SafeProcessHandle handle) : ILauncherProcess
 {
-    public bool HasExited => process.HasExited;
-    public string? ExecutablePath => process.MainModule?.FileName;
-    public bool WaitForExit(int milliseconds) => process.WaitForExit(milliseconds);
-    public void Dispose() => process.Dispose();
+    // Querying the image requires only limited-information rights, unlike module
+    // enumeration. The same handle pins process identity for the bounded wait.
+    public static LauncherProcess? Open(int pid)
+    {
+        var handle = OpenProcess(0x00100000 | 0x1000, false, pid); // SYNCHRONIZE | QUERY_LIMITED_INFORMATION
+        if (!handle.IsInvalid) return new LauncherProcess(handle);
+        int error = Marshal.GetLastWin32Error(); handle.Dispose();
+        if (error == 87) return null; // PID naturally exited before OpenProcess.
+        throw new System.ComponentModel.Win32Exception(error);
+    }
+    public bool HasExited => WaitForExit(0);
+    public string ExecutablePath
+    {
+        get
+        {
+            var path = new StringBuilder(32768); int length = path.Capacity;
+            if (!QueryFullProcessImageName(handle, 0, path, ref length)) throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+            return path.ToString();
+        }
+    }
+    public bool WaitForExit(int milliseconds)
+    {
+        uint result = WaitForSingleObject(handle, (uint)milliseconds);
+        return result switch { 0 => true, 258 => false, _ => throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error()) };
+    }
+    public void Dispose() => handle.Dispose();
+    [DllImport("kernel32.dll", SetLastError = true)]
+    static extern SafeProcessHandle OpenProcess(uint access, bool inherit, int pid);
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    static extern bool QueryFullProcessImageName(SafeProcessHandle process, int flags, StringBuilder path, ref int length);
+    [DllImport("kernel32.dll", SetLastError = true)]
+    static extern uint WaitForSingleObject(SafeProcessHandle handle, uint milliseconds);
 }

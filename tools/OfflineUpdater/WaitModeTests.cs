@@ -47,7 +47,20 @@ internal static partial class Program
             Reject(() => MatchExpectedLauncher(expected, "WuWaFpsUnlock.exe"));
             Reject(() => MatchExpectedLauncher(expected, Path.Combine(Path.GetTempPath(), "other", "WuWaFpsUnlock.exe")));
         });
+        test("native limited-rights query and wait observe a naturally exiting child", () =>
+        {
+            string self = Environment.ProcessPath ?? throw new Exception("No self executable path");
+            var start = new System.Diagnostics.ProcessStartInfo(self) { UseShellExecute = false, CreateNoWindow = true };
+            start.ArgumentList.Add("--self-test-child");
+            using var child = System.Diagnostics.Process.Start(start) ?? throw new Exception("Child failed to start");
+            using var identity = LauncherProcess.Open(child.Id) ?? throw new Exception("Child exited before identity capture");
+            Check(identity.ExecutablePath.Equals(self, StringComparison.OrdinalIgnoreCase));
+            WaitForLauncherExit(child.Id, self, OpenLauncherProcess);
+            Check(identity.HasExited && child.WaitForExit(1000) && child.ExitCode == 0);
+        });
     }
+
+    static int SelfTestChild() { Thread.Sleep(1500); return 0; }
 }
 
 internal sealed class FakeLauncherProcess : ILauncherProcess

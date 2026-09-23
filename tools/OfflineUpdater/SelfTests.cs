@@ -1,7 +1,7 @@
 internal static partial class Program
 {
-    // CI-only inert filesystem fixtures: never executes an app/game, resolves a real
-    // installation, invokes COM, creates shortcuts, or reads the user's data.
+    // CI fixtures never start the launcher/game, resolve a real installation,
+    // invoke COM, create shortcuts or read user data. One updater child exits itself.
     static int SelfTest()
     {
         string sandbox = Path.Combine(Path.GetTempPath(), "WuWaUpdater-fixtures-" + Guid.NewGuid().ToString("N"));
@@ -99,7 +99,7 @@ internal static partial class Program
             Check(File.ReadAllText(Scoped(f.Root, "WuWaFpsUnlock.exe")).StartsWith("inert new"));
         });
         WaitModeTests(Test);
-        Console.WriteLine($"RESULT: {passed} passed, {failed} failed; inert temp-directory fixtures and injected wait-API checks only. No game, app launch, or desktop changes.");
+        Console.WriteLine($"RESULT: {passed} passed, {failed} failed; inert filesystem fixtures, injected checks and native updater-child wait. No launcher/game launch or desktop changes.");
         // Delete only the exact generated fixture root, never a path supplied by a caller.
         try { NoLinks(sandbox); Directory.Delete(sandbox, true); } catch { Console.WriteLine("Fixture files retained: " + sandbox); }
         return failed == 0 ? 0 : 1;
