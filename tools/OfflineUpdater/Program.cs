@@ -12,9 +12,10 @@ int result;
 try
 {
     result = args.Length == 0 ? Update()
+        : args.Length == 3 && args[0] == "--wait-for-exit" ? WaitThenUpdate(args[1], args[2])
         : args.Length == 2 && args[0] == "--rollback" ? Rollback(args[1])
         : args.Length == 1 && args[0] == "--self-test" ? SelfTest()
-        : throw new ArgumentException("用法：WuWaUpdater.exe [--rollback <备份目录>]");
+        : throw new ArgumentException("用法：WuWaUpdater.exe [--rollback <备份目录> | --wait-for-exit <PID> <启动器完整路径>]");
 }
 catch (UnauthorizedAccessException ex)
 {
@@ -27,7 +28,7 @@ if (!Console.IsInputRedirected && !args.Contains("--self-test")) Console.ReadKey
 return result;
 }
 
-static int Update()
+static int Update(string? expectedLauncher = null)
 {
     string updaterDirectory = Path.GetFullPath(AppContext.BaseDirectory);
     string payload = Path.Combine(updaterDirectory, "update-payload");
@@ -35,6 +36,7 @@ static int Update()
     if (!Directory.Exists(payload)) throw new DirectoryNotFoundException("更新器旁缺少 update-payload，请保留完整更新包目录结构。");
     string root = FindInstallation(updaterDirectory);
     string exe = Path.Combine(root, "WuWaFpsUnlock.exe");
+    if (expectedLauncher is not null) MatchExpectedLauncher(exe, expectedLauncher);
     NoLinks(root); NoLinks(payload); NoLinks(exe);
     string oldVersion = ProductVersion(exe);
     string newVersion = ProductVersion(Path.Combine(payload, "WuWaFpsUnlock.exe"));

@@ -98,7 +98,8 @@ internal static partial class Program
             Reject(() => RestoreSnapshot(f.Backup, f.Snapshot, () => { }));
             Check(File.ReadAllText(Scoped(f.Root, "WuWaFpsUnlock.exe")).StartsWith("inert new"));
         });
-        Console.WriteLine($"RESULT: {passed} passed, {failed} failed; inert temp-directory fixtures only. No game, app launch, or desktop changes.");
+        WaitModeTests(Test);
+        Console.WriteLine($"RESULT: {passed} passed, {failed} failed; inert temp-directory fixtures and injected wait-API checks only. No game, app launch, or desktop changes.");
         // Delete only the exact generated fixture root, never a path supplied by a caller.
         try { NoLinks(sandbox); Directory.Delete(sandbox, true); } catch { Console.WriteLine("Fixture files retained: " + sandbox); }
         return failed == 0 ? 0 : 1;

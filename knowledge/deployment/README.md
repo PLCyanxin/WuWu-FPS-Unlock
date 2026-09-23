@@ -94,3 +94,11 @@ Update and rollback success refresh only real-desktop shortcuts whose full norma
 Static implementation review completed; no local build, fixture execution, updater execution or game action claimed. Parent owns CI build/test evidence and release packaging.
 
 The only additional optional payload metadata target is payload/addon-source.json, for bundled addon provenance. No general payload/manifest overwrite allowance was added; user-customized full manifests remain untouched by updates.
+
+## Online handoff — wait for launcher exit
+
+Branch codex/updater-wait-for-exit starts from main 55520ce; previous deployment branch and commits are retained. IPC: WuWaUpdater.exe --wait-for-exit <positive PID> <expected fully-qualified WuWaFpsUnlock.exe path>. Use ProcessStartInfo.ArgumentList, do not assemble shell command text. Package may live at installation/.updates/<guid>; existing bounded parent discovery finds installation two levels above. Source remains updaterDirectory/update-payload.
+
+Before waiting, resolve the installation, validate the supplied path equals that installation EXE and verify its product identity. A live PID must expose the same full executable path; only that process is waited on, at most 30 seconds, never killed. Missing/already exited PID is accepted as naturally gone and never treated as verified live identity; Update then re-resolves expected installation and runs existing RejectRunning and exclusive-file preflight. Wrong live process, denied identity lookup or timeout aborts. No application/game launch or injection added.
+
+Six injected process-API tests added to --self-test (14 total with existing snapshot cases). These test control flow, identity mismatch, bounded wait, permission failure, natural exit and required complete path; they are explicitly not real Windows child-process evidence. No local self-test or game execution performed for this change. Shared package-manifest protocol integration is coordinated with launch agent separately.
