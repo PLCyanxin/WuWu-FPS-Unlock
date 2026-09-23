@@ -2,18 +2,30 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 
+internal static partial class Program
+{
+[STAThread]
+static int Main(string[] args)
+{
 Console.OutputEncoding = Encoding.UTF8;
 int result;
-try { result = Update(); }
+try
+{
+    result = args.Length == 0 ? Update()
+        : args.Length == 2 && args[0] == "--rollback" ? Rollback(args[1])
+        : args.Length == 1 && args[0] == "--self-test" ? SelfTest()
+        : throw new ArgumentException("用法：WuWaUpdater.exe [--rollback <备份目录>]");
+}
 catch (UnauthorizedAccessException ex)
 {
-    Console.Error.WriteLine("权限不足，更新未完成。请关闭启动器，右键更新器，选择“以管理员身份运行”。不会自动提权。\n" + ex.Message);
+    Console.Error.WriteLine("权限不足，操作未完成。请关闭启动器，右键更新器，选择“以管理员身份运行”。不会自动提权。\n" + ex.Message);
     result = 1;
 }
-catch (Exception ex) { Console.Error.WriteLine("更新未完成：" + ex.Message); result = 1; }
+catch (Exception ex) { Console.Error.WriteLine("操作未完成：" + ex.Message); result = 1; }
 Console.WriteLine("按任意键退出。");
-if (!Console.IsInputRedirected) Console.ReadKey(true);
+if (!Console.IsInputRedirected && !args.Contains("--self-test")) Console.ReadKey(true);
 return result;
+}
 
 static int Update()
 {
@@ -72,6 +84,8 @@ static int Update()
             }
         }
         File.WriteAllLines(Path.Combine(backup, "files.txt"), entries.Select(e => $"{e.Relative}\told={e.OldHash ?? "(absent)"}\tnew={e.NewHash}"), Encoding.UTF8);
+        var snapshot = CaptureSnapshot(root, backup, updaterDirectory, entries);
+        PrepareRollbackLauncher(backup, updaterDirectory);
         RejectRunning(exe);
         foreach (var entry in entries)
         {
@@ -86,7 +100,9 @@ static int Update()
             EnsureUnchanged(entry.Target, entry.NewHash);
             Console.WriteLine("已更新：" + entry.Relative);
         }
-        Console.WriteLine("更新完成，原文件备份已保留。\n请打开启动器，在设置中重新部署一次");
+        WriteSnapshot(backup, snapshot with { Complete = true });
+        RefreshDesktopShortcut(root);
+        Console.WriteLine("更新完成，更新前完整快照已保留。可删除更新文件夹，但请保留安装目录中的备份文件夹。\n需要回退时使用更新器文件夹中的“回退.cmd”，或备份中的 rollback.cmd。\n自动回退恢复旧程序与材料，保留当前配置和部署记录；data 快照仅供人工参考，避免丢失后续部署记录。\n请打开启动器，在设置中重新部署一次");
         return 0;
     }
     catch
@@ -148,6 +164,7 @@ static bool Allowed(string path) => path.Equals("WuWaFpsUnlock.exe", StringCompa
     || path.Equals("components/fps/ww_plugin_base.dll", StringComparison.OrdinalIgnoreCase)
     || path.Equals("components/PROVENANCE.json", StringComparison.OrdinalIgnoreCase)
     || path.Equals("payload/files/addon/renodx-mfgunlock.addon64", StringComparison.OrdinalIgnoreCase)
+    || path.Equals("payload/addon-source.json", StringComparison.OrdinalIgnoreCase)
     || path.StartsWith("licenses/", StringComparison.OrdinalIgnoreCase);
 
 static IEnumerable<string> Enumerate(string directory)
@@ -234,6 +251,7 @@ static void EnsureUnchanged(string path, string? expected)
     }
     using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None);
     if (Hash(stream) != expected) throw new IOException("预检后文件发生变化：" + path);
+}
 }
 
 sealed class Entry(string relative, string source, string target, string newHash)
