@@ -1,5 +1,11 @@
 name: Publish universal offline update package
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      updater_only:
+        description: Build updater only for local packaging
+        type: boolean
+        default: false
 permissions:
   contents: write
 jobs:
@@ -17,7 +23,12 @@ jobs:
         run: |
           dotnet publish tools/OfflineUpdater -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o updater-build
           if ($LASTEXITCODE -ne 0) { throw 'Updater build failed' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: offline-updater
+          path: updater-build/WuWaUpdater.exe
       - name: Package published launcher and FPS core
+        if: ${{ !inputs.updater_only }}
         shell: pwsh
         run: |
           gh release download v1.1RC --repo $env:GITHUB_REPOSITORY --pattern WuWaFPSUnlock-1.1RC-win-x64.zip --dir current
@@ -38,6 +49,7 @@ jobs:
           } | Set-Content update/SHA256.txt -Encoding utf8
           Compress-Archive update/* WuWaFPSUnlock-universal-to-1.1RC-update.zip
       - name: Upload update package
+        if: ${{ !inputs.updater_only }}
         shell: pwsh
         run: |
           gh release upload v1.1RC WuWaFPSUnlock-universal-to-1.1RC-update.zip --repo $env:GITHUB_REPOSITORY
