@@ -41,8 +41,8 @@ $utf8 = [Text.UTF8Encoding]::new($false)
 $resource = @'
 #include <winver.h>
 1 VERSIONINFO
-FILEVERSION 1,1,0,1
-PRODUCTVERSION 1,1,0,1
+FILEVERSION 1,1,0,2
+PRODUCTVERSION 1,1,0,2
 FILETYPE VFT_DLL
 BEGIN
  BLOCK "StringFileInfo"
@@ -50,9 +50,9 @@ BEGIN
   BLOCK "040904b0"
   BEGIN
    VALUE "OriginalFilename", "renodx-mfgunlock.addon64\0"
-   VALUE "FileVersion", "1.1+WuWu.DynamicMax.1\0"
-   VALUE "ProductVersion", "1.1+WuWu.DynamicMax.1\0"
-   VALUE "FileDescription", "MFG Unlock 1.1 with Dynamic maximum multiplier support\0"
+   VALUE "FileVersion", "1.1+WuWu.DynamicMax.Runtime.1\0"
+   VALUE "ProductVersion", "1.1+WuWu.DynamicMax.Runtime.1\0"
+   VALUE "FileDescription", "MFG Unlock 1.1 with experimental live Dynamic maximum support\0"
   END
  END
  BLOCK "VarFileInfo"
@@ -63,6 +63,12 @@ END
 '@
 [IO.File]::WriteAllText((Join-Path $output 'mfgunlock.rc'), $resource, $utf8)
 $includes = @('Detours/include','Streamline/include','DLSS/include','reshade','json/include') | ForEach-Object { '/I"' + (Join-Path "$deps/external" $_) + '"' }
+$runtimeTests = @"
+cl /nologo /std:c++20 /EHsc /MT /O2 /DNOMINMAX /utf-8 /I"$deps/external/Detours/include" "$source/tests/dynamiclive_tests.cpp" "$deps/external/Detours/lib.X64/detours.lib" /Fe:dynamiclive_tests.exe
+if errorlevel 1 exit /b 1
+dynamiclive_tests.exe
+if errorlevel 1 exit /b 1
+"@
 $batch = @"
 @echo off
 call "$vcvars" x64
@@ -79,6 +85,8 @@ if errorlevel 1 exit /b 1
 cl /nologo /std:c++20 /EHsc /MT /O2 /DNOMINMAX /utf-8 "$source/tests/dynamicmax_policy_tests.cpp" /Fe:dynamicmax_policy_tests.exe
 if errorlevel 1 exit /b 1
 dynamicmax_policy_tests.exe
+if errorlevel 1 exit /b 1
+$runtimeTests
 exit /b %errorlevel%
 "@
 $batchPath = Join-Path $output 'build.cmd'

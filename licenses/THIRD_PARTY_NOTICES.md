@@ -10,7 +10,7 @@
 
 完整版包含维护者提供的 ReShade 6.8.0 Full Add-on 安装器、MFG addon 和 DLSS / Streamline 材料。相关组件的版权与使用条件属于其各自权利人。
 
-带 Dynamic 最大倍率支持的 addon 基于 [mavismmg/MFGAdaUnlock-RenoDx](https://github.com/mavismmg/MFGAdaUnlock-RenoDx) tag `1.1`（提交 `c3733d8afd51214c46a71d18feec520b0bf54864`）重新构建，派生版本为 `1.1+WuWu.DynamicMax.1`。修改仅增加进程内 Dynamic 上限读取覆盖、配置与诊断，不是未经修改的上游发行文件。
+带 Dynamic 最大倍率支持的 addon 基于 [mavismmg/MFGAdaUnlock-RenoDx](https://github.com/mavismmg/MFGAdaUnlock-RenoDx) tag `1.1`（提交 `c3733d8afd51214c46a71d18feec520b0bf54864`）重新构建，派生版本为 `1.1+WuWu.DynamicMax.Runtime.1`。修改提供版本限定的进程内 Dynamic 运行时上限控制与诊断，不使用旧的启动 DRS 上限覆盖，不是未经修改的上游发行文件。
 
 源码补丁与构建方法见 `third_party/mfgunlock`。来源记录见源码中的 `release-assets/mfg/source.json`，随包记录为 `payload/addon-source.json`；它们列出源码基线、构建依赖和产物哈希。DLL 清单中的其他 DLSS / Streamline 材料保持既有字节，不随此补丁升级。
 

@@ -1,19 +1,19 @@
 {
   "file": "renodx-mfgunlock.addon64",
-  "addonVersion": "1.1+WuWu.DynamicMax.1",
-  "length": 519168,
-  "sha256": "ff4dd79e9bab1af2fa74164bab06b992bf5c35dfefed6d6f072fce53f5450003",
-  "fileVersion": "1.1+WuWu.DynamicMax.1",
+  "addonVersion": "1.1+WuWu.DynamicMax.Runtime.1",
+  "length": 523776,
+  "sha256": "2cb56b3c1c644ab9eebe2eb6cd3f25185feec8476519d131f6e5ddb26b0a7740",
+  "fileVersion": "1.1+WuWu.DynamicMax.Runtime.1",
   "upstream": {
     "commit": "c3733d8afd51214c46a71d18feec520b0bf54864",
     "repository": "https://github.com/mavismmg/MFGAdaUnlock-RenoDx",
     "tag": "1.1",
     "license": "MIT"
   },
-  "modification": "Process-local DynamicMaxMultiplier DRS read override; native Dynamic scheduling retained.",
+  "modification": "Runtime-only Dynamic maximum with automatic version-checked initialization and default 4x; no startup DRS cap override. Native scheduling and hardware limits retained.",
   "patch": {
     "path": "third_party/mfgunlock/dynamic-max.patch",
-    "sha256": "bfc2f81303fb1c66b1af0a64cc75e6034d8e719f074704a9137543448fee349d"
+    "sha256": "52d320eb1217edee5817a56d8ca881ef44aada5ed89ae1ac4644f48ee4de363d"
   },
   "build": {
     "windowsSdk": "10.0.26100.0",
@@ -29,8 +29,11 @@
   },
   "validation": {
     "gameCeiling": "Not yet verified in game",
-    "upstreamNativeSuites": 12,
-    "isolatedHookAssertions": 21,
-    "configurationAbiAssertions": 49
-  }
+    "configurationAbiAssertions": 49,
+    "runtimeAdapterFixtureAssertions": 96,
+    "scope": "Isolated native fixtures and data-only reference image validation; no game execution",
+    "noDrsOverrideAssertions": 12
+  },
+  "derivedCommit": "216228de950d6e0a2ec7f532412711e3ea785bce",
+  "derivedSourceCommit": "38f038957c83ea9a2f937a0fa42d83ae5b893465"
 }

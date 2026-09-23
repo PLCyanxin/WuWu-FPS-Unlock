@@ -1,8 +1,6 @@
 # MFG Unlock：Dynamic 最大倍率派生构建
 
-基线为 [mavismmg/MFGAdaUnlock-RenoDx](https://github.com/mavismmg/MFGAdaUnlock-RenoDx) tag `1.1`，解析到 `c3733d8afd51214c46a71d18feec520b0bf54864`。`dynamic-max.patch` 增加 `DynamicMaxMultiplier`、进程内 DRS 读取覆盖、界面诊断及测试，版本标识为 `1.1+WuWu.DynamicMax.1`。
-
-补丁不修改 `framecount.hpp`、Fixed 倍率、目标 FPS、Latency Guard 或 NVIDIA DLL。Dynamic 仍请求 `DLSSGMode::eDynamic`。具体使用及运行时验证方法见 [Dynamic 最大倍率](../../docs/DYNAMIC_MAX_MULTIPLIER.md)。源码中的上游功能和 credits 保持原样。
+基线为上游 mavismmg/MFGAdaUnlock-RenoDx tag 1.1，提交 c3733d8afd51214c46a71d18feec520b0bf54864。dynamic-max.patch 提供仅运行时的 Dynamic 最大倍率控制，默认4x，移除旧启动DRS覆盖；仍由 NVIDIA 原生调度决定实际倍率。版本门禁、线程校验和原生能力上限保留。使用方法见 [Dynamic 最大倍率](../../docs/DYNAMIC_MAX_MULTIPLIER.md)。
 
 ## Windows x64 构建
 
@@ -29,7 +27,7 @@ git -C renodx-deps/external/reshade submodule update --init deps/imgui
 
 输出包括 `renodx-mfgunlock.addon64`、原生配置/ABI 测试和 `build.log`。该脚本不安装插件、不启动游戏。`/MT` 静态链接 C++ 运行时，`/Brepro` 消除链接时间戳；不同编译器或 SDK 的输出不保证逐字节相同。构建环境、补丁哈希及最终文件哈希见 `release-assets/mfg/source.json`。
 
-补丁还提供 `mfg-source/tests/run_dynamicmax_tests.ps1 -DependencyDirectory <renodx-deps> -OutputDirectory <新的空输出目录>`。它构建自有惰性 DLL，在独立测试进程中验证生产 GetProcAddress 拦截链、调用来源识别、早期缓存与错误透传；不加载真实 NVIDIA 驱动 DLL，不启动游戏。单个 Streamline gateway 导出不足以获得覆盖，必须同时匹配对应角色的本模块函数。
+运行时控制测试使用惰性数据验证默认4x、4→5→6切换、原生上限约束与失效透传；加载器回归验证正常安装加载hook后仍不覆盖NVAPI DRS返回。测试不执行真实NVIDIA DLL，不启动游戏，不能替代游戏内验收。
 
 ## 固定依赖
 
