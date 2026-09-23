@@ -1,5 +1,0 @@
-PASS missing18 : 输入必须恰好包含全部18个指定DLL。
-PASS unknownDll : 未知材料：unknown1.dll
-PASS nestedInput : 替换必须是平铺素材目录。
-PASS outputInsideSource : 输出目录不能位于输入文件树内部。
-PASS: four input rejection cases; no payload generated; no installer/unlocker/game executed.

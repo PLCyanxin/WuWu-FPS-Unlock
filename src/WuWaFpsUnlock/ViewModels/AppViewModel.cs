@@ -60,7 +60,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         InitializeUpdates();
         _monitor.Tick+=Monitor;_monitor.Start();
         RememberValidSelection();
-        Log("鸣潮 FPS Unlock 1.1.1 启动。");
+        Log("鸣潮 FPS Unlock 1.2RC 启动。");
     }
     public bool Busy {get=>_busy;private set{_busy=value;NotifyAll();}}
     public bool IsGameRunning {get=>_running;private set{_running=value;NotifyAll();}}

@@ -5,18 +5,16 @@
 > [!WARNING]
 > **使用本工具有被官方封号的风险。使用工具后录制视频或分享截图等，请遮挡 UID，请勿跳脸官方。**（维护者实测可以正常与他人联机；能正常联机不代表没有封号风险。）
 
-**当前版本：v1.1.1 · Windows x64**
+**当前版本：v1.2RC · Windows x64**
 
-[下载完整版](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/download/v1.1.1/WuWaFPSUnlock-1.1.1-win-x64.zip) · [下载更新包](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/download/v1.1.1/WuWaFPSUnlock-1.1.1-update.zip) · [所有版本](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases)
+[下载完整版](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/download/v1.2.0RC/WuWaFPSUnlock-1.2.0RC-win-x64.zip) · [下载更新包](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/download/v1.2.0RC/WuWaFPSUnlock-1.2.0RC-update.zip) · [所有版本](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases)
 
-## v1.1.1 有什么新变化
+## v1.2RC 有什么新变化
 
-- 启动器支持检查更新，可在设置中选择是否启动时自动检测。发现新版时显示更新说明，可选择立即更新、暂不更新，或勾选跳过这个版本。
-- 在线下载后自动校验更新包，由独立更新器等待启动器退出后安装，继续保留备份、回退和桌面快捷方式维护。
-- 更新多帧生成插件，可在游戏内的 MFG Unlock 面板查看 **Dynamic 当前实际生成倍率**。
-- 新增部分实验性画面调优选项，可按需尝试，具体效果取决于游戏场景和设备。
-- 更新包支持自动查找原安装目录，并在更新前备份用户自己的软件文件。
-- 新增回退入口：恢复的是你更新前实际使用的程序与插件材料，包括自己替换过的 addon，而不是统一退回某个旧发布版。
+- 新增实验性 **Dynamic 最大倍率**，出厂默认 **4x**，可选择 NVIDIA 默认或 2x–6x。
+- 实际倍率仍由 NVIDIA 原生 Dynamic 调度，上限不是固定倍率。
+- **不支持热切换。** 首次部署在启动器设置；之后可在游戏内 MFG Unlock 面板修改，完全退出并再次启动游戏后生效，无需每次重新部署。
+- 更新后请在启动器设置中重新部署一次，让游戏使用新版插件。
 
 ## 第一次使用
 
@@ -42,7 +40,7 @@
 GitHub、百度网盘分发的本项目旧版都可以使用更新包，不要求旧版本号或文件哈希相同。更新包需要已有安装；首次使用请选择完整版。
 
 1. 正常退出游戏，再退出系统托盘中的启动器。
-2. 下载并解压 `WuWaFPSUnlock-1.1.1-update.zip`。
+2. 下载并解压 `WuWaFPSUnlock-1.2.0RC-update.zip`。
 3. 找到原启动器目录。若平时使用桌面快捷方式，可右键快捷方式，选择“打开文件所在的位置”。
 4. 把解压后的**整个更新文件夹**放进原启动器目录，双击里面的 **`更新.exe`**。请保留独立文件夹，不要把新协议包平铺混进原安装目录，也不用先覆盖主程序。
 5. 确认更新窗口显示的安装目录正确，等待备份和更新完成。更新器会检查自身目录及最多三层上级目录中的主程序；找不到或出现多个安装时会提示原因。
@@ -94,9 +92,11 @@ GitHub、百度网盘分发的本项目旧版都可以使用更新包，不要�
 
 Dynamic 的驱动预检查门槛为 **595.41**，不是整个工具或 FPS 解锁功能的最低驱动要求。是否可用还取决于显卡、游戏、运行库和相关设置；驱动条件满足或部署完成，都不等于游戏内已生效。
 
-**以下倍率上限功能属于本地验证构建，现有 v1.1.1 Release 尚不包含。**
+**Dynamic 最大倍率是实验性功能，出厂默认最高 4x。** 可选值为 `0、2、3、4、5、6`，其中 `0` 表示 NVIDIA 默认、不覆盖上限；只影响 Dynamic，Fixed 不受影响。
 
-支持 Dynamic 最大倍率的派生 addon 可在设置中选择 **Dynamic 最大倍率**，默认 **最高 4x**。可选值为 `0、2、3、4、5、6`，其中 `0` 表示 NVIDIA 默认、不覆盖上限；该选项只影响 Dynamic，Fixed 不受影响。修改后需要**重新部署并完全重启游戏**。配置写入不等于 NVIDIA 运行时已使用上限，需查看插件诊断并在游戏内验证；详见 [Dynamic 最大倍率说明](docs/DYNAMIC_MAX_MULTIPLIER.md)。
+首次部署时，在启动器设置中选择上限；之后可直接在游戏内 ReShade 的 **MFG Unlock → Dynamic maximum multiplier** 中修改。**本版无法热切换，修改会在完全退出并再次启动游戏后生效。** 返回标题界面或开关帧生成不能代替重启。日常调整无需重新部署；若重新部署，将以启动器中保存的选值写入，请先核对，避免覆盖游戏内设置。
+
+实际倍率和兼容性取决于设备、驱动、运行库与场景。设置上限不保证实际达到该倍率，也不能仅凭保存成功判断限制已生效。详见 [Dynamic 最大倍率说明](docs/DYNAMIC_MAX_MULTIPLIER.md)。
 
 实验性画面选项建议逐项尝试；遇到画面异常或稳定性问题，可关闭相应选项，并按插件面板提示重启游戏。它们不是所有设备都必须开启的优化。
 
@@ -104,7 +104,7 @@ Dynamic 的驱动预检查门槛为 **595.41**，不是整个工具或 FPS 解�
 
 启动器优先复用当前鸣潮安装中兼容的 ReShade。需要安装时使用随包安装器；升级已有 ReShade 前会提示。不会因为其他游戏装过 ReShade 就认为鸣潮也已安装。
 
-自行更换 MFG addon 时，将文件放到 `payload/files/addon/renodx-mfgunlock.addon64`，然后关闭游戏，在设置中重新部署。工具允许更新本地材料，不要求 addon 与旧清单哈希一致。v1.1.1 更新包会替换这个 addon；其他自行维护的 DLSS/Streamline 材料不会随本次更新被换掉。
+自行更换 MFG addon 时，将文件放到 `payload/files/addon/renodx-mfgunlock.addon64`，然后关闭游戏，在设置中重新部署。工具允许更新本地材料，不要求 addon 与旧清单哈希一致。本版更新包会替换这个 addon；其他自行维护的 DLSS/Streamline 材料不会随本次更新被换掉。
 
 “清除插件”按部署记录处理本工具负责的文件。用户原有的 ReShade、滤镜和其他 addon 会保留，由本工具安装的 ReShade 按来源记录处理。清除不会恢复官方 DLL；之后可能需要在官方启动器中进行文件校验。**不要依赖普通启动自动补齐文件。**
 

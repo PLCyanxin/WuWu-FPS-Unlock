@@ -16,3 +16,24 @@ payload/setup/
 components/unlocker/
 
 components/dotnet8/
+AGENTS.md
+CODEX_TASK.md
+00_START_HERE.md
+HANDOFF_MANIFEST.json
+knowledge/
+skills/
+input/
+preview/
+reference/desktop-*.png
+reference/README.md
+docs/CODEX_HANDOFF.md
+docs/HANDOFF_SOURCES.md
+docs/HANDOFF_V2_AUDIT.md
+docs/DELIVERY_REPORT_V0.1.md
+docs/WINDOWS_VALIDATION.md
+docs/baseline/
+docs/*-results.json
+docs/build-environment.txt
+docs/source-inventory.json
+docs/static-pe-inspection-used.py
+docs/UI-preview-not-native-WPF.png

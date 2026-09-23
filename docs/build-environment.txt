@@ -1,4 +1,0 @@
-Build session environment: Linux-6.18.44-x86_64-with-glibc2.41
-
-
-No .NET SDK/compiler was available in this session. Windows build and game execution were not performed.

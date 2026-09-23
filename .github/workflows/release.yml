@@ -26,11 +26,17 @@ jobs:
           if (!(Test-Path "docs/RELEASE_$tag.md")) { throw 'Release notes missing' }
           "RELEASE_VERSION=$version" | Add-Content $env:GITHUB_ENV
           "RELEASE_TAG=$tag" | Add-Content $env:GITHUB_ENV
+          $display=$version -replace '^(\d+\.\d+)\.0(RC\d*)$','$1$2'
+          "RELEASE_DISPLAY_VERSION=$display" | Add-Content $env:GITHUB_ENV
       - name: Build and test
         shell: pwsh
         run: |
           dotnet run --project tests/WuWaFpsUnlock.Tests -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Core tests failed' }
+          dotnet run --project tests/DynamicMultiplier.Tests -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Dynamic multiplier configuration tests failed' }
+          dotnet run --project tests/Dynamic.SettingsTests -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Dynamic settings tests failed' }
           dotnet run --project tests/Update.ServiceTests -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Update service tests failed' }
           dotnet run --project tests/Update.PreferenceTests -c Release
@@ -57,7 +63,7 @@ jobs:
           $version=$env:RELEASE_VERSION
           gh release view $tag --repo $env:GITHUB_REPOSITORY *> $null
           if ($LASTEXITCODE -eq 0) { throw 'Release exists; do not overwrite published assets. Inspect it before retrying.' }
-          gh release create $tag --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title "鸣潮 FPS Unlock $tag" --notes-file "docs/RELEASE_$tag.md" --draft
+          gh release create $tag --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title "鸣潮 FPS Unlock v$env:RELEASE_DISPLAY_VERSION" --notes-file "docs/RELEASE_$tag.md" --draft
           if ($LASTEXITCODE -ne 0) { throw 'Draft creation failed' }
           gh release upload $tag "WuWaFPSUnlock-$version-win-x64.zip" "WuWaFPSUnlock-$version-update.zip" SHA256SUMS.txt --repo $env:GITHUB_REPOSITORY
           if ($LASTEXITCODE -ne 0) { throw 'Asset upload failed; draft retained' }
