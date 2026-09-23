@@ -52,12 +52,13 @@ static int Update(string? expectedLauncher = null)
     var entries = new List<Entry>();
     var held = new List<FileStream>();
     string? backup = null;
+    string inventoryScratch = Path.Combine(Path.GetTempPath(), "WuWaUpdater-inventory-" + Guid.NewGuid().ToString("N"));
     try
     {
         foreach (string source in Enumerate(payload))
         {
             string relative = Path.GetRelativePath(payload, source).Replace('\\', '/');
-            if (!Allowed(relative)) throw new InvalidDataException("更新包包含不允许更新的文件：" + relative);
+            if (!AllowedPackageFile(relative)) throw new InvalidDataException("更新包包含不允许更新的文件：" + relative);
             string target = Path.Combine(root, relative.Replace('/', Path.DirectorySeparatorChar));
             NoLinks(target);
             if (Directory.Exists(target)) throw new IOException("目标是目录而非文件：" + target);
@@ -80,6 +81,7 @@ static int Update(string? expectedLauncher = null)
         foreach (string required in new[] { "WuWaFpsUnlock.exe", "components/fps/ww_plugin_base.dll", "components/PROVENANCE.json", "payload/files/addon/renodx-mfgunlock.addon64", "payload/addon-source.json" })
             if (!entries.Any(e => e.Relative.Equals(required, StringComparison.OrdinalIgnoreCase)))
                 throw new InvalidDataException("更新包不完整，缺少：" + required);
+        AddInventoryEntries(root, entries, held, inventoryScratch);
         // Use a GUID directory so every attempt keeps its own original files and staged copy.
         backup = Path.Combine(root, "update-backup-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N"));
         NoLinks(backup);
@@ -144,7 +146,12 @@ static int Update(string? expectedLauncher = null)
         if (backup is not null) Console.Error.WriteLine("备份保留于：" + backup);
         throw;
     }
-    finally { foreach (var handle in held) handle.Dispose(); }
+    finally
+    {
+        foreach (var handle in held) handle.Dispose();
+        try { if(Directory.Exists(inventoryScratch)){NoLinks(inventoryScratch);Directory.Delete(inventoryScratch,true);} }
+        catch { Console.WriteLine("临时材料清单保留于：" + inventoryScratch); }
+    }
 }
 
 static string FindInstallation(string updaterDirectory)
@@ -172,7 +179,8 @@ static string FindInstallation(string updaterDirectory)
     return candidates[0];
 }
 
-static bool Allowed(string path) => path.Equals("WuWaFpsUnlock.exe", StringComparison.OrdinalIgnoreCase)
+static bool Allowed(string path) => AllowedPackageFile(path) || InventoryPaths.Contains(path, StringComparer.OrdinalIgnoreCase);
+static bool AllowedPackageFile(string path) => path.Equals("WuWaFpsUnlock.exe", StringComparison.OrdinalIgnoreCase)
     || path.Equals("components/fps/ww_plugin_base.dll", StringComparison.OrdinalIgnoreCase)
     || path.Equals("components/PROVENANCE.json", StringComparison.OrdinalIgnoreCase)
     || path.Equals("payload/files/addon/renodx-mfgunlock.addon64", StringComparison.OrdinalIgnoreCase)

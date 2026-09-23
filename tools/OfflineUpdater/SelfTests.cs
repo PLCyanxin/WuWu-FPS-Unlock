@@ -98,6 +98,7 @@ internal static partial class Program
             Reject(() => RestoreSnapshot(f.Backup, f.Snapshot, () => { }));
             Check(File.ReadAllText(Scoped(f.Root, "WuWaFpsUnlock.exe")).StartsWith("inert new"));
         });
+        InventoryTests(Test);
         WaitModeTests(Test);
         Console.WriteLine($"RESULT: {passed} passed, {failed} failed; inert filesystem fixtures, injected checks and native updater-child wait. No launcher/game launch or desktop changes.");
         // Delete only the exact generated fixture root, never a path supplied by a caller.

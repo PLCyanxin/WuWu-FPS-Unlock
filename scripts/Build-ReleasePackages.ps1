@@ -17,29 +17,7 @@ $provenance=Get-Content -LiteralPath $sourceRecord -Raw | ConvertFrom-Json
 if((Get-FileHash $addon).Hash -ne $provenance.sha256 -or (Get-Item $addon).Length -ne $provenance.length){throw 'Addon differs from its release source record'}
 Copy-Item $addon package/payload/files/addon/renodx-mfgunlock.addon64 -Force
 Copy-Item -LiteralPath $sourceRecord -Destination package/payload/addon-source.json
-$manifest=Get-Content package/payload/manifest.json -Raw | ConvertFrom-Json
-$manifest.packageId="wuwa-fps-unlock-$Version"
-$entry=$manifest.files | Where-Object source -eq 'files/addon/renodx-mfgunlock.addon64'
-if(!$entry){throw 'Addon manifest entry missing'}
-$entry.sha256=$provenance.sha256
-$entry.size=$provenance.length
-$manifest | ConvertTo-Json -Depth 30 | Set-Content package/payload/manifest.json -Encoding utf8
-$source=Get-Content package/payload/source-manifest.json -Raw | ConvertFrom-Json
-$record=$source.files | Where-Object name -eq 'renodx-mfgunlock.addon64'
-if(!$record){throw 'Addon source record missing'}
-$record.length=$provenance.length
-$record.sha256=$provenance.sha256
-$record.copySha256=$provenance.sha256
-$record.sourcePath='release-assets/mfg/renodx-mfgunlock.addon64'
-$record.copiedPath='payload/files/addon/renodx-mfgunlock.addon64'
-$record.fileVersion=(Get-Item $addon).VersionInfo.FileVersion
-$source | ConvertTo-Json -Depth 30 | Set-Content package/payload/source-manifest.json -Encoding utf8
-$map=Get-Content package/payload/payload-map.json -Raw | ConvertFrom-Json
-$mapped=$map | Where-Object name -eq 'renodx-mfgunlock.addon64'
-if(!$mapped){throw 'Addon map missing'}
-$mapped.sha256=$provenance.sha256
-$mapped.source='payload/files/addon/renodx-mfgunlock.addon64'
-$map | ConvertTo-Json -Depth 30 | Set-Content package/payload/payload-map.json -Encoding utf8
+& "$PSScriptRoot/Sync-AddonInventory.ps1" -PayloadDirectory package/payload -SourceRecord $sourceRecord -AddonPath $addon -PackageId "wuwa-fps-unlock-$Version" -PublicInventory
 Copy-Item -LiteralPath (Join-Path $repo 'README.md') -Destination package
 $allowedRoot=@('WuWaFpsUnlock.exe','App.ico','README.md','payload','components','licenses')
 foreach($item in Get-ChildItem package -Force){
