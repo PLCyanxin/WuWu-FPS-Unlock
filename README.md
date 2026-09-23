@@ -5,17 +5,17 @@
 > [!WARNING]
 > **使用本工具有被官方封号的风险。使用工具后录制视频或分享截图等，请遮挡 UID，请勿跳脸官方。**（维护者实测可以正常与他人联机；能正常联机不代表没有封号风险。）
 
-**当前版本：v1.2RC · Windows x64**
+**当前构建：v1.2.1RC · Windows x64**
 
-[下载完整版](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/download/v1.2.0RC/WuWaFPSUnlock-1.2.0RC-win-x64.zip) · [下载更新包](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/download/v1.2.0RC/WuWaFPSUnlock-1.2.0RC-update.zip) · [所有版本](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases)
+[已发布版本与下载](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases)
 
-## v1.2RC 有什么新变化
+## Dynamic 运行时倍率上限
 
-- 新增实验性 **Dynamic 最大倍率**，出厂默认 **4x**，可选择 NVIDIA 默认或 2x–6x。
-- 实际倍率仍由 NVIDIA 原生 Dynamic 调度，上限不是固定倍率。
-- **不支持热切换。** 首次部署在启动器设置；之后可在游戏内 MFG Unlock 面板修改，完全退出并再次启动游戏后生效，无需每次重新部署。
+- 在游戏内 ReShade 的 MFG Unlock 面板调整 Dynamic 最大倍率，默认 4x。
+- 启动器不再提供部署时的静态倍率选项，旧的静态配置不再参与倍率控制；升级后需重新部署并完整重启一次游戏。
+- 运行时可选择2x–6x，上限不是固定倍率。实际倍率仍由 NVIDIA 原生 Dynamic 根据负载与运行时能力决定。
+- 热调整为实验功能，仅支持随包适配的运行库。若检测失败会停用热控制并显示原因，不应关闭安全软件强行启用。
 - 更新后请在启动器设置中重新部署一次，让游戏使用新版插件。
-
 ## 第一次使用
 
 1. 下载完整版，解压到一个固定文件夹，运行 `WuWaFpsUnlock.exe`。包内已包含所需运行时，无需另装 .NET。

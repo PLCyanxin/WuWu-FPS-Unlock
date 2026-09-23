@@ -60,45 +60,15 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         InitializeUpdates();
         _monitor.Tick+=Monitor;_monitor.Start();
         RememberValidSelection();
-        Log("鸣潮 FPS Unlock 1.2RC 启动。");
+        Log("鸣潮 FPS Unlock 1.2.1RC 启动。");
     }
     public bool Busy {get=>_busy;private set{_busy=value;NotifyAll();}}
     public bool IsGameRunning {get=>_running;private set{_running=value;NotifyAll();}}
     public bool CanChangeFpsMode=>!Busy;
     public bool CanEditFps=>!Busy&&FpsEnabled;
     public bool CanEditSettings=>!Busy&&!IsGameRunning;
-    public bool CanEditDynamicMultiplier=>CanEditSettings && _hardware.Driver is >=59541;
-    public string DynamicMultiplierHint=>_hardware.Driver is not >=59541
-        ? "需要 NVIDIA 驱动 595.41 或更高版本；驱动版本未知时暂不可调节。"
-        : "实验功能，默认 4x，仅对 Dynamic 生效。首次部署在此设定；后续可在游戏内修改，下次启动生效。";
     public bool FpsEnabled {get=>_settings.FpsEnabled;set{if(!CanChangeFpsMode)return;_settings.FpsEnabled=value;Save();Status="FPS 开关下次启动生效";NotifyAll();}}
     public bool MfgSelected {get=>_settings.MfgSelected;set{if(!CanEditSettings)return;_settings.MfgSelected=value;Save();NotifyAll();}}
-    public sealed record DynamicMultiplierOption(int Value,string Label);
-    public IReadOnlyList<DynamicMultiplierOption> DynamicMaxMultiplierOptions {get;} =
-    [new(0,"NVIDIA 默认 / 不限制"),new(2,"最高 2x"),new(3,"最高 3x"),new(4,"最高 4x"),new(5,"最高 5x"),new(6,"最高 6x")];
-    public int DynamicMaxMultiplier
-    {
-        get=>_settings.DynamicMaxMultiplier;
-        set
-        {
-            if(!CanEditDynamicMultiplier)return;
-            value=DynamicMultiplierLimit.Normalize(value);
-            if(_settings.DynamicMaxMultiplier==value)return;
-            try
-            {
-                var candidate=_settings.Clone();candidate.DynamicMaxMultiplier=value;
-                JsonFiles.Save(AppPaths.Settings,candidate);_settings=candidate;
-                Status="Dynamic 最大倍率已保存；需要重新部署并完全重启游戏。";
-                Log(Status);
-            }
-            catch(Exception error)
-            {
-                Status="Dynamic 最大倍率未保存："+error.Message;Log(Status);
-                _dispatcher.BeginInvoke(new Action(()=>Notify(nameof(DynamicMaxMultiplier))));
-            }
-            Notify();
-        }
-    }
     public int TargetFps
     {
         get=>_settings.TargetFps;

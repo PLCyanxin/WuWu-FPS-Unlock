@@ -25,7 +25,7 @@ internal static class SettingsLayoutTests
                 new HardwareInfo("NVIDIA GeForce RTX 4090", 59541, true, "Windows 11 fixture", "已开启", true));
             window = new SettingsWindow(vm);
             var root = (FrameworkElement)window.Content;
-            var combo = (ComboBox)window.FindName("DynamicMaxMultiplierBox");
+            var combo = (TextBlock)window.FindName("DynamicRuntimeHint");
             var mfg = Parents(combo).OfType<Border>().First();
             var right = (Grid)mfg.Parent;
             var columns = (Grid)right.Parent;
@@ -34,8 +34,8 @@ internal static class SettingsLayoutTests
             var maintenance = right.Children.OfType<Border>().Single(x => Grid.GetRow(x) == 4);
             foreach (double width in new[] { 1160d, 850d })
             {
-                root.Measure(new Size(width, 806));
-                root.Arrange(new Rect(0, 0, width, 806));
+                root.Measure(new Size(width, 784));
+                root.Arrange(new Rect(0, 0, width, 784));
                 root.UpdateLayout(); pump(); root.UpdateLayout();
                 check(!window.IsVisible, "settings window remains unshown");
                 var leftBounds = Bounds(left, columns);

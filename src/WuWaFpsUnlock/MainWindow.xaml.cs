@@ -39,7 +39,7 @@ public partial class MainWindow:Window
             {
                 using var stream=Application.GetResourceStream(new Uri("pack://application:,,,/WuWaFpsUnlock;component/Assets/App.ico")).Stream;
                 _trayIcon=new System.Drawing.Icon(stream);
-                _tray=new System.Windows.Forms.NotifyIcon{Icon=_trayIcon,Text="鸣潮 FPS Unlock v1.2RC"};
+                _tray=new System.Windows.Forms.NotifyIcon{Icon=_trayIcon,Text="鸣潮 FPS Unlock v1.2.1RC"};
                 _tray.DoubleClick+=(_,_)=>Dispatcher.Invoke(RestoreFromTray);
                 var menu=new System.Windows.Forms.ContextMenuStrip();
                 menu.Items.Add("显示启动器",null,(_,_)=>Dispatcher.Invoke(RestoreFromTray));
