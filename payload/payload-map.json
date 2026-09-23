@@ -1,162 +1,163 @@
 [
   {
     "name": "NvLowLatencyVk.dll",
-    "source": "E:\\yanxin_ws\\wuwa-fps-unlock\\input\\desktop-materials\\替换\\NvLowLatencyVk.dll",
+    "source": "payload/files/game/NvLowLatencyVk.dll",
     "sha256": "2a77dc3e1c724b7eea5755be0ae7423752e79a2459fae72181a9f00e3507e5d6",
     "targetPolicy": "用户所选GameRoot内现有同名文件；无匹配跳过；运行时逐路径确认；不新增DLL",
     "actualGameTargets": [],
-    "gameMappingStatus": "待用户指定游戏路径并确认；未扫描真实游戏"
+    "gameMappingStatus": "Targets are resolved within the selected game directory during deployment."
   },
   {
     "name": "nvngx_deepdvc.dll",
-    "source": "E:\\yanxin_ws\\wuwa-fps-unlock\\input\\desktop-materials\\替换\\nvngx_deepdvc.dll",
+    "source": "payload/files/game/nvngx_deepdvc.dll",
     "sha256": "dc9562c67594fa06b763fe5d78f4aa53452c5344f8b43e6e2b81264320588500",
     "targetPolicy": "用户所选GameRoot内现有同名文件；无匹配跳过；运行时逐路径确认；不新增DLL",
     "actualGameTargets": [],
-    "gameMappingStatus": "待用户指定游戏路径并确认；未扫描真实游戏"
+    "gameMappingStatus": "Targets are resolved within the selected game directory during deployment."
   },
   {
     "name": "nvngx_dlss.dll",
-    "source": "E:\\yanxin_ws\\wuwa-fps-unlock\\input\\desktop-materials\\替换\\nvngx_dlss.dll",
+    "source": "payload/files/game/nvngx_dlss.dll",
     "sha256": "3975567b8943c53acce397f2b72380092f84f162d00b0d2c7d08a1025c563983",
     "targetPolicy": "用户所选GameRoot内现有同名文件；无匹配跳过；运行时逐路径确认；不新增DLL",
     "actualGameTargets": [],
-    "gameMappingStatus": "待用户指定游戏路径并确认；未扫描真实游戏"
+    "gameMappingStatus": "Targets are resolved within the selected game directory during deployment."
   },
   {
     "name": "nvngx_dlssd.dll",
-    "source": "E:\\yanxin_ws\\wuwa-fps-unlock\\input\\desktop-materials\\替换\\nvngx_dlssd.dll",
+    "source": "payload/files/game/nvngx_dlssd.dll",
     "sha256": "4bc7ea5fcb2f32cf86bc2cb072e8d2860914a0be511cbdcb2fc206c1d9d83b80",
     "targetPolicy": "用户所选GameRoot内现有同名文件；无匹配跳过；运行时逐路径确认；不新增DLL",
     "actualGameTargets": [],
-    "gameMappingStatus": "待用户指定游戏路径并确认；未扫描真实游戏"
+    "gameMappingStatus": "Targets are resolved within the selected game directory during deployment."
   },
   {
     "name": "nvngx_dlssg.dll",
-    "source": "E:\\yanxin_ws\\wuwa-fps-unlock\\input\\desktop-materials\\替换\\nvngx_dlssg.dll",
+    "source": "payload/files/game/nvngx_dlssg.dll",
     "sha256": "ff6e90eb78b827927dff5b4ecc6b1c870c2e9bca29ed9f48c7d348cc9e170b82",
     "targetPolicy": "用户所选GameRoot内现有同名文件；无匹配跳过；运行时逐路径确认；不新增DLL",
     "actualGameTargets": [],
-    "gameMappingStatus": "待用户指定游戏路径并确认；未扫描真实游戏"
+    "gameMappingStatus": "Targets are resolved within the selected game directory during deployment."
   },
   {
     "name": "nvngx_dlssnr.dll",
-    "source": "E:\\yanxin_ws\\wuwa-fps-unlock\\input\\desktop-materials\\替换\\nvngx_dlssnr.dll",
+    "source": "payload/files/game/nvngx_dlssnr.dll",
     "sha256": "e16bcf15e16e13f527491cdf7845b2fe6521a738d8f7c9c721866a8496e1fc8e",
     "targetPolicy": "用户所选GameRoot内现有同名文件；无匹配跳过；运行时逐路径确认；不新增DLL",
     "actualGameTargets": [],
-    "gameMappingStatus": "待用户指定游戏路径并确认；未扫描真实游戏"
+    "gameMappingStatus": "Targets are resolved within the selected game directory during deployment."
   },
   {
     "name": "sl.common.dll",
-    "source": "E:\\yanxin_ws\\wuwa-fps-unlock\\input\\desktop-materials\\替换\\sl.common.dll",
+    "source": "payload/files/game/sl.common.dll",
     "sha256": "82924a8954dd671e09351c5de0eb87ad0eb25b944cc9f9ab955ca1d9950de15d",
     "targetPolicy": "用户所选GameRoot内现有同名文件；无匹配跳过；运行时逐路径确认；不新增DLL",
     "actualGameTargets": [],
-    "gameMappingStatus": "待用户指定游戏路径并确认；未扫描真实游戏"
+    "gameMappingStatus": "Targets are resolved within the selected game directory during deployment."
   },
   {
     "name": "sl.deepdvc.dll",
-    "source": "E:\\yanxin_ws\\wuwa-fps-unlock\\input\\desktop-materials\\替换\\sl.deepdvc.dll",
+    "source": "payload/files/game/sl.deepdvc.dll",
     "sha256": "e4b7e83c9e67eab7023222af13de239241e8a09bdb63faf26f803e9fd0f3e9c9",
     "targetPolicy": "用户所选GameRoot内现有同名文件；无匹配跳过；运行时逐路径确认；不新增DLL",
     "actualGameTargets": [],
-    "gameMappingStatus": "待用户指定游戏路径并确认；未扫描真实游戏"
+    "gameMappingStatus": "Targets are resolved within the selected game directory during deployment."
   },
   {
     "name": "sl.directsr.dll",
-    "source": "E:\\yanxin_ws\\wuwa-fps-unlock\\input\\desktop-materials\\替换\\sl.directsr.dll",
+    "source": "payload/files/game/sl.directsr.dll",
     "sha256": "4b2c0c90195c3a9991b4e0b59004113511a90802c85d81fc7faa7c7c75f53927",
     "targetPolicy": "用户所选GameRoot内现有同名文件；无匹配跳过；运行时逐路径确认；不新增DLL",
     "actualGameTargets": [],
-    "gameMappingStatus": "待用户指定游戏路径并确认；未扫描真实游戏"
+    "gameMappingStatus": "Targets are resolved within the selected game directory during deployment."
   },
   {
     "name": "sl.dlss.dll",
-    "source": "E:\\yanxin_ws\\wuwa-fps-unlock\\input\\desktop-materials\\替换\\sl.dlss.dll",
+    "source": "payload/files/game/sl.dlss.dll",
     "sha256": "73bf52c0cfaa5900a8f3f4a91306e4625e7cca696dfb305aae44c9f97b582e1f",
     "targetPolicy": "用户所选GameRoot内现有同名文件；无匹配跳过；运行时逐路径确认；不新增DLL",
     "actualGameTargets": [],
-    "gameMappingStatus": "待用户指定游戏路径并确认；未扫描真实游戏"
+    "gameMappingStatus": "Targets are resolved within the selected game directory during deployment."
   },
   {
     "name": "sl.dlss_d.dll",
-    "source": "E:\\yanxin_ws\\wuwa-fps-unlock\\input\\desktop-materials\\替换\\sl.dlss_d.dll",
+    "source": "payload/files/game/sl.dlss_d.dll",
     "sha256": "026b9f4f9ea848f2f5aa0e2024fc6b1c885f57eea5d41078124dba14f873b86b",
     "targetPolicy": "用户所选GameRoot内现有同名文件；无匹配跳过；运行时逐路径确认；不新增DLL",
     "actualGameTargets": [],
-    "gameMappingStatus": "待用户指定游戏路径并确认；未扫描真实游戏"
+    "gameMappingStatus": "Targets are resolved within the selected game directory during deployment."
   },
   {
     "name": "sl.dlss_g.dll",
-    "source": "E:\\yanxin_ws\\wuwa-fps-unlock\\input\\desktop-materials\\替换\\sl.dlss_g.dll",
+    "source": "payload/files/game/sl.dlss_g.dll",
     "sha256": "f4a6b2b14dcc0b1485989e430d3b4e3a44ac1800b92ba1ad74f476e64fb2b09c",
     "targetPolicy": "用户所选GameRoot内现有同名文件；无匹配跳过；运行时逐路径确认；不新增DLL",
     "actualGameTargets": [],
-    "gameMappingStatus": "待用户指定游戏路径并确认；未扫描真实游戏"
+    "gameMappingStatus": "Targets are resolved within the selected game directory during deployment."
   },
   {
     "name": "sl.dlss_nr.dll",
-    "source": "E:\\yanxin_ws\\wuwa-fps-unlock\\input\\desktop-materials\\替换\\sl.dlss_nr.dll",
+    "source": "payload/files/game/sl.dlss_nr.dll",
     "sha256": "9f6672e5e0170dc118a3188d21bda187e1fc1aa3502895b21ab846d23165c11d",
     "targetPolicy": "用户所选GameRoot内现有同名文件；无匹配跳过；运行时逐路径确认；不新增DLL",
     "actualGameTargets": [],
-    "gameMappingStatus": "待用户指定游戏路径并确认；未扫描真实游戏"
+    "gameMappingStatus": "Targets are resolved within the selected game directory during deployment."
   },
   {
     "name": "sl.interposer.dll",
-    "source": "E:\\yanxin_ws\\wuwa-fps-unlock\\input\\desktop-materials\\替换\\sl.interposer.dll",
+    "source": "payload/files/game/sl.interposer.dll",
     "sha256": "8c87c9499461da561edd529aa9bf7831d67d7b94ebb1c1a5ed54ef4934e1ea4c",
     "targetPolicy": "用户所选GameRoot内现有同名文件；无匹配跳过；运行时逐路径确认；不新增DLL",
     "actualGameTargets": [],
-    "gameMappingStatus": "待用户指定游戏路径并确认；未扫描真实游戏"
+    "gameMappingStatus": "Targets are resolved within the selected game directory during deployment."
   },
   {
     "name": "sl.nis.dll",
-    "source": "E:\\yanxin_ws\\wuwa-fps-unlock\\input\\desktop-materials\\替换\\sl.nis.dll",
+    "source": "payload/files/game/sl.nis.dll",
     "sha256": "556870e456d268601188919927b3b122f76b25f9b221cc4b15d3ef649f0ad27b",
     "targetPolicy": "用户所选GameRoot内现有同名文件；无匹配跳过；运行时逐路径确认；不新增DLL",
     "actualGameTargets": [],
-    "gameMappingStatus": "待用户指定游戏路径并确认；未扫描真实游戏"
+    "gameMappingStatus": "Targets are resolved within the selected game directory during deployment."
   },
   {
     "name": "sl.nvperf.dll",
-    "source": "E:\\yanxin_ws\\wuwa-fps-unlock\\input\\desktop-materials\\替换\\sl.nvperf.dll",
+    "source": "payload/files/game/sl.nvperf.dll",
     "sha256": "b4ca8f8eeba653446f27d20e8b394cdaae5d518c1292b440a4b97652e0f0376b",
     "targetPolicy": "用户所选GameRoot内现有同名文件；无匹配跳过；运行时逐路径确认；不新增DLL",
     "actualGameTargets": [],
-    "gameMappingStatus": "待用户指定游戏路径并确认；未扫描真实游戏"
+    "gameMappingStatus": "Targets are resolved within the selected game directory during deployment."
   },
   {
     "name": "sl.pcl.dll",
-    "source": "E:\\yanxin_ws\\wuwa-fps-unlock\\input\\desktop-materials\\替换\\sl.pcl.dll",
+    "source": "payload/files/game/sl.pcl.dll",
     "sha256": "f13d51cfa05f4cd514df2026049e2db8adf359221713170ad386fd499915b582",
     "targetPolicy": "用户所选GameRoot内现有同名文件；无匹配跳过；运行时逐路径确认；不新增DLL",
     "actualGameTargets": [],
-    "gameMappingStatus": "待用户指定游戏路径并确认；未扫描真实游戏"
+    "gameMappingStatus": "Targets are resolved within the selected game directory during deployment."
   },
   {
     "name": "sl.reflex.dll",
-    "source": "E:\\yanxin_ws\\wuwa-fps-unlock\\input\\desktop-materials\\替换\\sl.reflex.dll",
+    "source": "payload/files/game/sl.reflex.dll",
     "sha256": "0ce9725e3e03ea9e7f81d008b57f33ee365973d2e349131c8b1c3e3378fe2db0",
     "targetPolicy": "用户所选GameRoot内现有同名文件；无匹配跳过；运行时逐路径确认；不新增DLL",
     "actualGameTargets": [],
-    "gameMappingStatus": "待用户指定游戏路径并确认；未扫描真实游戏"
+    "gameMappingStatus": "Targets are resolved within the selected game directory during deployment."
   },
   {
     "name": "renodx-mfgunlock.addon64",
-    "source": "C:\\Users\\StrixZ16\\Desktop\\鸣潮 FPS Unlock v0.1RC\\GitHub发布版\\payload\\files\\addon\\renodx-mfgunlock.addon64",
-    "sha256": "f9f10c685e3e89077f751df2394a1629615a56b58d111dff26b39894e772d50e",
+    "source": "payload/files/addon/renodx-mfgunlock.addon64",
+    "sha256": "ff4dd79e9bab1af2fa74164bab06b992bf5c35dfefed6d6f072fce53f5450003",
     "targetPolicy": "经验证ReShade AddonDir/renodx-mfgunlock.addon64",
+    "addonVersion": "1.1+WuWu.DynamicMax.1",
     "actualGameTargets": [],
-    "gameMappingStatus": "待用户指定游戏路径并确认；未扫描真实游戏"
+    "gameMappingStatus": "Targets are resolved within the selected game directory during deployment."
   },
   {
     "name": "ReShade_Setup_6.8.0_Addon.exe",
-    "source": "E:\\yanxin_ws\\wuwa-fps-unlock\\input\\desktop-materials\\ReShade_Setup_6.8.0_Addon.exe",
+    "source": "payload/setup/ReShade_Setup_6.8.0_Addon.exe",
     "sha256": "afe4c8f13048306307983b8b3d41d5bf00a86820440b0e57dea10950e1176445",
     "targetPolicy": "便携包payload/setup；Setup目标为用户手选Shipping，代理实际产物须校验",
     "actualGameTargets": [],
-    "gameMappingStatus": "待用户指定游戏路径并确认；未扫描真实游戏"
+    "gameMappingStatus": "Targets are resolved within the selected game directory during deployment."
   }
 ]

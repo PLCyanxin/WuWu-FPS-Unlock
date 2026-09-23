@@ -19,7 +19,9 @@ Copy-Item $addon package/payload/files/addon/renodx-mfgunlock.addon64 -Force
 Copy-Item -LiteralPath $sourceRecord -Destination package/payload/addon-source.json
 & "$PSScriptRoot/Sync-AddonInventory.ps1" -PayloadDirectory package/payload -SourceRecord $sourceRecord -AddonPath $addon -PackageId "wuwa-fps-unlock-$Version" -PublicInventory
 Copy-Item -LiteralPath (Join-Path $repo 'README.md') -Destination package
-$allowedRoot=@('WuWaFpsUnlock.exe','App.ico','README.md','payload','components','licenses')
+New-Item package/docs -ItemType Directory -Force | Out-Null
+Copy-Item -LiteralPath (Join-Path $repo 'docs/DYNAMIC_MAX_MULTIPLIER.md') -Destination package/docs
+$allowedRoot=@('WuWaFpsUnlock.exe','App.ico','README.md','payload','components','licenses','docs')
 foreach($item in Get-ChildItem package -Force){
     if($item.Name -notin $allowedRoot){throw "Unexpected full-package item (possible local user data): $($item.Name)"}
 }

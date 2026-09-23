@@ -149,15 +149,14 @@
     {
       "anchor": "AddonDir",
       "target": "renodx-mfgunlock.addon64",
-      "sha256": "f9f10c685e3e89077f751df2394a1629615a56b58d111dff26b39894e772d50e",
+      "sha256": "ff4dd79e9bab1af2fa74164bab06b992bf5c35dfefed6d6f072fce53f5450003",
       "source": "files/addon/renodx-mfgunlock.addon64",
       "kind": "Addon",
-      "size": 710144
+      "size": 519168
     }
   ],
   "fixedMinimumDriver": null,
   "schemaVersion": 1,
-  "addonVersion": "0.2026.0909.1640",
   "fixedMultiplier": 4,
   "reShade": {
     "version": "6.8.0",
@@ -167,5 +166,6 @@
     "localSetupPath": "setup/ReShade_Setup_6.8.0_Addon.exe"
   },
   "preferDynamic": true,
-  "mfgConfig": {}
+  "mfgConfig": {},
+  "addonVersion": "1.1+WuWu.DynamicMax.1"
 }

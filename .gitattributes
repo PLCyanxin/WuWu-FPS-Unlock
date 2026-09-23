@@ -1,0 +1,2 @@
+# Preserve reproducible source-patch bytes on Windows checkouts.
+third_party/mfgunlock/*.patch -text

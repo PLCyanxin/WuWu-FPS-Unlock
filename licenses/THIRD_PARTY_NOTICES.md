@@ -10,9 +10,13 @@
 
 完整版包含维护者提供的 ReShade 6.8.0 Full Add-on 安装器、MFG addon 和 DLSS / Streamline 材料。相关组件的版权与使用条件属于其各自权利人。
 
-v1.1.1RC 使用的 addon 来源记录见源码中的 `release-assets/mfg/source.json`；包内 `payload/addon-source.json` 记录相同文件。完整版的 `payload/source-manifest.json` 和 `payload/payload-map.json` 已同步本次 addon 的大小与哈希，其余运行库未因本次更新而更换。使用更新包时保留原有整体清单，新 addon 以独立来源记录为准。
+带 Dynamic 最大倍率支持的 addon 基于 [mavismmg/MFGAdaUnlock-RenoDx](https://github.com/mavismmg/MFGAdaUnlock-RenoDx) tag `1.1`（提交 `c3733d8afd51214c46a71d18feec520b0bf54864`）重新构建，派生版本为 `1.1+WuWu.DynamicMax.1`。修改仅增加进程内 Dynamic 上限读取覆盖、配置与诊断，不是未经修改的上游发行文件。
 
-这些二进制由维护者提供并按原始字节分发。本地哈希用于区分文件，不表示对上游来源或可复现构建的证明。
+源码补丁与构建方法见 `third_party/mfgunlock`。来源记录见源码中的 `release-assets/mfg/source.json`，随包记录为 `payload/addon-source.json`；它们列出源码基线、构建依赖和产物哈希。DLL 清单中的其他 DLSS / Streamline 材料保持既有字节，不随此补丁升级。
+
+MFG addon 遵循 [MIT 许可](MFGAdaUnlock-MIT.txt)，保留 Dreamt、dashdogy、mavismmg 及[上游完整 credits](MFGUnlock-UPSTREAM-CREDITS.md)。构建使用的 RenoDX、ReShade、Dear ImGui、Microsoft Detours、Streamline、NVAPI ABI 资料与 NVIDIA RTX SDK 保留各自随附许可。最小 NVAPI ABI 镜像仅用于已知 DRS V1 结构，不静态链接或分发 NVAPI 驱动库。
+
+ReShade 安装器及既有 NVIDIA 运行库来自维护者提供的材料。本地哈希用于区分文件，不证明这些材料与某个公开源码构建等价。Windows 驱动与运行库的支持范围仍由各自提供方决定。
 
 ## 图片素材
 
