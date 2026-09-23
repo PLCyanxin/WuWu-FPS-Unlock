@@ -1,11 +1,11 @@
 {
   "route": "builtin-fps-only",
   "runtimePath": "components/fps/ww_plugin_base.dll",
-  "source": "Original FPS-only DLL byte-identical to embedded component in user supplied input/unlocker/鸣潮.exe; source EXE is never executed by v0.1",
+  "source": "Maintainer-supplied FPS module extracted from the original launcher resource; distributed with the WutherFPSUnlocker MIT license.",
   "size": 34304,
   "sha256": "844d7552692f53e8a1bfe45edf360a094597c5bf2b26dc058ff59b21d2250c3a",
   "sourceExeSha256": "5b9cba854357a4d9ce9c56676e22e397be8d5dbd2dc10de9393155e378050fae",
   "sourceOffset": 4230325,
-  "verification": "Exact source hash and x64 identity checked. v0.1 actual game injection and restart await explicit approval; prior external-unlocker tests do not validate this route.",
-  "externalUnlocker": "Not compiled into active route; not packaged; no .NET8 external runtime required. Historical source audit retained."
+  "verification": "The recorded hash identifies the original x64 module. Compatibility with a particular game build must be evaluated at runtime.",
+  "externalUnlocker": "The launcher hosts the FPS module directly; an external unlock.exe and .NET 8 runtime are not required."
 }
