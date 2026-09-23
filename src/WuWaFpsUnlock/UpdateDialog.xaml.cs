@@ -23,7 +23,8 @@ public partial class UpdateDialog : Window
         SkipVersion.Unchecked += (_, _) => skipChanged(false);
         OperationStatus.Text = "点击“立即更新”后才会下载安装包；安装前启动器会退出。";
         Width = Math.Min(Width, SystemParameters.WorkArea.Width - 36);
-        Height = Math.Min(Height, SystemParameters.WorkArea.Height - 36);
+        MaxHeight = Math.Max(240, SystemParameters.WorkArea.Height - 36);
+        ReleaseNotes.MaxHeight = Math.Max(80, MaxHeight - 260);
         Closing += OnClosing;
         Closed += (_, _) => { _closed = true; _download?.Cancel(); };
         PreviewKeyDown += (_, e) => { if (e.Key == System.Windows.Input.Key.Escape) { e.Handled = true; CancelOrClose(); } };
