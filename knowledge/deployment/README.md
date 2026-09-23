@@ -64,3 +64,11 @@ UserMaterialRemoval planning uses the same current source fingerprint rather tha
 No build or tests were run, as explicitly requested. No actual game file was accessed or modified. Older tests expecting stale manifest hash/size to reject source updates now describe superseded behavior and have not been rerun.
 
 主整合补充：2026-09-16 移除 VM 启动/刷新部署完整性检查，安装到 D:\software\鸣潮 FPS Unlock 并迁移44项data；桌面鸣潮.lnk已更新。build成功，无测试/实机操作。材料更新说明见 artifacts/update-20260916/更新说明.txt。
+
+## 2026-09-23 — offline updater
+
+Added tools/OfflineUpdater: .NET 10 Windows x64 self-contained single-file console output WuWaUpdater.exe. Uses its own directory as target; reads update-payload beside it. Allowlist: WuWaFpsUnlock.exe, components/fps/ww_plugin_base.dll, components/PROVENANCE.json, licenses descendants. data and user payload cannot be targets. ProductName WuWaFpsUnlock and OriginalFilename WuWaFpsUnlock.dll/exe required for both executables; no old version/hash pinning.
+
+Preflights all paths, refuses reparse ancestors and links, checks exact running target and acquires exclusive destination handles. Copies originals and stages replacements under a unique update-backup timestamp/GUID directory, compares copy hashes, then replaces. Existing destination handles must close immediately before Windows File.Replace; rechecks original fingerprint at that point. This reduces incidental races but is not an adversarial filesystem transaction. On failure, changed files roll back in reverse order only if still equal to updater's new bytes; changed external files are preserved and incomplete restoration explicitly reported. Backups always retained. No termination, auto-elevation, app launch, game launch or deployment. Success prompts: 请打开启动器，在设置中重新部署一次.
+
+No build, executable run, filesystem integration test or real-game action performed by this agent in this task. Parent owns publishing workflow/README and CI. Product identity follows default project assembly metadata, not a release-specific hash.
