@@ -287,7 +287,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
                     var startInfo=new ProcessStartInfo(exe){UseShellExecute=true,WorkingDirectory=Path.GetDirectoryName(exe)!};
                     if(snapshot.MfgSelected){startInfo.ArgumentList.Add("-dx12");Log("多帧生成启动参数：-dx12；实际D3D12加载以游戏日志为准。");}
                     var process=Process.Start(startInfo)??throw new IOException("系统未返回游戏进程。");
-                    _game=process;startedThisAttempt=true;IsGameRunning=true;GameStarted?.Invoke();
+                    _game=process;startedThisAttempt=true;IsGameRunning=true;_deferredUpdate.GameStarted();GameStarted?.Invoke();
                     Log($"仅启动所选Shipping一次：{exe}；PID={process.Id}；FPS={(snapshot.FpsEnabled?"ON":"OFF")}；目标={snapshot.TargetFps}");
                     return Task.FromResult(process);
                 },
@@ -338,7 +338,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         try
         {
             await ReleaseFpsSessionAsync();
-            Status="游戏已退出，启动器即将退出。";Log(Status);
+            Status=HasDeferredUpdate?"游戏已退出，准备执行预约更新。":"游戏已退出，启动器即将退出。";Log(Status);
         }
         catch(Exception error){Log("释放游戏会话失败："+error.Message);}
         finally{game.Dispose();Busy=false;}

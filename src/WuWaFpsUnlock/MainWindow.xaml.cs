@@ -8,16 +8,17 @@ public partial class MainWindow:Window
     private System.Windows.Forms.NotifyIcon? _tray;
     private System.Drawing.Icon? _trayIcon;
     private bool _exitRequested;
+    public Action? StartupCompleted { get; set; }
     public MainWindow(AppViewModel vm)
     {
         InitializeComponent();_vm=vm;DataContext=vm;vm.SettingsRequested+=OpenSettings;
         vm.GameStarted+=MinimizeToTray;
         vm.LaunchFailed+=RestoreFromTray;
-        vm.GameExited+=ExitFromTray;
+        vm.GameExited+=OnGameExited;
         vm.UpdateExitRequested+=ExitForUpdate;
         Width=Math.Min(Width,SystemParameters.WorkArea.Width-36);Height=Math.Min(Height,SystemParameters.WorkArea.Height-36);
         Closing+=OnClosing;Closed+=async(_,_)=>{_tray?.Dispose();_trayIcon?.Dispose();await vm.CloseAsync();};
-        Loaded+=async(_,_)=>{try{await vm.RefreshAsync();}catch(Exception e){vm.ReportError(e);}await vm.CheckForUpdatesOnStartupAsync();};
+        Loaded+=async(_,_)=>{try{await vm.RefreshAsync();}catch(Exception e){vm.ReportError(e);}if(StartupCompleted is { } completed){StartupCompleted=null;completed();} else await vm.CheckForUpdatesOnStartupAsync();};
     }
     private void OpenSettings()
     {
@@ -28,6 +29,12 @@ public partial class MainWindow:Window
     {
         if(!_exitRequested&&_vm.IsGameRunning){e.Cancel=true;MinimizeToTray();return;}
         if(_vm.Busy){e.Cancel=true;_vm.Log("当前操作仍在进行，不能在文件写入/启动过程中关闭窗口。");return;}
+    }
+    private async void OnGameExited()
+    {
+        if (!_vm.HasDeferredUpdate) { ExitFromTray(); return; }
+        RestoreFromTray();
+        await _vm.RunDeferredUpdateAfterGameAsync();
     }
     private void ExitForUpdate(){_exitRequested=true;_settings?.Close();Close();}
     private void ExitFromTray(){_exitRequested=true;try{Close();}finally{_exitRequested=false;}}
@@ -57,4 +64,3 @@ public partial class MainWindow:Window
     private void Maximize_Click(object sender,RoutedEventArgs e){if(WindowState==WindowState.Maximized)SystemCommands.RestoreWindow(this);else SystemCommands.MaximizeWindow(this);}
     private void Close_Click(object sender,RoutedEventArgs e)=>Close();
 }
-

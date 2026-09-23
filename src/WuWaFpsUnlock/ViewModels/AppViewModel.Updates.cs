@@ -10,6 +10,8 @@ namespace WuWaFpsUnlock.ViewModels;
 
 public sealed partial class AppViewModel
 {
+    private readonly DeferredUpdateSession _deferredUpdate = new();
+    public bool HasDeferredUpdate => _deferredUpdate.Pending is not null;
     private static readonly HttpClient UpdateHttp = new() { Timeout = TimeSpan.FromMinutes(20) };
     private readonly GitHubUpdateService _updates = new(UpdateHttp);
     private CancellationTokenSource? _updateCheckCancellation;
@@ -106,6 +108,11 @@ public sealed partial class AppViewModel
     private async Task CheckForUpdatesAsync(bool manual)
     {
         if (_closing || _checkingUpdates) return;
+        if (manual && _deferredUpdate.Pending is { } reserved)
+        {
+            if (!Busy) ShowUpdateOffer(reserved);
+            return;
+        }
         _checkingUpdates = true; _automaticCheckInProgress = !manual;
         Notify(nameof(UpdateCheckLabel)); CheckUpdatesCommand.Refresh();
         UpdateStatus = "正在检查更新…";
@@ -122,32 +129,7 @@ public sealed partial class AppViewModel
             { UpdateStatus = "已跳过版本 " + release.Tag; Log(UpdateStatus); return; }
             UpdateStatus = "发现新版本 " + release.Tag;
             if (Busy) { UpdateStatus += "，当前操作结束后可手动检查"; Log(UpdateStatus); return; }
-            try { RequireGameStoppedForUpdate(); }
-            catch (Exception ex) { UpdateStatus += "；" + ex.Message; Log(UpdateStatus); return; }
-            bool started = false;
-            Busy = true;
-            try
-            {
-                var dialog = new UpdateDialog(release.Version, release.Notes,
-                    string.Equals(_settings.SkippedUpdateTag, release.Tag, StringComparison.OrdinalIgnoreCase),
-                    skipped =>
-                    {
-                        PersistUpdatePreference(settings =>
-                        {
-                            if (skipped) settings.SkippedUpdateTag = release.Tag;
-                            else if (string.Equals(settings.SkippedUpdateTag, release.Tag, StringComparison.OrdinalIgnoreCase)) settings.SkippedUpdateTag = "";
-                        });
-                    }, (token, progress) => InstallUpdateAsync(release, token, progress), Log);
-                dialog.Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
-                    ?? Application.Current.MainWindow;
-                _updateDialog = dialog;
-                dialog.ShowDialog();
-                started = dialog.UpdateStarted;
-                if (!started) UpdateStatus = string.Equals(_settings.SkippedUpdateTag, release.Tag, StringComparison.OrdinalIgnoreCase)
-                    ? "已跳过版本 " + release.Tag : "暂未安装 " + release.Tag;
-            }
-            finally { _updateDialog = null; Busy = false; }
-            if (started) UpdateExitRequested?.Invoke();
+            ShowUpdateOffer(release);
         }
         catch (OperationCanceledException)
         {
@@ -159,6 +141,56 @@ public sealed partial class AppViewModel
             _updateCheckCancellation = null; _checkingUpdates = false; _automaticCheckInProgress = false;
             Notify(nameof(UpdateCheckLabel)); CheckUpdatesCommand.Refresh();
         }
+    }
+    private bool ShowUpdateOffer(UpdateRelease release, bool autoStart = false)
+    {
+        if (Busy || _closing) return false;
+        bool gameRunning = IsGameRunning;
+        try { RequireGameStoppedForUpdate(); }
+        catch { gameRunning = true; } // Unknown or externally running game also forbids installation.
+        bool started = false;
+        Busy = true;
+        try
+        {
+            var dialog = new UpdateDialog(release.Version, release.Notes,
+                string.Equals(_settings.SkippedUpdateTag, release.Tag, StringComparison.OrdinalIgnoreCase),
+                skipped =>
+                {
+                    PersistUpdatePreference(settings =>
+                    {
+                        if (skipped) settings.SkippedUpdateTag = release.Tag;
+                        else if (string.Equals(settings.SkippedUpdateTag, release.Tag, StringComparison.OrdinalIgnoreCase)) settings.SkippedUpdateTag = "";
+                    });
+                    if (skipped && _deferredUpdate.Pending?.Tag == release.Tag) _deferredUpdate.Cancel();
+                }, (token, progress) => InstallUpdateAsync(release, token, progress), Log,
+                gameRunning: gameRunning, allowDefer: !autoStart, autoStart: autoStart && !gameRunning);
+            dialog.Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
+                ?? Application.Current.MainWindow;
+            _updateDialog = dialog; dialog.ShowDialog(); started = dialog.UpdateStarted;
+            if (dialog.DeferredRequested)
+            {
+                if (string.Equals(_settings.SkippedUpdateTag, release.Tag, StringComparison.OrdinalIgnoreCase))
+                    PersistUpdatePreference(settings => settings.SkippedUpdateTag = "");
+                _deferredUpdate.Queue(release, IsGameRunning);
+                UpdateStatus = IsGameRunning ? "已预约 " + release.Tag + "，本次游戏退出后更新" : "已预约 " + release.Tag + "，下次由启动器启动的游戏退出后更新（仅本次工具会话）";
+            }
+            else if (!started) UpdateStatus = HasDeferredUpdate
+                ? "预约更新尚未完成；可点击检查更新重试，或关闭工具取消本次预约"
+                : string.Equals(_settings.SkippedUpdateTag, release.Tag, StringComparison.OrdinalIgnoreCase) ? "已跳过版本 " + release.Tag : "暂未安装 " + release.Tag;
+            Log(UpdateStatus);
+        }
+        finally { _updateDialog = null; Busy = false; }
+        if (started) { _deferredUpdate.CompleteAttempt(true); UpdateExitRequested?.Invoke(); }
+        return started;
+    }
+    public Task RunDeferredUpdateAfterGameAsync()
+    {
+        if (_closing || Busy || IsGameRunning || !_deferredUpdate.TryBeginAfterGameExit(out var release)) return Task.CompletedTask;
+        bool started = false;
+        try { started = ShowUpdateOffer(release!, autoStart: true); }
+        catch (Exception error) { UpdateStatus = "预约更新未开始：" + error.Message; Log(UpdateStatus); }
+        finally { _deferredUpdate.CompleteAttempt(started); }
+        return Task.CompletedTask;
     }
     private async Task<bool> InstallUpdateAsync(UpdateRelease release, CancellationToken cancellation, IProgress<string> progress)
     {
