@@ -347,9 +347,9 @@
     {
       "name": "renodx-mfgunlock.addon64",
       "relativePath": "renodx-mfgunlock.addon64",
-      "length": 523776,
-      "sha256": "2cb56b3c1c644ab9eebe2eb6cd3f25185feec8476519d131f6e5ddb26b0a7740",
-      "copySha256": "2cb56b3c1c644ab9eebe2eb6cd3f25185feec8476519d131f6e5ddb26b0a7740",
+      "length": 524288,
+      "sha256": "987b447465af038e6d53cb60b5a7aba2934b5ddb39739057c983539ee98d6592",
+      "copySha256": "987b447465af038e6d53cb60b5a7aba2934b5ddb39739057c983539ee98d6592",
       "fileVersion": "1.1+WuWu.DynamicMax.Runtime.1",
       "productVersion": "",
       "company": "",

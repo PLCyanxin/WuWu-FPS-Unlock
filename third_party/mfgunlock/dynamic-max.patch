@@ -1,5 +1,5 @@
 diff --git a/src/addons/mfgunlock/addon.cpp b/src/addons/mfgunlock/addon.cpp
-index 7189cf8..311ec90 100644
+index 7189cf8..8d4eb80 100644
 --- a/src/addons/mfgunlock/addon.cpp
 +++ b/src/addons/mfgunlock/addon.cpp
 @@ -123,6 +123,7 @@
@@ -18,13 +18,13 @@ index 7189cf8..311ec90 100644
    // A primary swapchain can disappear while an already-existing secondary
    // survives (resize, launcher/video swapchain, device recreation). Promote
    // the next presenting swapchain once instead of leaving HDR/API state stale.
-@@ -4245,6 +4247,30 @@ void OnRegisterOverlay(reshade::api::effect_runtime* runtime) {
+@@ -4245,6 +4247,34 @@ void OnRegisterOverlay(reshade::api::effect_runtime* runtime) {
      }
      if (block_dynamic_enable) ImGui::EndDisabled();
  
 +    ImGui::TableNextRow();
 +    ImGui::TableNextColumn();
-+    SettingLabel("Experimental live Dynamic maximum", "Session-only, exact Streamline build adapter.",
++    SettingLabel("Experimental live Dynamic maximum", "Saved across launches; exact Streamline build adapter.",
 +                 "Changes the next native Dynamic frame before frame selection, RSYNC and NGX submission. Cannot exceed that frame's native hardware/driver bound. Zero restores native behavior. Unknown builds disable live control.");
 +    ImGui::TableNextColumn();
 +    namespace live = mfgunlock::dynamiclive;
@@ -37,7 +37,11 @@ index 7189cf8..311ec90 100644
 +    int live_index = live_value == 0 ? 0 : live_value - 1;
 +    ImGui::SetNextItemWidth(-1.0f);
 +    if (ImGui::Combo("##live_dynamic_max", &live_index, "Native bound (restore)\0Up to 2x\0Up to 3x\0Up to 4x\0Up to 5x\0Up to 6x\0"))
-+      live::requested.store(live_index == 0 ? 0 : live_index + 1);
++    {
++      const int request = live::NormalizeConfig(live_index == 0 ? 0 : live_index + 1);
++      live::requested.store(request);
++      reshade::set_config_value(nullptr, kConfigSection, live::kConfigKey, request);
++    }
 +    if (!live_available) ImGui::EndDisabled();
 +    ImGui::TextWrapped("%s", live::invalid.load() ? "Native frame validation failed; live control disabled" : live::status.load());
 +    const auto live_sample = live::observation.load();
@@ -49,7 +53,7 @@ index 7189cf8..311ec90 100644
      int dynamic_target = static_cast<int>(
          mfgunlock::framecount::g_dynamic_target_fps.load(
              std::memory_order_relaxed));
-@@ -4626,6 +4652,7 @@ void OnRegisterOverlay(reshade::api::effect_runtime* runtime) {
+@@ -4626,6 +4656,7 @@ void OnRegisterOverlay(reshade::api::effect_runtime* runtime) {
    if (page == UiPage::Support) {
      ImGui::Spacing();
      ImGui::TextDisabled("SUPPORT DIAGNOSTICS");
@@ -57,29 +61,33 @@ index 7189cf8..311ec90 100644
      ImGui::Separator();
      bool gate_patched = false;
      bool midpoint_patched = false;
-@@ -5275,6 +5302,7 @@ void LoadConfig() {
+@@ -5275,6 +5306,11 @@ void LoadConfig() {
      mfgunlock::framecount::g_dynamic_mfg_enabled.store(value != 0,
                                                          std::memory_order_relaxed);
    }
 +  // Legacy DynamicMaxMultiplier is intentionally ignored: never re-arm a static DRS ceiling.
++  const auto live_max_values = ReadConfigArray(kConfigSection, mfgunlock::dynamiclive::kConfigKey);
++  mfgunlock::dynamiclive::requested.store(mfgunlock::dynamiclive::ParseConfig(
++      live_max_values.size(), live_max_values.empty() ? std::string_view{} : std::string_view(live_max_values.front())),
++      std::memory_order_relaxed);
    if (reshade::get_config_value(nullptr, kConfigSection, "DynamicTargetFPS", value)) {
      if (value < 0 || value > 1000) value = 0;
      mfgunlock::framecount::g_dynamic_target_fps.store(
-@@ -5345,6 +5373,8 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
+@@ -5345,6 +5381,8 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
        g_self_module = h_module;
        if (!reshade::register_addon(h_module)) return FALSE;
        LoadConfig();
 +      reshade::log::message(reshade::log::level::info, "mfgunlock: derived build 1.1+WuWu.DynamicMax.Runtime.1; upstream MFGAdaUnlock-RenoDx 1.1 credits preserved.");
-+      reshade::log::message(reshade::log::level::info, "mfgunlock: live Dynamic cap defaults to 4x; legacy DynamicMaxMultiplier ignored; no DRS maximum override.");
++      reshade::log::message(reshade::log::level::info, "mfgunlock: live Dynamic cap loads DynamicLiveMaxMultiplier (first-use default 4x); legacy DynamicMaxMultiplier ignored; no DRS maximum override.");
        g_is_star_wars_outlaws = CurrentProcessNameIs(L"Outlaws.exe");
        g_is_monster_hunter_wilds =
            CurrentProcessNameIs(L"MonsterHunterWilds.exe");
 diff --git a/src/addons/mfgunlock/dynamiclive.hpp b/src/addons/mfgunlock/dynamiclive.hpp
 new file mode 100644
-index 0000000..318e06f
+index 0000000..b11eb9f
 --- /dev/null
 +++ b/src/addons/mfgunlock/dynamiclive.hpp
-@@ -0,0 +1,196 @@
+@@ -0,0 +1,197 @@
 +// SPDX-License-Identifier: MIT
 +// Experimental adapter for ONE audited Streamline image; not a generic ABI.
 +#pragma once
@@ -94,6 +102,7 @@ index 0000000..318e06f
 +#include <string>
 +#include <algorithm>
 +#include <cstring>
++#include "dynamiclive_config.hpp"
 +#pragma comment(lib, "bcrypt.lib")
 +namespace mfgunlock::dynamiclive {
 +constexpr unsigned kEntry=0x464a0, kReturn=0x47275;
@@ -103,11 +112,11 @@ index 0000000..318e06f
 +inline HMODULE owner=nullptr;
 +inline const std::atomic_bool* addon_enabled=nullptr;
 +inline const std::atomic_bool* dynamic_enabled=nullptr;
-+inline std::atomic<int> requested{4}; // session-only; zero restores each frame's native bound
++inline std::atomic<int> requested{kDefaultRequest}; // persisted request; zero restores each frame's native bound
 +inline std::atomic<bool> installed{false}, enabled{false}, invalid{false};
 +inline std::atomic<unsigned long long> observation{0}; // coherent request/bound/submitted sample
 +inline std::atomic_flag installing=ATOMIC_FLAG_INIT;
-+inline std::atomic<const char*> status{"Waiting for supported Streamline; default live request 4x"};
++inline std::atomic<const char*> status{"Waiting for supported Streamline; configured live request ready"};
 +inline unsigned Limit(unsigned native, int request) {
 + return request>=2&&request<=6 ? (std::min)(native,static_cast<unsigned>(request-1)) : native;
 +}
@@ -304,6 +313,28 @@ index 0000000..f0aece3
 +inline constexpr unsigned char a17[]={0x45,0x24,0x01,0x4c,0x89,0xbd,0x80,0x00,0x00,0x00,0x4c,0x89,0xbd,0x88,0x00,0x00,0x00,0x4c,0x89,0xb5,0x90,0x00,0x00,0x00,0x4c,0x89,0xad,0x98,0x00,0x00,0x00,0x48,0x8d,0x05,0x62,0x92,0x03,0x00,0x48,0x89,0x45,0x40,0x0f,0x28,0x85,0x80,0x00,0x00,0x00,0x0f,0x11,0x45,0x48,0x0f,0x28,0x8d,0x90,0x00,0x00,0x00,0x0f,0x11,0x4d,0x58,0x48,0x8d,0x45,0x40,0x48,0x89,0x45,0x78,0x45,0x33,0xc9,0x4c,0x8d,0x45,0x90,0x48,0x8d,0x55,0x40,0x49,0x8d,0x8f,0x60,0x43,0x00,0x00,0xe8,0xb1,0xbd,0x02,0x00,0x90,0x48,0x8b,0x4d,0x78,0x48,0x85,0xc9,0x74,0x10,0x48,0x8b,0x01,0x48,0x8d,0x55,0x40,0x48,0x3b,0xca,0x0f,0x95,0xc2,0xff,0x50,0x20,0x83,0x7c,0x24,0x64,0x00,0x75,0x21,0x0f,0xb6,0x44,0x24,0x61,0x88,0x44,0x24,0x20,0x44,0x0f,0xb6,0x4c,0x24,0x60,0x4d,0x8b,0xc5,0x8b,0xd7,0x49,0x8b,0xcf,0xe8,0x64,0xe4,0xff,0xff,0xc6,0x44,0x24,0x61};
 +inline constexpr unsigned char a18[]={0x4c,0x89,0x44,0x24,0x18,0x55,0x41,0x56,0x48,0x83,0xec,0x48,0x41,0x83,0x79,0x20,0x00,0x4d,0x8b,0xf1,0x48,0x8b,0xe9,0x74,0x31,0x48,0x8b,0x41,0x10,0x48,0xc7,0x44,0x24,0x70,0x00,0x00,0x00,0x00,0x48,0x8b,0x48,0x18,0x48,0x8b,0x89,0x18,0x01,0x00,0x00,0x48,0x8b,0x01,0xff,0x10,0x84,0xc0,0x74,0x1a,0x41,0xc6,0x86,0x45,0x06,0x00,0x00,0x00,0x48,0x8b,0x45,0x20,0xc6,0x40,0x24,0x00,0xb0,0x01,0x48,0x83,0xc4,0x48,0x41,0x5e,0x5d,0xc3,0x48,0x8b,0x45,0x10,0x48,0x8b,0x4d,0x18,0x48,0x89,0x5c,0x24,0x60,0x48,0x89,0x74,0x24,0x68,0x48,0x8b,0xb0,0x58,0x43,0x00,0x00,0x48,0x89,0x7c,0x24,0x40,0x48,0x8b,0x06,0x48,0x8b,0xb8,0xe8,0x01,0x00,0x00,0x49,0x8b,0x86,0x88,0x00,0x00,0x00,0x48,0x8b,0x58,0x20,0x48,0x8b,0x01,0xff,0x90,0x98,0x00,0x00,0x00,0x48,0xc7,0x44,0x24,0x30,0x01,0x00,0x00,0x00,0x4c,0x8d,0x4c,0x24,0x70,0x48,0x8b,0xd0,0x48,0xc7,0x44,0x24,0x28,0x00,0x00,0x00,0x00,0x4c,0x8b,0xc3,0xc7,0x44,0x24,0x20,0x00,0x00,0x00,0x00,0x48,0x8b,0xce,0xff,0xd7,0x85,0xc0,0x75,0x65,0x48,0x8b,0x44,0x24,0x70,0x0f,0xb6,0x08,0x41,0x88,0x8e,0x45,0x06,0x00,0x00,0x48,0x8b,0x55,0x20,0x80,0x7a,0x24,0x00,0x74,0x08,0x84,0xc9,0x74,0x04,0xb0,0x01,0xeb,0x02,0x32,0xc0,0x88,0x42,0x24,0x48,0x8b,0x45,0x10,0x48,0x8b,0x4d,0x18,0x48,0x8b,0xb0,0x58,0x43,0x00,0x00,0x48,0x8b,0x06,0x48,0x8b,0xb8,0xf0,0x01,0x00,0x00,0x49,0x8b,0x86,0x88,0x00,0x00,0x00,0x48,0x8b,0x58,0x20,0x48,0x8b,0x01,0xff,0x90,0x98,0x00,0x00,0x00,0x45,0x33,0xc9,0x4c,0x8b,0xc3,0x48,0x8b,0xd0,0x48,0x8b,0xce,0xff,0xd7,0xb0,0x01,0xeb,0x12,0x41,0xc6,0x86,0x45,0x06,0x00,0x00,0x00,0x48,0x8b,0x45,0x20,0xc6,0x40,0x24,0x00,0x32,0xc0,0x48,0x8b,0x74,0x24,0x68,0x48,0x8b,0x5c,0x24,0x60,0x48,0x8b,0x7c,0x24,0x40,0x48,0x83,0xc4,0x48,0x41,0x5e,0x5d,0xc3};
 +inline constexpr Bytes anchors[]={{0x464a0,a0,sizeof(a0)},{0x47202,a1,sizeof(a1)},{0x47639,a2,sizeof(a2)},{0x484e0,a3,sizeof(a3)},{0x48520,a4,sizeof(a4)},{0x60510,a5,sizeof(a5)},{0x60ea9,a6,sizeof(a6)},{0x61307,a7,sizeof(a7)},{0x482b0,a8,sizeof(a8)},{0x48490,a9,sizeof(a9)},{0x3dcb0,a10,sizeof(a10)},{0x3e478,a11,sizeof(a11)},{0x40830,a12,sizeof(a12)},{0x3ec70,a13,sizeof(a13)},{0x3f200,a14,sizeof(a14)},{0x3f3ba,a15,sizeof(a15)},{0x4bbc0,a16,sizeof(a16)},{0x3e6f0,a17,sizeof(a17)},{0x40870,a18,sizeof(a18)}};
+diff --git a/src/addons/mfgunlock/dynamiclive_config.hpp b/src/addons/mfgunlock/dynamiclive_config.hpp
+new file mode 100644
+index 0000000..cbc74a0
+--- /dev/null
++++ b/src/addons/mfgunlock/dynamiclive_config.hpp
+@@ -0,0 +1,16 @@
++// SPDX-License-Identifier: MIT
++#pragma once
++#include <cstddef>
++#include <string_view>
++namespace mfgunlock::dynamiclive {
++inline constexpr char kConfigKey[] = "DynamicLiveMaxMultiplier";
++inline constexpr int kDefaultRequest = 4;
++constexpr int NormalizeConfig(int value) { return value == 0 || (value >= 2 && value <= 6) ? value : kDefaultRequest; }
++constexpr int ParseConfig(std::size_t count, std::string_view value) {
++ if (count != 1) return kDefaultRequest;
++ while (!value.empty() && (value.front() == ' ' || value.front() == '\t')) value.remove_prefix(1);
++ while (!value.empty() && (value.back() == ' ' || value.back() == '\t')) value.remove_suffix(1);
++ if (value.size() != 1 || value[0] < '0' || value[0] > '6') return kDefaultRequest;
++ return NormalizeConfig(value[0] - '0');
++}
++}
 diff --git a/src/addons/mfgunlock/dynamicmax.hpp b/src/addons/mfgunlock/dynamicmax.hpp
 new file mode 100644
 index 0000000..b33e58c
@@ -500,10 +531,10 @@ index 0000000..5d1ea02
 +} // namespace mfgunlock::dynamicmax
 diff --git a/tests/dynamiclive_tests.cpp b/tests/dynamiclive_tests.cpp
 new file mode 100644
-index 0000000..a1bf9cb
+index 0000000..eae1527
 --- /dev/null
 +++ b/tests/dynamiclive_tests.cpp
-@@ -0,0 +1,90 @@
+@@ -0,0 +1,98 @@
 +// Self-built fake native function only. Does not load NVIDIA, Streamline or a game.
 +#include "../src/addons/mfgunlock/dynamiclive.hpp"
 +#include <iostream>
@@ -533,6 +564,14 @@ index 0000000..a1bf9cb
 + std::cout.setf(std::ios::unitbuf);
 + std::atomic_bool addon{true},dynamic{true};
 + Check(live::requested.load()==4,"live request defaults to 4 without legacy configuration");
++ Check(std::string_view(live::kConfigKey)=="DynamicLiveMaxMultiplier","persistent key distinct from retired static cap");
++ Check(live::ParseConfig(0,"")==4,"first use without new key defaults to 4");
++ Check(live::ParseConfig(2,"6")==4,"multi-value corrupt config falls back to 4");
++ for(int value:{0,2,3,4,5,6}){const auto saved=std::to_string(live::NormalizeConfig(value));Check(live::ParseConfig(1,saved)==value,"saved live cap round-trip including 0 and 6");}
++ for(const char* bad:{"","1","7","-1","999999999999","4x","6,4","nan","+6","6.0"})Check(live::ParseConfig(1,bad)==4,"malformed live config uses safe 4 default");
++ Check(live::ParseConfig(1," \t6 ")==6,"trimmed persisted value accepted");
++ {Snapshot f(5);unsigned long long sample=0;Check(live::Policy(&f,live::ParseConfig(1,"6"),sample)&&f.cap()==5,"persisted 6 does not restore static 4 clamp");}
++
 + for(int request:{4,5,6}){Snapshot f(5);unsigned long long sample=0;Check(live::Policy(&f,request,sample)&&f.cap()==static_cast<unsigned>(request-1),"native 6x bound permits live 4-5-6 without static clamp");}
 + for(unsigned i=0;i<60;++i){live::next_auto_check=0;live::AutoInstall(addon,dynamic);}
 + Check(live::auto_finished&&live::auto_checks==60&&!live::installed,"automatic missing-module checks stop after 60 attempts");
