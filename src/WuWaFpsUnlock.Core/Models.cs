@@ -11,6 +11,13 @@ public sealed class UserSettings
     public int TargetFps { get; set; } = 240;
     public bool FpsEnabled { get; set; } = true;
     public bool MfgSelected { get; set; }
+    private int _dynamicMaxMultiplier = 4;
+    [JsonConverter(typeof(DynamicMultiplierLimitJsonConverter))]
+    public int DynamicMaxMultiplier
+    {
+        get => _dynamicMaxMultiplier;
+        set => _dynamicMaxMultiplier = DynamicMultiplierLimit.Normalize(value);
+    }
     public string PackageManifest { get; set; } = "";
     public bool RiskAccepted { get; set; }
     public bool AutoCheckUpdates { get; set; } = true;
