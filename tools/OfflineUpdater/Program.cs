@@ -17,11 +17,13 @@ return result;
 
 static int Update()
 {
-    string root = Path.GetFullPath(AppContext.BaseDirectory);
-    string payload = Path.Combine(root, "update-payload");
+    string updaterDirectory = Path.GetFullPath(AppContext.BaseDirectory);
+    string payload = Path.Combine(updaterDirectory, "update-payload");
+    NoLinks(updaterDirectory); NoLinks(payload);
+    if (!Directory.Exists(payload)) throw new DirectoryNotFoundException("更新器旁缺少 update-payload，请保留完整更新包目录结构。");
+    string root = FindInstallation(updaterDirectory);
     string exe = Path.Combine(root, "WuWaFpsUnlock.exe");
     NoLinks(root); NoLinks(payload); NoLinks(exe);
-    if (!Directory.Exists(payload)) throw new DirectoryNotFoundException("请将完整更新包解压到旧版 WuWaFpsUnlock.exe 同目录；缺少 update-payload。");
     string oldVersion = ProductVersion(exe);
     string newVersion = ProductVersion(Path.Combine(payload, "WuWaFpsUnlock.exe"));
     Console.WriteLine($"鸣潮 FPS Unlock 离线更新\n安装目录：{root}\n当前版本：{oldVersion}\n包内版本：{newVersion}");
@@ -115,6 +117,31 @@ static int Update()
         throw;
     }
     finally { foreach (var handle in held) handle.Dispose(); }
+}
+
+static string FindInstallation(string updaterDirectory)
+{
+    var candidates = new List<string>();
+    var rejected = new List<string>();
+    string? directory = Path.TrimEndingDirectorySeparator(Path.GetFullPath(updaterDirectory));
+    // Direct children only: updater directory, then at most three parent directories.
+    for (int level = 0; level <= 3 && directory is not null; level++, directory = Path.GetDirectoryName(directory))
+    {
+        NoLinks(directory);
+        string candidate = Path.Combine(directory, "WuWaFpsUnlock.exe");
+        NoLinks(candidate);
+        if (!File.Exists(candidate)) continue;
+        try { ProductVersion(candidate); candidates.Add(directory); }
+        catch (InvalidDataException) { rejected.Add(candidate); }
+    }
+    if (rejected.Count > 0)
+        Console.WriteLine("以下同名文件的产品身份不符，已排除：\n" + string.Join("\n", rejected));
+    if (candidates.Count == 0)
+        throw new DirectoryNotFoundException("未找到有效的鸣潮 FPS Unlock 安装。请将完整更新包放入原版 WuWaFpsUnlock.exe 所在目录或其子目录（最多三层）。");
+    if (candidates.Count > 1)
+        throw new InvalidDataException("找到多个有效安装，无法自动选择；请调整更新包位置，只保留一个候选：\n"
+            + string.Join("\n", candidates.Select(path => Path.Combine(path, "WuWaFpsUnlock.exe"))));
+    return candidates[0];
 }
 
 static bool Allowed(string path) => path.Equals("WuWaFpsUnlock.exe", StringComparison.OrdinalIgnoreCase)
