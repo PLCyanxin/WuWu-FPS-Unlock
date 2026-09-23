@@ -1,0 +1,67 @@
+name: Publish v0.1 to v1.1RC update package
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  package:
+    runs-on: windows-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download published versions
+        shell: pwsh
+        run: |
+          gh release download v0.1RC --repo $env:GITHUB_REPOSITORY --pattern WuWaFPSUnlock-0.1RC-win-x64.zip --dir original
+          if ($LASTEXITCODE -ne 0) { throw 'Original release download failed' }
+          gh release download v1.1RC --repo $env:GITHUB_REPOSITORY --pattern WuWaFPSUnlock-1.1RC-win-x64.zip --dir current
+          if ($LASTEXITCODE -ne 0) { throw 'Current release download failed' }
+          Expand-Archive original/WuWaFPSUnlock-0.1RC-win-x64.zip original/files
+          Expand-Archive current/WuWaFPSUnlock-1.1RC-win-x64.zip current/files
+      - name: Confirm component compatibility and package launcher
+        shell: pwsh
+        run: |
+          $old=(Resolve-Path original/files).Path
+          $new=(Resolve-Path current/files).Path
+          if ((Get-Item "$old/WuWaFpsUnlock.exe").VersionInfo.FileVersion -ne '0.1.0.0') { throw 'Unexpected source version' }
+          if ((Get-Item "$new/WuWaFpsUnlock.exe").VersionInfo.FileVersion -ne '1.1.0.0') { throw 'Unexpected destination version' }
+          $before=@(Get-ChildItem $old -File -Recurse | ForEach-Object { [IO.Path]::GetRelativePath($old,$_.FullName) } | Where-Object { $_ -notin @('WuWaFpsUnlock.exe','README.md') } | Sort-Object)
+          $after=@(Get-ChildItem $new -File -Recurse | ForEach-Object { [IO.Path]::GetRelativePath($new,$_.FullName) } | Where-Object { $_ -notin @('WuWaFpsUnlock.exe','README.md') } | Sort-Object)
+          if (Compare-Object $before $after) { throw 'Release dependencies differ; an EXE-only update is insufficient' }
+          foreach ($path in $after) {
+            if ((Get-FileHash "$old/$path").Hash -ne (Get-FileHash "$new/$path").Hash) { throw "Dependency changed: $path" }
+          }
+          New-Item update -ItemType Directory | Out-Null
+          Copy-Item "$new/WuWaFpsUnlock.exe" update
+          @'
+          鸣潮 FPS Unlock：v0.1 → v1.1RC 专用更新包
+
+          适用于从本仓库 v0.1RC Release 下载并完整解压的 Windows x64 便携版。
+          本包只更新启动器，不是独立完整版；保留原有 .NET 运行依赖及第三方组件。
+
+          更新步骤
+          1. 正常退出游戏，再从系统托盘右键选择“退出启动器”。
+          2. 打开原来存放 WuWaFpsUnlock.exe 的文件夹（可右键桌面快捷方式，选择“打开文件所在的位置”）。
+          3. 将本更新包中的 WuWaFpsUnlock.exe 复制到该文件夹，同意覆盖同名文件。
+          4. 使用原来的快捷方式启动，窗口应显示 v1.1RC。
+
+          不要删除或覆盖 data、payload、components、licenses，也不要把更新包单独放在新目录里运行。
+          若提示文件被占用，请确认已经从托盘退出旧启动器，再重新复制。
+          原有设置、游戏路径、部署记录和已更新的 MFG 文件均保留；无需清除或重新部署游戏插件。
+
+          本次更新
+          - 游戏进程启动后立即收起到托盘。
+          - 游戏退出后自动关闭启动器。
+          - 启动或 FPS 连接失败时恢复窗口显示错误。
+          - 保留允许自行更新 MFG 材料的功能。
+
+          本包 EXE 直接取自已发布的 v1.1RC 完整包，没有重新编译。
+          '@ | Set-Content update/更新说明.txt -Encoding utf8
+          $hash=(Get-FileHash update/WuWaFpsUnlock.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  WuWaFpsUnlock.exe" | Set-Content update/SHA256.txt -Encoding ascii
+          Compress-Archive update/* WuWaFPSUnlock-0.1-to-1.1RC-update.zip
+      - name: Upload update package
+        shell: pwsh
+        run: |
+          gh release upload v1.1RC WuWaFPSUnlock-0.1-to-1.1RC-update.zip --repo $env:GITHUB_REPOSITORY
+          if ($LASTEXITCODE -ne 0) { throw 'Update package upload failed' }

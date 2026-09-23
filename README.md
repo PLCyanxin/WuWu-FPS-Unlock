@@ -6,6 +6,8 @@
 
 ## 快速开始
 
+**已安装 v0.1？** 下载 [v0.1 → v1.1RC 专用更新包](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/download/v1.1RC/WuWaFPSUnlock-0.1-to-1.1RC-update.zip)。先退出游戏和托盘里的启动器，再把包内 `WuWaFpsUnlock.exe` 覆盖到原程序目录即可。保留原有 `data`、`payload`、`components` 和 `licenses`，无需重新下载完整包或重新部署插件。首次使用请下载下方完整便携版。
+
 1. 在 Release 页面下载 `WuWaFPSUnlock-1.1RC-win-x64.zip`，完整解压后运行 `WuWaFpsUnlock.exe`，按 Windows 提示授予管理员权限。
 2. 打开“设置”，点击“帮我查找鸣潮”，或手动选择游戏根目录。正确的游戏程序是 `Client\Binaries\Win64\Client-Win64-Shipping.exe`；选择正确目录后会自动填写。
 3. 开启“解锁帧率上限”，设置目标 FPS，返回主窗口点击“开始游戏”。
