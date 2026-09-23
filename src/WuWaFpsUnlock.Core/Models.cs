@@ -13,6 +13,8 @@ public sealed class UserSettings
     public bool MfgSelected { get; set; }
     public string PackageManifest { get; set; } = "";
     public bool RiskAccepted { get; set; }
+    public bool AutoCheckUpdates { get; set; } = true;
+    public string SkippedUpdateTag { get; set; } = "";
     public UserSettings Clone() => JsonSerializer.Deserialize<UserSettings>(JsonSerializer.Serialize(this))!;
 }
 

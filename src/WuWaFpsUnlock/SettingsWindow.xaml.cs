@@ -8,7 +8,7 @@ public partial class SettingsWindow:Window
     {
         InitializeComponent();DataContext=vm;
         Width=Math.Min(Width,SystemParameters.WorkArea.Width-36);Height=Math.Min(Height,SystemParameters.WorkArea.Height-36);
-        Closing+=(_,e)=>{if(vm.Busy){e.Cancel=true;vm.Log("部署操作未结束，设置窗口暂不能关闭。");}};
+        Closing+=(_,e)=>{if(vm.Busy){e.Cancel=true;vm.Log("当前操作未结束，设置窗口暂不能关闭。");}};
     }
     private void LogChanged(object sender,TextChangedEventArgs e){if(sender is TextBox text)text.ScrollToEnd();}
     private void Minimize_Click(object sender,RoutedEventArgs e)=>SystemCommands.MinimizeWindow(this);

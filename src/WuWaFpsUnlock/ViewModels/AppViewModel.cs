@@ -9,7 +9,7 @@ using WuWaFpsUnlock.Core;
 using WuWaFpsUnlock.Services;
 
 namespace WuWaFpsUnlock.ViewModels;
-public sealed class AppViewModel:INotifyPropertyChanged
+public sealed partial class AppViewModel:INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;
     public event Action? SettingsRequested;
@@ -57,6 +57,7 @@ public sealed class AppViewModel:INotifyPropertyChanged
         DeployCommand=new(DeployAsync,()=>!Busy&&!IsGameRunning,ReportError);
         CleanCommand=new(CleanAsync,()=>!Busy&&!IsGameRunning,ReportError);
         StartCommand=new(StartAsync,()=>!Busy&&_validFps,ReportError);
+        InitializeUpdates();
         _monitor.Tick+=Monitor;_monitor.Start();
         RememberValidSelection();
         Log("鸣潮 FPS Unlock 1.1.1RC 启动。");
@@ -136,7 +137,7 @@ public sealed class AppViewModel:INotifyPropertyChanged
         PropertyChanged?.Invoke(this,new(null));
         OpenSettingsCommand?.Refresh();BrowseDirectoryCommand?.Refresh();BrowseExeCommand?.Refresh();IncrementFpsCommand?.Refresh();DecrementFpsCommand?.Refresh();
         StartCommand?.Refresh();DeployCommand?.Refresh();CleanCommand?.Refresh();RefreshCommand?.Refresh();
-        FindGameCommand?.Refresh();
+        FindGameCommand?.Refresh();CheckUpdatesCommand?.Refresh();
     }
     private void BrowseRoot()
     {
@@ -344,7 +345,7 @@ public sealed class AppViewModel:INotifyPropertyChanged
     }
     public async Task CloseAsync()
     {
-        _closing=true;_monitor.Stop();_lifetime.Cancel();
+        _closing=true;_monitor.Stop();_lifetime.Cancel();CancelUpdateWork();
         await ReleaseFpsSessionAsync();
         _game?.Dispose();_game=null;
     }

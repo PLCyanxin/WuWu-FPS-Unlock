@@ -14,9 +14,10 @@ public partial class MainWindow:Window
         vm.GameStarted+=MinimizeToTray;
         vm.LaunchFailed+=RestoreFromTray;
         vm.GameExited+=ExitFromTray;
+        vm.UpdateExitRequested+=ExitForUpdate;
         Width=Math.Min(Width,SystemParameters.WorkArea.Width-36);Height=Math.Min(Height,SystemParameters.WorkArea.Height-36);
         Closing+=OnClosing;Closed+=async(_,_)=>{_tray?.Dispose();_trayIcon?.Dispose();await vm.CloseAsync();};
-        Loaded+=async(_,_)=>{try{await vm.RefreshAsync();}catch(Exception e){vm.ReportError(e);}};
+        Loaded+=async(_,_)=>{try{await vm.RefreshAsync();}catch(Exception e){vm.ReportError(e);}await vm.CheckForUpdatesOnStartupAsync();};
     }
     private void OpenSettings()
     {
@@ -28,6 +29,7 @@ public partial class MainWindow:Window
         if(!_exitRequested&&_vm.IsGameRunning){e.Cancel=true;MinimizeToTray();return;}
         if(_vm.Busy){e.Cancel=true;_vm.Log("当前操作仍在进行，不能在文件写入/启动过程中关闭窗口。");return;}
     }
+    private void ExitForUpdate(){_exitRequested=true;_settings?.Close();Close();}
     private void ExitFromTray(){_exitRequested=true;try{Close();}finally{_exitRequested=false;}}
     private void MinimizeToTray()
     {
