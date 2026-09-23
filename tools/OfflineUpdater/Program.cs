@@ -120,6 +120,7 @@ static int Update()
 static bool Allowed(string path) => path.Equals("WuWaFpsUnlock.exe", StringComparison.OrdinalIgnoreCase)
     || path.Equals("components/fps/ww_plugin_base.dll", StringComparison.OrdinalIgnoreCase)
     || path.Equals("components/PROVENANCE.json", StringComparison.OrdinalIgnoreCase)
+    || path.Equals("payload/files/addon/renodx-mfgunlock.addon64", StringComparison.OrdinalIgnoreCase)
     || path.StartsWith("licenses/", StringComparison.OrdinalIgnoreCase);
 
 static IEnumerable<string> Enumerate(string directory)
