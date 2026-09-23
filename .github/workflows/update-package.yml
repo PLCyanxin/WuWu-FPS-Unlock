@@ -33,9 +33,9 @@ jobs:
         if: ${{ !inputs.updater_only }}
         shell: pwsh
         run: |
-          gh release download v1.1.1 --repo $env:GITHUB_REPOSITORY --pattern WuWaFPSUnlock-1.1.1-win-x64.zip --dir current
+          gh release download v1.1.1RC --repo $env:GITHUB_REPOSITORY --pattern WuWaFPSUnlock-1.1.1RC-win-x64.zip --dir current
           if ($LASTEXITCODE -ne 0) { throw 'Current release download failed' }
-          Expand-Archive current/WuWaFPSUnlock-1.1.1-win-x64.zip current/files
+          Expand-Archive current/WuWaFPSUnlock-1.1.1RC-win-x64.zip current/files
           $new=(Resolve-Path current/files).Path
           if ((Get-Item "$new/WuWaFpsUnlock.exe").VersionInfo.FileVersion -ne '1.1.1.0') { throw 'Unexpected destination version' }
           New-Item update/update-payload/components/fps -ItemType Directory -Force | Out-Null
@@ -52,10 +52,10 @@ jobs:
           Get-ChildItem $root -Recurse -File | ForEach-Object {
             '{0}  {1}' -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant(), [IO.Path]::GetRelativePath($root,$_.FullName)
           } | Set-Content update/SHA256.txt -Encoding utf8
-          Compress-Archive update/* WuWaFPSUnlock-1.1.1-update.zip
+          Compress-Archive update/* WuWaFPSUnlock-1.1.1RC-update.zip
       - name: Upload update package
         if: ${{ !inputs.updater_only }}
         shell: pwsh
         run: |
-          gh release upload v1.1.1 WuWaFPSUnlock-1.1.1-update.zip --repo $env:GITHUB_REPOSITORY
+          gh release upload v1.1.1RC WuWaFPSUnlock-1.1.1RC-update.zip --repo $env:GITHUB_REPOSITORY
           if ($LASTEXITCODE -ne 0) { throw 'Update package upload failed' }

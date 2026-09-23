@@ -24,7 +24,7 @@ jobs:
         run: |
           & ./updater-build/WuWaUpdater.exe --self-test
           if ($LASTEXITCODE -ne 0) { throw 'Updater regression failed' }
-      - name: Package v1.1.1
+      - name: Package v1.1.1RC
         shell: pwsh
         run: |
           gh release download v1.1RC --repo $env:GITHUB_REPOSITORY --pattern WuWaFPSUnlock-1.1RC-win-x64.zip --dir baseline
@@ -38,7 +38,7 @@ jobs:
           Copy-Item $addon package/payload/files/addon/renodx-mfgunlock.addon64 -Force
           Copy-Item release-assets/mfg/source.json package/payload/addon-source.json
           $manifest=Get-Content package/payload/manifest.json -Raw | ConvertFrom-Json
-          $manifest.packageId='wuwa-fps-unlock-1.1.1'
+          $manifest.packageId='wuwa-fps-unlock-1.1.1RC'
           $entry=$manifest.files | Where-Object source -eq 'files/addon/renodx-mfgunlock.addon64'
           if (!$entry) { throw 'Addon manifest entry missing' }
           $entry.sha256=(Get-FileHash $addon).Hash.ToLowerInvariant()
@@ -61,7 +61,7 @@ jobs:
           $mapped.source='payload/files/addon/renodx-mfgunlock.addon64'
           $map | ConvertTo-Json -Depth 30 | Set-Content package/payload/payload-map.json -Encoding utf8
           Copy-Item README.md package
-          Compress-Archive package/* WuWaFPSUnlock-1.1.1-win-x64.zip
+          Compress-Archive package/* WuWaFPSUnlock-1.1.1RC-win-x64.zip
           New-Item update/update-payload/components/fps,update/update-payload/payload/files/addon -ItemType Directory -Force | Out-Null
           Copy-Item build/WuWaFpsUnlock.exe update/update-payload
           Copy-Item build/components/fps/ww_plugin_base.dll update/update-payload/components/fps
@@ -71,23 +71,23 @@ jobs:
           Copy-Item release-assets/mfg/source.json update/update-payload/payload/addon-source.json
           Copy-Item updater-build/WuWaUpdater.exe update/更新.exe
           Copy-Item tools/OfflineUpdater/更新说明.txt update
-          Compress-Archive update/* WuWaFPSUnlock-1.1.1-update.zip
-          Get-FileHash WuWaFPSUnlock-1.1.1-win-x64.zip,WuWaFPSUnlock-1.1.1-update.zip | ForEach-Object { '{0}  {1}' -f $_.Hash.ToLowerInvariant(),(Split-Path $_.Path -Leaf) } | Set-Content SHA256SUMS.txt -Encoding ascii
+          Compress-Archive update/* WuWaFPSUnlock-1.1.1RC-update.zip
+          Get-FileHash WuWaFPSUnlock-1.1.1RC-win-x64.zip,WuWaFPSUnlock-1.1.1RC-update.zip | ForEach-Object { '{0}  {1}' -f $_.Hash.ToLowerInvariant(),(Split-Path $_.Path -Leaf) } | Set-Content SHA256SUMS.txt -Encoding ascii
       - uses: actions/upload-artifact@v4
         with:
-          name: release-v1.1.1
+          name: release-v1.1.1RC
           path: |
-            WuWaFPSUnlock-1.1.1-*.zip
+            WuWaFPSUnlock-1.1.1RC-*.zip
             SHA256SUMS.txt
       - name: Upload and publish
         shell: pwsh
         run: |
-          gh release view v1.1.1 --repo $env:GITHUB_REPOSITORY *> $null
+          gh release view v1.1.1RC --repo $env:GITHUB_REPOSITORY *> $null
           if ($LASTEXITCODE -ne 0) {
-            gh release create v1.1.1 --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title '鸣潮 FPS Unlock v1.1.1' --notes-file docs/RELEASE_v1.1.1.md --draft
+            gh release create v1.1.1RC --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title '鸣潮 FPS Unlock v1.1.1RC' --notes-file docs/RELEASE_v1.1.1RC.md --draft --prerelease
             if ($LASTEXITCODE -ne 0) { throw 'Draft creation failed' }
           }
-          gh release upload v1.1.1 WuWaFPSUnlock-1.1.1-win-x64.zip WuWaFPSUnlock-1.1.1-update.zip SHA256SUMS.txt --repo $env:GITHUB_REPOSITORY
+          gh release upload v1.1.1RC WuWaFPSUnlock-1.1.1RC-win-x64.zip WuWaFPSUnlock-1.1.1RC-update.zip SHA256SUMS.txt --repo $env:GITHUB_REPOSITORY
           if ($LASTEXITCODE -ne 0) { throw 'Asset upload failed; draft retained' }
-          gh release edit v1.1.1 --repo $env:GITHUB_REPOSITORY --title '鸣潮 FPS Unlock v1.1.1' --notes-file docs/RELEASE_v1.1.1.md --draft=false --latest
+          gh release edit v1.1.1RC --repo $env:GITHUB_REPOSITORY --title '鸣潮 FPS Unlock v1.1.1RC' --notes-file docs/RELEASE_v1.1.1RC.md --draft=false --prerelease
           if ($LASTEXITCODE -ne 0) { throw 'Publication failed' }

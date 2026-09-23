@@ -3,6 +3,6 @@
   "length": 903680,
   "sha256": "5d9184d5d690ff5cc1771c07a69331e4a596f8a94fde5867a5afc713650f800c",
   "fileVersion": "0.2026.0909.1640",
-  "source": "Maintainer-provided binary, retained unchanged on 2026-09-23 for v1.1.1.",
+  "source": "Maintainer-provided binary, retained unchanged on 2026-09-23 for v1.1.1RC.",
   "note": "The embedded file version is unchanged from earlier binaries; size and SHA-256 distinguish this revision. The maintainer reports in-game Dynamic multiplier display and experimental image adjustments. No reproducible source-build equivalence is asserted."
 }

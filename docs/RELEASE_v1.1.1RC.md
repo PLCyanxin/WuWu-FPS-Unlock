@@ -1,4 +1,4 @@
-# 鸣潮 FPS Unlock v1.1.1
+# 鸣潮 FPS Unlock v1.1.1RC
 
 > [!WARNING]
 > **使用本工具有被官方封号的风险。使用工具后录制视频或分享截图等，请遮挡 UID，请勿跳脸官方。**（维护者实测可以正常与他人联机；能正常联机不代表没有封号风险。）
@@ -11,8 +11,8 @@
 
 ## 选择下载
 
-- 第一次使用：`WuWaFPSUnlock-1.1.1-win-x64.zip`，完整解压后运行 `WuWaFpsUnlock.exe`。
-- 已有本项目旧版：`WuWaFPSUnlock-1.1.1-update.zip`，无需重新下载整套材料，GitHub 和网盘旧版均可使用。
+- 第一次使用：`WuWaFPSUnlock-1.1.1RC-win-x64.zip`，完整解压后运行 `WuWaFpsUnlock.exe`。
+- 已有本项目旧版：`WuWaFPSUnlock-1.1.1RC-update.zip`，无需重新下载整套材料，GitHub 和网盘旧版均可使用。
 
 ## 更新步骤
 
