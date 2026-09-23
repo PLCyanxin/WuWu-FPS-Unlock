@@ -347,10 +347,10 @@
     {
       "name": "renodx-mfgunlock.addon64",
       "relativePath": "renodx-mfgunlock.addon64",
-      "length": 519168,
-      "sha256": "ff4dd79e9bab1af2fa74164bab06b992bf5c35dfefed6d6f072fce53f5450003",
-      "copySha256": "ff4dd79e9bab1af2fa74164bab06b992bf5c35dfefed6d6f072fce53f5450003",
-      "fileVersion": "1.1+WuWu.DynamicMax.1",
+      "length": 523776,
+      "sha256": "2cb56b3c1c644ab9eebe2eb6cd3f25185feec8476519d131f6e5ddb26b0a7740",
+      "copySha256": "2cb56b3c1c644ab9eebe2eb6cd3f25185feec8476519d131f6e5ddb26b0a7740",
+      "fileVersion": "1.1+WuWu.DynamicMax.Runtime.1",
       "productVersion": "",
       "company": "",
       "peMachine": "0x8664",
@@ -360,7 +360,7 @@
       "signatureMessage": "Signature not revalidated for this build.",
       "signer": null,
       "certificateThumbprint": null,
-      "addonVersion": "1.1+WuWu.DynamicMax.1",
+      "addonVersion": "1.1+WuWu.DynamicMax.Runtime.1",
       "sourcePath": "payload/files/addon/renodx-mfgunlock.addon64",
       "copiedPath": "payload/files/addon/renodx-mfgunlock.addon64"
     },

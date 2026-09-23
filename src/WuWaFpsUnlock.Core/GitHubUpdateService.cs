@@ -21,7 +21,7 @@ public sealed class GitHubUpdateService(HttpClient http)
             if(releases.ValueKind!=JsonValueKind.Array)throw new InvalidDataException("发布列表格式不符。");
             foreach(var release in releases.EnumerateArray())
             {
-                if(release.GetProperty("draft").GetBoolean())continue;
+                if(release.GetProperty("draft").GetBoolean() || release.GetProperty("prerelease").GetBoolean())continue;
                 string tag=release.GetProperty("tag_name").GetString()??"";
                 string version=tag.StartsWith('v')?tag[1..]:tag;
                 if(!UpdatePackageProtocol.IsVersion(version)||CompareVersions(version,currentVersion)<=0||(best is not null&&CompareVersions(version,best.Version)<=0))continue;
