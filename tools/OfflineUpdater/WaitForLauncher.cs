@@ -7,6 +7,7 @@ internal static partial class Program
         if (!int.TryParse(pidText, out int pid) || pid <= 0) throw new ArgumentException("启动器 PID 无效。");
         string updaterDirectory = Path.GetFullPath(AppContext.BaseDirectory);
         NoLinks(updaterDirectory);
+        ValidateUpdateManifest(updaterDirectory, required: true);
         string root = FindInstallation(updaterDirectory);
         string exe = Path.Combine(root, "WuWaFpsUnlock.exe");
         MatchExpectedLauncher(exe, expectedLauncher);

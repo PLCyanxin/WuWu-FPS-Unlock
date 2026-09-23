@@ -15,7 +15,8 @@ try
         : args.Length == 3 && args[0] == "--wait-for-exit" ? WaitThenUpdate(args[1], args[2])
         : args.Length == 2 && args[0] == "--rollback" ? Rollback(args[1])
         : args.Length == 1 && args[0] == "--self-test" ? SelfTest()
-        : throw new ArgumentException("用法：WuWaUpdater.exe [--rollback <备份目录> | --wait-for-exit <PID> <启动器完整路径>]");
+        : args.Length == 3 && args[0] == "--validate-package" ? ValidatePackageCommand(args[1], args[2])
+        : throw new ArgumentException("用法：WuWaUpdater.exe [--rollback <备份目录> | --wait-for-exit <PID> <启动器完整路径> | --validate-package <包目录> <版本>]");
 }
 catch (UnauthorizedAccessException ex)
 {
@@ -23,8 +24,11 @@ catch (UnauthorizedAccessException ex)
     result = 1;
 }
 catch (Exception ex) { Console.Error.WriteLine("操作未完成：" + ex.Message); result = 1; }
-Console.WriteLine("按任意键退出。");
-if (!Console.IsInputRedirected && !args.Contains("--self-test")) Console.ReadKey(true);
+if (!args.Contains("--self-test") && !args.Contains("--validate-package"))
+{
+    Console.WriteLine("按任意键退出。");
+    if (!Console.IsInputRedirected) Console.ReadKey(true);
+}
 return result;
 }
 
@@ -33,6 +37,8 @@ static int Update(string? expectedLauncher = null)
     string updaterDirectory = Path.GetFullPath(AppContext.BaseDirectory);
     string payload = Path.Combine(updaterDirectory, "update-payload");
     NoLinks(updaterDirectory); NoLinks(payload);
+    bool requireManifest = expectedLauncher is not null || File.Exists(Path.Combine(updaterDirectory, "update-manifest.json"));
+    ValidateUpdateManifest(updaterDirectory, required: requireManifest);
     if (!Directory.Exists(payload)) throw new DirectoryNotFoundException("更新器旁缺少 update-payload，请保留完整更新包目录结构。");
     string root = FindInstallation(updaterDirectory);
     string exe = Path.Combine(root, "WuWaFpsUnlock.exe");
@@ -67,6 +73,9 @@ static int Update(string? expectedLauncher = null)
             entry.SourceHandle = sourceHandle;
             entries.Add(entry);
         }
+        // Recheck while source handles prevent changes; protocol hashes must describe
+        // the actual bytes staged below, not an earlier unlocked observation.
+        ValidateUpdateManifest(updaterDirectory, required: requireManifest);
         foreach (string required in new[] { "WuWaFpsUnlock.exe", "components/fps/ww_plugin_base.dll", "components/PROVENANCE.json", "payload/files/addon/renodx-mfgunlock.addon64", "payload/addon-source.json" })
             if (!entries.Any(e => e.Relative.Equals(required, StringComparison.OrdinalIgnoreCase)))
                 throw new InvalidDataException("更新包不完整，缺少：" + required);
