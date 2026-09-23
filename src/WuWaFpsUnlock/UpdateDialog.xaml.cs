@@ -70,10 +70,10 @@ public partial class UpdateDialog : Window
         using var cancellation = new CancellationTokenSource(); _download = cancellation;
         InstallButton.IsEnabled = false; SkipVersion.IsEnabled = false; AfterGameButton.IsEnabled = false;
         LaterButton.Content = "取消下载"; DownloadProgress.Visibility = Visibility.Visible;
-        OperationStatus.Text = "正在准备下载…";
+        OperationStatus.Text = "请勿关闭窗口与游戏启动器。\n正在准备下载…";
         try
         {
-            var progress = new Progress<string>(message => { if (!_closed) OperationStatus.Text = message; });
+            var progress = new Progress<string>(message => { if (!_closed) OperationStatus.Text = "请勿关闭窗口与游戏启动器。\n" + message; });
             UpdateStarted = await _install(cancellation.Token, progress);
             if (UpdateStarted) { _installing = false; DialogResult = true; return; }
         }

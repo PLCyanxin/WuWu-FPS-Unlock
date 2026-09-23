@@ -9,6 +9,7 @@ static string? completedUpdateLauncher;
 static int Main(string[] args)
 {
 Console.OutputEncoding = Encoding.UTF8;
+if (args.Length == 0 || args[0] == "--wait-for-exit") Console.WriteLine("请勿关闭窗口与游戏启动器。程序会自动完成必要的退出与重新打开。");
 int result;
 try
 {
