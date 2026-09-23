@@ -13,6 +13,7 @@ description: Build, update, and publish WuWa FPS Unlock launchers and compatible
 
 - RC 是本项目正常分发的准正式版，必须参与自动检测；同数字版本正式版高于 RC。不能依赖 GitHub `/releases/latest`，否则漏掉 prerelease。
 - 使用用户指定的新版本，不能擅自把已发布版本改名或覆盖资产。确有更名/替换授权时，先生成新资产并核对，最后处理旧条目。已发布版本原则上不可变。
+- 用户规定：正式版公开且完整包、更新包和校验文件均就绪后，移除同一数字版本对应的 RC Release（包括其资产），让正式版成为下载入口；保留源码标签便于追溯，不顺带删除其他历史版本。正式版发布失败时保留 RC。
 - UI/InformationalVersion 使用产品版本，例如 `1.1.1` 或 `1.1.2RC`；程序集/FileVersion 使用四段数字，第三方版本不可跟随改写。
 - Release 文案面向用户，说明新增功能、适用范围、操作步骤；不把构建日志、历史改动流水或测试数量当产品介绍。保留 README 简介之后的账号风险提示，实测结论仅报告实际证据。
 
