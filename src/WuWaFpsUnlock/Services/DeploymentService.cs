@@ -13,7 +13,7 @@ public sealed class DeploymentService(Action<string> log)
     public string ApprovalFingerprint { get; private set; } = "";
     public void UseApprovedFingerprint(string fingerprint) => ApprovalFingerprint = fingerprint;
     private static string Fingerprint(object value) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(value, JsonFiles.Options)));
-    private static async Task<string> PlanFingerprint(UserSettings s, List<PlannedFile> plan, ReShadeInfo info, CancellationToken token) => Fingerprint(new { GameRoot=Path.GetFullPath(s.GameRoot), GameExe=Path.GetFullPath(s.GameExe), ManifestHash=await SafePaths.HashAsync(s.PackageManifest,token), Plan=plan, ReShade=info, IniHash=File.Exists(info.Ini)?await SafePaths.HashAsync(info.Ini,token):null, ProxyHash=info.Proxy is not null && File.Exists(info.Proxy)?await SafePaths.HashAsync(info.Proxy,token):null });
+    private static async Task<string> PlanFingerprint(UserSettings s, List<PlannedFile> plan, ReShadeInfo info, MfgDeploymentConfiguration configuration, CancellationToken token) => Fingerprint(new { GameRoot=Path.GetFullPath(s.GameRoot), GameExe=Path.GetFullPath(s.GameExe), ManifestHash=await SafePaths.HashAsync(s.PackageManifest,token), Plan=plan, ReShade=info, MfgConfiguration=configuration, IniHash=File.Exists(info.Ini)?await SafePaths.HashAsync(info.Ini,token):null, ProxyHash=info.Proxy is not null && File.Exists(info.Proxy)?await SafePaths.HashAsync(info.Proxy,token):null });
     public async Task<string> PreviewAsync(UserSettings s,CancellationToken token=default)
     {
         string exe=GameProcesses.ValidateExe(s);GameProcesses.RequireStopped(s.GameRoot);
@@ -22,8 +22,10 @@ public sealed class DeploymentService(Action<string> log)
         var manifest=PackageReader.Load(s.PackageManifest);var before=new ReShadeService(log).Inspect(s,manifest.ReShade);
         if(before.State=="Conflict")throw new IOException(before.Description);
         var plan=await PackageReader.PlanAsync(manifest,s.PackageManifest,s.GameRoot,Path.GetDirectoryName(exe)!,before.AddonDirectory,token);
-        ApprovalFingerprint=await PlanFingerprint(s,plan,before,token);
+        var configuration=MfgDeploymentConfiguration.Create(s,manifest,EnvironmentProbe.Read(log));
+        ApprovalFingerprint=await PlanFingerprint(s,plan,before,configuration,token);
         var lines=new List<string>{"游戏根："+s.GameRoot,"原装 Shipping："+exe,"ReShade："+before.Description,"ReShade 配置："+before.Ini};
+        lines.Add(configuration.PreviewText);
         lines.AddRange(plan.Select(f=>$"{f.Source} → {f.Target}"));
         foreach(var f in manifest.Files.Where(f=>f.Kind==PayloadKind.Vendor))
             if(!plan.Any(p=>p.Kind==PayloadKind.Vendor&&Path.GetFileName(p.Target).Equals(Path.GetFileName(f.Target),StringComparison.OrdinalIgnoreCase)))lines.Add("无同名目标，跳过："+f.Target);
@@ -76,13 +78,14 @@ public sealed class DeploymentService(Action<string> log)
         if(hardware.Driver is null)log("驱动状态未知，不能确认 Dynamic；不把未知报告为不支持。");
         if(manifest.FixedMinimumDriver is int minimum && (hardware.Driver is null || hardware.Driver<minimum))throw new InvalidOperationException("驱动不满足该文件包声明的 Fixed 条件。");
         if(hardware.HagsConfigured==false)throw new InvalidOperationException("HAGS 已配置关闭。请在 Windows 中处理并重启后再检查；工具不会擅自修改系统。");
-        bool dynamic=manifest.PreferDynamic&&hardware.Driver is int detectedDriver&&detectedDriver>=manifest.DynamicMinimumDriver;
+        var configuration=MfgDeploymentConfiguration.Create(s,manifest,hardware);
+        bool dynamic=configuration.DynamicEnabled;
         log(dynamic?"Dynamic 驱动门槛通过；运行时支持仍待游戏内确认。":"不满足 Dynamic 门槛：只部署 Fixed 兼容配置，不拦截整个 MFG 功能。");
         var reshade=new ReShadeService(log);var before=reshade.Inspect(s,manifest.ReShade);
         if(before.State=="Conflict")throw new IOException(before.Description);
         // Fully validate payload and ALL paths before running an external installer.
         var plan=await PackageReader.PlanAsync(manifest,s.PackageManifest,s.GameRoot,Path.GetDirectoryName(exe)!,before.AddonDirectory,token);
-        if(string.IsNullOrEmpty(ApprovalFingerprint) || ApprovalFingerprint!=await PlanFingerprint(s,plan,before,token))throw new IOException("文件计划与确认时不同或未经预览，请重新预览并确认。");
+        if(string.IsNullOrEmpty(ApprovalFingerprint) || ApprovalFingerprint!=await PlanFingerprint(s,plan,before,configuration,token))throw new IOException("文件计划或 MFG 配置与确认时不同，或未经预览，请重新预览并确认。");
         var skippedVendors=manifest.Files.Where(f=>f.Kind==PayloadKind.Vendor&&!plan.Any(p=>p.Kind==PayloadKind.Vendor&&Path.GetFileName(p.Target).Equals(Path.GetFileName(f.Target),StringComparison.OrdinalIgnoreCase))).Select(f=>Path.GetFileName(f.Target)).ToList();
         log($"DLL 同名映射：{plan.Count(f=>f.Kind==PayloadKind.Vendor)} 个实际目标；{skippedVendors.Count} 个材料名称无同名目标而跳过。"+(skippedVendors.Count>0?" 跳过："+string.Join("、",skippedVendors):""));
         foreach(var f in plan){WriteProbe.Check(f.Target);if(File.Exists(f.Target)){using var lockTest=new FileStream(f.Target,FileMode.Open,FileAccess.ReadWrite,FileShare.None);}}
@@ -110,10 +113,7 @@ public sealed class DeploymentService(Action<string> log)
             proxyEntry.InstalledHash=await SafePaths.HashAsync(receipt.ProxyPath,token);proxyEntry.Completed=true;
             var ini=IniDocument.Load(ready.Ini);
             foreach(var pair in manifest.MfgConfig)ini.ApplyOwned("RenoDX.MFGUnlock",pair.Key,pair.Value,receipt);
-            ini.ApplyOwned("RenoDX.MFGUnlock","Enabled","1",receipt);
-            ini.ApplyOwned("RenoDX.MFGUnlock","DynamicMFG",dynamic?"1":"0",receipt);
-            ini.ApplyOwned("RenoDX.MFGUnlock","ForceMultiplier",dynamic?"0":manifest.FixedMultiplier.ToString(),receipt);
-            if(dynamic)ini.ApplyOwned("RenoDX.MFGUnlock","RuntimeSelectionMode","1",receipt);
+            configuration.ApplyOwned(ini,receipt);
             string early=ini.MergeCsv("ADDON","LoadFromDllMain","renodx-mfgunlock.addon64");
             ini.ApplyOwned("ADDON","LoadFromDllMain",early,receipt);
             AppPaths.SaveReceipt(receipt);ini.Save(ready.Ini);
