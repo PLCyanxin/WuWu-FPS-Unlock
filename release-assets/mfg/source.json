@@ -2,7 +2,7 @@
   "file": "renodx-mfgunlock.addon64",
   "addonVersion": "1.1+WuWu.DynamicMax.Runtime.1",
   "length": 524288,
-  "sha256": "987b447465af038e6d53cb60b5a7aba2934b5ddb39739057c983539ee98d6592",
+  "sha256": "ebf43641ad70ea48b81e42a9bec68c87f90ae72f9ef40da44d0cd238aa7a9996",
   "fileVersion": "1.1+WuWu.DynamicMax.Runtime.1",
   "upstream": {
     "commit": "c3733d8afd51214c46a71d18feec520b0bf54864",
@@ -13,7 +13,7 @@
   "modification": "Runtime Dynamic maximum with persisted in-game selection; first-use default 4x. No startup DRS cap override. Native scheduling and hardware limits retained.",
   "patch": {
     "path": "third_party/mfgunlock/dynamic-max.patch",
-    "sha256": "4cf282c5fd682501be176777dc99284f669553e709583b55652cc0b93719d860"
+    "sha256": "a784e517b4887a6b039ad7d8962022b6233b3b573d62ac6ebc37d8506bab920c"
   },
   "build": {
     "windowsSdk": "10.0.26100.0",
@@ -35,5 +35,5 @@
     "noDrsOverrideAssertions": 12
   },
   "derivedCommit": "216228de950d6e0a2ec7f532412711e3ea785bce",
-  "derivedSourceCommit": "fed219929039482165af5720c6285b8861ad5ea3"
+  "derivedSourceCommit": "69595e4e75a5bf66cedd60dfc1181b9bd0d9c04c"
 }

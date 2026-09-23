@@ -1,5 +1,5 @@
 diff --git a/src/addons/mfgunlock/addon.cpp b/src/addons/mfgunlock/addon.cpp
-index 7189cf8..8d4eb80 100644
+index 7189cf8..eaed315 100644
 --- a/src/addons/mfgunlock/addon.cpp
 +++ b/src/addons/mfgunlock/addon.cpp
 @@ -123,6 +123,7 @@
@@ -18,18 +18,17 @@ index 7189cf8..8d4eb80 100644
    // A primary swapchain can disappear while an already-existing secondary
    // survives (resize, launcher/video swapchain, device recreation). Promote
    // the next presenting swapchain once instead of leaving HDR/API state stale.
-@@ -4245,6 +4247,34 @@ void OnRegisterOverlay(reshade::api::effect_runtime* runtime) {
+@@ -4245,6 +4247,26 @@ void OnRegisterOverlay(reshade::api::effect_runtime* runtime) {
      }
      if (block_dynamic_enable) ImGui::EndDisabled();
  
 +    ImGui::TableNextRow();
 +    ImGui::TableNextColumn();
-+    SettingLabel("Experimental live Dynamic maximum", "Saved across launches; exact Streamline build adapter.",
-+                 "Changes the next native Dynamic frame before frame selection, RSYNC and NGX submission. Cannot exceed that frame's native hardware/driver bound. Zero restores native behavior. Unknown builds disable live control.");
++    ImGui::TextUnformatted("Dynamic maximum multiplier");
 +    ImGui::TableNextColumn();
 +    namespace live = mfgunlock::dynamiclive;
 +    if (!live::installed.load()) {
-+      if (ImGui::Button("Enable version-checked live control")) live::TryInstall(g_enabled, mfgunlock::framecount::g_dynamic_mfg_enabled);
++      if (ImGui::Button("Enable live control")) live::TryInstall(g_enabled, mfgunlock::framecount::g_dynamic_mfg_enabled);
 +    }
 +    const bool live_available = live::installed.load() && !live::invalid.load() && g_enabled.load() && mfgunlock::framecount::g_dynamic_mfg_enabled.load();
 +    if (!live_available) ImGui::BeginDisabled();
@@ -43,17 +42,10 @@ index 7189cf8..8d4eb80 100644
 +      reshade::set_config_value(nullptr, kConfigSection, live::kConfigKey, request);
 +    }
 +    if (!live_available) ImGui::EndDisabled();
-+    ImGui::TextWrapped("%s", live::invalid.load() ? "Native frame validation failed; live control disabled" : live::status.load());
-+    const auto live_sample = live::observation.load();
-+    if (live_sample >> 63) {
-+      ImGui::Text("Last frame: native bound %llux, request %llu (0=native), submitted %llux",
-+                  (live_sample >> 8) & 255, live_sample & 255, (live_sample >> 16) & 255);
-+      ImGui::TextWrapped("Submitted to native scheduling; not a measurement of displayed multiplier. Queued frames may still use an earlier setting.");
-+    }
      int dynamic_target = static_cast<int>(
          mfgunlock::framecount::g_dynamic_target_fps.load(
              std::memory_order_relaxed));
-@@ -4626,6 +4656,7 @@ void OnRegisterOverlay(reshade::api::effect_runtime* runtime) {
+@@ -4626,6 +4648,7 @@ void OnRegisterOverlay(reshade::api::effect_runtime* runtime) {
    if (page == UiPage::Support) {
      ImGui::Spacing();
      ImGui::TextDisabled("SUPPORT DIAGNOSTICS");
@@ -61,7 +53,7 @@ index 7189cf8..8d4eb80 100644
      ImGui::Separator();
      bool gate_patched = false;
      bool midpoint_patched = false;
-@@ -5275,6 +5306,11 @@ void LoadConfig() {
+@@ -5275,6 +5298,11 @@ void LoadConfig() {
      mfgunlock::framecount::g_dynamic_mfg_enabled.store(value != 0,
                                                          std::memory_order_relaxed);
    }
@@ -73,7 +65,7 @@ index 7189cf8..8d4eb80 100644
    if (reshade::get_config_value(nullptr, kConfigSection, "DynamicTargetFPS", value)) {
      if (value < 0 || value > 1000) value = 0;
      mfgunlock::framecount::g_dynamic_target_fps.store(
-@@ -5345,6 +5381,8 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
+@@ -5345,6 +5373,8 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
        g_self_module = h_module;
        if (!reshade::register_addon(h_module)) return FALSE;
        LoadConfig();

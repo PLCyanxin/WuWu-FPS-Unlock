@@ -146,7 +146,7 @@
   {
     "name": "renodx-mfgunlock.addon64",
     "source": "payload/files/addon/renodx-mfgunlock.addon64",
-    "sha256": "987b447465af038e6d53cb60b5a7aba2934b5ddb39739057c983539ee98d6592",
+    "sha256": "ebf43641ad70ea48b81e42a9bec68c87f90ae72f9ef40da44d0cd238aa7a9996",
     "targetPolicy": "经验证ReShade AddonDir/renodx-mfgunlock.addon64",
     "addonVersion": "1.1+WuWu.DynamicMax.Runtime.1",
     "actualGameTargets": [],
