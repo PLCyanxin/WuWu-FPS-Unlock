@@ -79,3 +79,5 @@ Automatic approval rejected one mixed command that combined injector-order adjus
 Actual validation: WPF build0warnings0errors; tests/FpsIdentity.Tests9passed0failed, only fake identity snapshots and error formatting (no process APIs/creation/injection/game/UAC). Evidence artifacts/fps-diagnostics-build.log and fps-identity-tests.log. Raw100ns mismatch is rejected, Windows path casing accepted, path/PID changes rejected, error stages/native5 preserved. Builtin WaitForRendererAsync now accepts an optional Action<string> log as fourth parameter; VM owner may pass Log for successful identity/window diagnostic lines. Real denied-access root cause needs the new stage evidence; game effectiveness remains unverified by this subtask.
 
 2026-09-14: Completed static FPS lifetime audit; see fps-session-lifetime.md. Exact core has independent 51 ms writer; no heartbeat fix justified. Six static evidence checks passed; no game/native DLL execution; access denied remains unresolved.
+
+2026-09-23: Core update service/protocol ready; online-update.md documents API/limits and fake HTTP tests20/20. Root release target1.1.1 local-only.

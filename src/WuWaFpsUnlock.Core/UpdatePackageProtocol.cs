@@ -10,14 +10,17 @@ public static class UpdatePackageProtocol
     public const int MaxFiles=4096;
     public const long MaxFileBytes=512L*1024*1024,MaxTotalBytes=1024L*1024*1024;
     public static readonly string[] RequiredFiles=["更新.exe","update-payload/WuWaFpsUnlock.exe","update-payload/components/fps/ww_plugin_base.dll","update-payload/components/PROVENANCE.json","update-payload/payload/files/addon/renodx-mfgunlock.addon64","update-payload/payload/addon-source.json"];
-    public static UpdatePackageManifest ValidateDirectory(string directory,string? expectedVersion=null)
+    public static UpdatePackageManifest ValidateDirectory(string directory,string? expectedVersion=null,CancellationToken token=default)
     {
         var root=Path.GetFullPath(directory);RejectLink(root);
+        int entryCount=0;
         var actual=new Dictionary<string,string>(StringComparer.OrdinalIgnoreCase);
         void Walk(string dir)
         {
             foreach(var entry in Directory.EnumerateFileSystemEntries(dir))
             {
+                token.ThrowIfCancellationRequested();
+                if(++entryCount>MaxFiles)throw new InvalidDataException("更新包目录项过多。");
                 RejectLink(entry);
                 if(Directory.Exists(entry)){Walk(entry);continue;}
                 string name=Path.GetRelativePath(root,entry).Replace('\\','/');ValidatePath(name);
@@ -25,6 +28,7 @@ public static class UpdatePackageProtocol
             }
         }
         Walk(root);
+        actual.Remove("回退.cmd"); // Local worker-generated retry entry; ZIP intake never permits it.
         if(!actual.Remove("update-manifest.json",out var manifestPath))throw new InvalidDataException("更新包缺少协议清单。");
         if(new FileInfo(manifestPath).Length>2*1024*1024)throw new InvalidDataException("更新清单过大。");
         var manifest=JsonSerializer.Deserialize<UpdatePackageManifest>(File.ReadAllText(manifestPath),new JsonSerializerOptions{PropertyNameCaseInsensitive=true})??throw new InvalidDataException("更新清单为空。");
@@ -40,7 +44,10 @@ public static class UpdatePackageProtocol
             total=checked(total+file.Size);if(total>MaxTotalBytes)throw new InvalidDataException("更新包过大。");
             if(!actual.Remove(file.Path,out var path)||new FileInfo(path).Length!=file.Size)throw new InvalidDataException("更新文件缺失或大小不符："+file.Path);
             using var stream=File.OpenRead(path);
-            if(!Convert.ToHexString(SHA256.HashData(stream)).Equals(file.Sha256,StringComparison.OrdinalIgnoreCase))throw new InvalidDataException("更新文件哈希不符："+file.Path);
+            using var hash=IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+            byte[] buffer=new byte[81920];int read;
+            while((read=stream.Read(buffer))!=0){token.ThrowIfCancellationRequested();hash.AppendData(buffer,0,read);}
+            if(!Convert.ToHexString(hash.GetHashAndReset()).Equals(file.Sha256,StringComparison.OrdinalIgnoreCase))throw new InvalidDataException("更新文件哈希不符："+file.Path);
         }
         if(actual.Count!=0||RequiredFiles.Any(x=>!declared.Contains(x)))throw new InvalidDataException("更新包存在未声明文件或缺少必需文件。");
         return manifest;

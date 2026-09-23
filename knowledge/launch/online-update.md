@@ -1,0 +1,9 @@
+# Online update service, 2026-09-23
+
+Core API: GitHubUpdateService(HttpClient), CheckAsync(currentVersion, token) returns highest newer eligible UpdateRelease or null; StageAsync(release, appRoot, token) returns validated updater full path. Caller supplies AssemblyInformationalVersion without metadata; settings/skip handled by UI. Fixed repo PLCyanxin/WuWu-FPS-Unlock; published release lists include prereleases and ignore drafts; no latest endpoint. Version comparison treats formal greater than same-number RC and compares RC suffix numerically.
+
+Staging is appRoot/.updates/GUID with sibling temporary GUID.zip deleted afterward. Downloads verify SHA256SUMS outside ZIP, extract bounded files to new directory, reject links/traversal/case duplicates and disallowed files, then shared UpdatePackageProtocol validates protocol/product/version/required files/exact hashes and sizes/no undeclared files. Worker-generated root 回退.cmd is allowed only by extracted-directory validation, forbidden in online ZIP intake. Failed staging cleans its own directory; no updater/game is executed by the service. SHA256 is integrity, not publisher signature. No live GitHub release created or published.
+
+Shared protocol file is BCL-only and can be Compile Linked by OfflineUpdater. ValidateDirectory(directory, expectedVersion=null, token=default). Offline worker may use null version; online service always matches release. Limits: 4096 entries, 512 MiB single file, 1 GiB total. JSON manifest <=2 MiB; checksums <=1 MiB; release page <=8 MiB, up to ten 100-result pages, otherwise fail rather than choose incomplete results.
+
+Validation: Core build 0 warnings/errors; tests/Update.ServiceTests fake HTTP and inert package bytes passed 20/20. Log artifacts/update-service-tests.log. No real updater, game, release, or actual installation altered. Root owns production publish/build and real UI integration.
