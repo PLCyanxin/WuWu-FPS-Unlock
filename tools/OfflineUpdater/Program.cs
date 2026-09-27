@@ -109,34 +109,11 @@ static int Update(string? expectedLauncher = null)
         NoLinks(backup);
         Directory.CreateDirectory(backup);
         Console.WriteLine("备份目录：" + backup);
-        foreach (var entry in entries)
-        {
-            entry.Staged = Path.Combine(backup, "staged", entry.Relative);
-            CopyFromHandle(entry.SourceHandle!, entry.Staged, entry.NewHash);
-            if (entry.TargetHandle is not null)
-            {
-                entry.Backup = Path.Combine(backup, "original", entry.Relative);
-                CopyFromHandle(entry.TargetHandle, entry.Backup, entry.OldHash!);
-            }
-        }
-        File.WriteAllLines(Path.Combine(backup, "files.txt"), entries.Select(e => $"{e.Relative}\told={e.OldHash ?? "(absent)"}\tnew={e.NewHash}"), Encoding.UTF8);
-        var snapshot = CaptureSnapshot(root, backup, updaterDirectory, entries);
+        var snapshot = StageUpdateSnapshot(root, backup, updaterDirectory, entries);
         PrepareRollbackLauncher(backup, updaterDirectory);
         RejectRunning(exe);
     RequireGameStopped();
-        foreach (var entry in entries)
-        {
-            NoLinks(entry.Target); NoLinks(entry.Staged!);
-            Directory.CreateDirectory(Path.GetDirectoryName(entry.Target)!);
-            entry.TargetHandle?.Dispose();
-            // Windows replacement needs the destination handle closed; recheck immediately.
-            EnsureUnchanged(entry.Target, entry.OldHash);
-            if (entry.OldHash is null) File.Move(entry.Staged!, entry.Target, false);
-            else File.Replace(entry.Staged!, entry.Target, null);
-            entry.Applied = true;
-            EnsureUnchanged(entry.Target, entry.NewHash);
-            Console.WriteLine("已更新：" + entry.Relative);
-        }
+        ApplyUpdateEntries(entries);
         WriteSnapshot(backup, snapshot with { Complete = true });
         RefreshDesktopShortcut(root);
         try { PrunePreviousBackups(root,backup); }
@@ -148,27 +125,8 @@ static int Update(string? expectedLauncher = null)
     catch
     {
         foreach (var handle in held) handle.Dispose();
-        bool restored = true;
-        foreach (var entry in entries.Where(e => e.Applied).Reverse())
-        {
-            try
-            {
-                NoLinks(entry.Target);
-                EnsureUnchanged(entry.Target, entry.NewHash);
-                if (entry.Backup is null) File.Delete(entry.Target);
-                else
-                {
-                    NoLinks(entry.Backup);
-                    string restore = Path.Combine(backup!, "restore-" + Guid.NewGuid().ToString("N"));
-                    using var original = new FileStream(entry.Backup, FileMode.Open, FileAccess.Read, FileShare.Read);
-                    CopyFromHandle(original, restore, entry.OldHash!);
-                    File.Replace(restore, entry.Target, null);
-                    EnsureUnchanged(entry.Target, entry.OldHash);
-                }
-            }
-            catch (Exception ex) { restored = false; Console.Error.WriteLine($"回滚失败：{entry.Target}\n{ex.Message}"); }
-        }
-        Console.Error.WriteLine(restored ? "本次已修改的文件均已恢复（尚未替换时原文件未改变）。" : "未能完整恢复，请勿启动应用；请从备份 original 目录手动恢复上述文件。");
+        bool restored = RestoreFailedUpdate(entries, backup);
+        Console.Error.WriteLine(restored ? "本次已修改的文件均已恢复（尚未替换时原文件未改变）。" : "未能完整恢复，请勿启动应用；请从备份 snapshot 目录手动恢复上述文件。");
         if (backup is not null) Console.Error.WriteLine("备份保留于：" + backup);
         throw;
     }

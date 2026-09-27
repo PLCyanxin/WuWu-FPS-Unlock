@@ -44,6 +44,8 @@ for($i=0;$i -lt 100 -and !(Test-Path "$root/completion-fixture.txt");$i++){Start
 Check ((Get-Content "$root/completion-fixture.txt").Count -eq 1) 'successful update launches completion handoff once'
 $first=@(Get-ChildItem $root -Directory -Filter 'update-backup-*')[0]
 Check ((Get-Content "$($first.FullName)/snapshot.json" -Raw|ConvertFrom-Json).Complete) 'first update creates complete backup'
+Check (!(Test-Path "$($first.FullName)/original")) 'CLI update stores old bytes once in complete snapshot'
+Check ((Get-FileHash "$($first.FullName)/snapshot/WuWaFpsUnlock.exe").Hash -eq $oldHash) 'shared snapshot preserves exact pre-update launcher'
 Copy-Item "$fixture/third/WuWaFpsUnlock.exe" "$payload/WuWaFpsUnlock.exe" -Force
 Remove-Item -LiteralPath "$package/回退.cmd"
 & "$repo/scripts/New-UpdateManifest.ps1" -PackageDirectory $package -Version '3.0.0'
