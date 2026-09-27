@@ -1,0 +1,28 @@
+{
+  "sourceFile": "src/addons/mfgunlock/addon.cpp",
+  "upstreamTag": "1.1.5",
+  "upstreamCommit": "066c734259f3672559078e68d9c7f0616bb6c1b0",
+  "referenceFileSha256": "a5e781a2c3d1bf1ab2a30ff26401e22f7a44281b1246be8d72cc225c2fb7e529",
+  "uiFunctions": [
+    { "name": "OnRegisterOverlay", "startAnchor": "void OnRegisterOverlay(reshade::api::effect_runtime* runtime)", "nextAnchor": "void LoadConfig()", "lineHint": 4193 },
+    { "name": "DrawAdvancedQualityControls", "startAnchor": "void DrawAdvancedQualityControls(bool adaptive_quality_managed)", "nextAnchor": "void DrawLatencyGuardControl()", "lineHint": 3101 },
+    { "name": "DrawLatencyGuardControl", "startAnchor": "void DrawLatencyGuardControl()", "nextAnchor": "const char* MarkerHealthText(", "lineHint": 3225 }
+  ],
+  "displayOnlyHelperResults": [
+    "RenderApiName", "InputFormatApiName", "InputNativeApiName", "InputColorSpaceName", "InputBooleanName", "InputDlssgModeName", "InputLifecycleName", "FormatMemoryBytes", "VramReadinessText", "PackedVersionString", "NgxPresetText", "NgxPerformanceModeText", "ReconstructionPresetText", "FrameGenerationPresetText", "DynamicMultiplierText", "MarkerHealthText", "TimingValidationText", "LatencyBottleneckText"
+  ],
+  "excludedFunctions": ["DrawLegacyOverlay", "DrawInputDiagnosticsPanel", "LoadConfig"],
+  "excludedReportSpan": {
+    "function": "OnRegisterOverlay",
+    "startAnchor": "std::string intermediate_report = \"Disabled\";",
+    "endBeforeAnchor": "if (ImGui::Button(\"Copy diagnostics\"))"
+  },
+  "neverTranslateCallArguments": ["reshade::get_config_value", "reshade::set_config_value", "reshade::log::message", "ImGui::SetClipboardText"],
+  "dynamicInsertion": {
+    "function": "OnRegisterOverlay",
+    "tableId": "##frame_generation_settings",
+    "afterAnchor": "if (block_dynamic_enable) ImGui::EndDisabled();",
+    "beforeAnchor": "int dynamic_target = static_cast<int>(",
+    "companionIdScope": "WuWa.DynamicMax"
+  }
+}
