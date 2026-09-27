@@ -31,3 +31,7 @@ if(args.Contains("--live")){
  Console.WriteLine($"LIVE OS={value.Os}; GPU={value.Gpu}; HAGS={value.Hags}; RegistryConfigured={value.HagsConfigured}; elapsed={timer.Elapsed.TotalSeconds:F1}s");
  timer.Restart();var cached=EnvironmentProbe.Read(Console.WriteLine);Console.WriteLine($"CACHED HAGS={cached.Hags}; elapsed={timer.Elapsed.TotalSeconds:F1}s");
 }
+if(args.Contains("--basic")){
+ var timer=System.Diagnostics.Stopwatch.StartNew();var value=EnvironmentProbe.ReadBasic(Console.WriteLine);
+ Console.WriteLine($"BASIC OS={value.Os}; GPU={value.Gpu}; Driver={value.DriverText}; HAGS={value.Hags}; RegistryConfigured={value.HagsConfigured}; elapsed={timer.Elapsed.TotalSeconds:F3}s");
+}

@@ -9,7 +9,7 @@ class Program
   var app=new Application {ShutdownMode=ShutdownMode.OnExplicitShutdown};int exit=0,count=0;
   app.Dispatcher.BeginInvoke(new Action(async()=>{
    using var gate=new ManualResetEventSlim();int probes=0;
-   var vm=new AppViewModel(probeEnvironment:_=>{Interlocked.Increment(ref probes);gate.Wait();return HardwareInfo.Unknown;});
+   var vm=new AppViewModel(probeEnvironment:_=>{Interlocked.Increment(ref probes);gate.Wait();return HardwareInfo.Unknown;},probeHags:(basic,_)=>basic);
    void Check(bool condition,string name){if(!condition)throw new Exception(name);Console.WriteLine("PASS "+name);count++;}
    void Busy(bool value)=>typeof(AppViewModel).GetProperty("Busy")!.SetValue(vm,value);
    try {
@@ -34,6 +34,25 @@ class Program
     Check(probes==1,"overlapping passive refresh coalesced");
     Busy(false);
     Check(vm.RefreshCommand.CanExecute(null),"refresh reenabled after completion");
+    using var hagsGate=new ManualResetEventSlim();
+    var hagsEntered=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var fast=new AppViewModel(probeEnvironment:_=>new HardwareInfo("fixture RTX",60000,true,"fixture OS","HAGS pending",true),
+      probeHags:(basic,_)=>{hagsEntered.TrySetResult();hagsGate.Wait();return basic with {Hags="fixture runtime enabled",HagsConfigured=false};});
+    try
+    {
+      var fastRefresh=fast.RefreshAsync();
+      Check(await Task.WhenAny(fastRefresh,Task.Delay(3000))==fastRefresh,"refresh completes while HAGS is blocked");
+      await fastRefresh;await hagsEntered.Task;
+      Check(fast.Gpu=="fixture RTX"&&fast.Os=="fixture OS","basic hardware published before HAGS");
+      Check(fast.Hags=="HAGS pending"&&!fast.Busy,"pending HAGS does not own operation lock");
+      Check(fast.ReShadeStatus=="未设置游戏路径","ReShade inspection finishes before HAGS");
+      hagsGate.Set();
+      for(int i=0;i<100&&fast.Hags!="fixture runtime enabled";i++)await Task.Delay(10);
+      Check(fast.Hags=="fixture runtime enabled","HAGS fills independently on completion");
+      var hw=(HardwareInfo)typeof(AppViewModel).GetField("_hardware",BindingFlags.NonPublic|BindingFlags.Instance)!.GetValue(fast)!;
+      Check(hw.HagsConfigured==true,"runtime result cannot change configured safety input");
+    }
+    finally{hagsGate.Set();}
     Console.WriteLine($"{count}/{count} passed");
    }catch(Exception e){Console.Error.WriteLine(e);exit=1;}
    finally{gate.Set();app.Shutdown();}

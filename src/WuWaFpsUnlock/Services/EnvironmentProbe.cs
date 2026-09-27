@@ -12,7 +12,9 @@ public static class EnvironmentProbe
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] private delegate int Enumerate([Out] IntPtr[] handles, out int count);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] private delegate int FullName(IntPtr gpu, StringBuilder name);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] private delegate int DriverVersion(out uint version, StringBuilder branch);
-    public static HardwareInfo Read(Action<string> log)
+    public static HardwareInfo Read(Action<string> log) => ReadHagsRuntime(ReadBasic(log), log);
+
+    public static HardwareInfo ReadBasic(Action<string> log)
     {
         string gpu = "未检测到 NVIDIA 显卡"; int? driver = null; bool ada = false; IntPtr library = IntPtr.Zero; Action? unload = null;
         try
@@ -44,9 +46,14 @@ public static class EnvironmentProbe
                 key?.GetValue("ProductName") as string, key?.GetValue("InstallationType") as string, key?.GetValue("DisplayVersion") as string);
         }
         catch (Exception e) { log("Windows 产品名称读取未完成：" + e.Message); }
-        bool? runtimeHags = DxDiagHagsProbe.Read(gpu, log);
-        string hs = EnvironmentStatus.HagsText(runtimeHags, hags);
-        log("HAGS 检测（匹配 " + gpu + "）：" + hs);
-        return new(gpu,driver,ada,os,hs,hags);
+        return new(gpu,driver,ada,os,"HAGS 运行态检测中…",hags);
+    }
+
+    public static HardwareInfo ReadHagsRuntime(HardwareInfo basic, Action<string> log)
+    {
+        bool? runtimeHags = DxDiagHagsProbe.Read(basic.Gpu, log);
+        string hs = EnvironmentStatus.HagsText(runtimeHags, basic.HagsConfigured);
+        log("HAGS 检测（匹配 " + basic.Gpu + "）：" + hs);
+        return basic with { Hags=hs };
     }
 }

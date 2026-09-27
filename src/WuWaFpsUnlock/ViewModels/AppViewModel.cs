@@ -33,14 +33,16 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     private bool _refreshing;
     private int _refreshGeneration;
     private readonly Func<Action<string>,HardwareInfo> _probeEnvironment;
+    private readonly Func<HardwareInfo,Action<string>,HardwareInfo> _probeHags;
     private readonly Func<string,IEnumerable<string>,CancellationToken,Task<GameDiscoveryResult>> _discover;
     private Process? _game;
     private readonly CancellationTokenSource _lifetime=new();
     private readonly string _logFile;
     private readonly object _logLock=new();
-    public AppViewModel(Func<string,IEnumerable<string>,CancellationToken,Task<GameDiscoveryResult>>? discover=null, Func<Action<string>,HardwareInfo>? probeEnvironment=null)
+    public AppViewModel(Func<string,IEnumerable<string>,CancellationToken,Task<GameDiscoveryResult>>? discover=null, Func<Action<string>,HardwareInfo>? probeEnvironment=null, Func<HardwareInfo,Action<string>,HardwareInfo>? probeHags=null)
     {
-        _probeEnvironment=probeEnvironment??EnvironmentProbe.Read;
+        _probeEnvironment=probeEnvironment??EnvironmentProbe.ReadBasic;
+        _probeHags=probeHags??EnvironmentProbe.ReadHagsRuntime;
         _discover=discover??((root,hints,token)=>GameDiscoveryService.DiscoverAsync(root,hints,true,token));
         Directory.CreateDirectory(AppPaths.Data);Directory.CreateDirectory(Path.Combine(AppPaths.Data,"logs"));
         _logFile=Path.Combine(AppPaths.Data,"logs",DateTime.Now.ToString("yyyyMMdd-HHmmss",CultureInfo.InvariantCulture)+".log");
@@ -167,6 +169,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         var hardware=await Task.Run(()=>_probeEnvironment(Log));
         if(_closing||generation!=_refreshGeneration)return;
         _hardware=hardware;NotifyAll();
+        _ = RefreshHagsAsync(hardware,generation);
         await RefreshRollbackAvailabilityAsync();
         if(_closing||generation!=_refreshGeneration||(passive&&Busy))return;
         var snapshot=_settings.Clone();
@@ -193,6 +196,22 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         _reShade=reShade;_deployState=deployState;
         _packageState=File.Exists(_settings.PackageManifest)?"文件包："+Path.GetFileName(Path.GetDirectoryName(_settings.PackageManifest)):"尚未导入 MFG 文件包；点击开始部署时选择清单。";
         NotifyAll();
+    }
+    private async Task RefreshHagsAsync(HardwareInfo basic,int generation)
+    {
+        try
+        {
+            var completed=await Task.Run(()=>_probeHags(basic,Log));
+            if(_closing||generation!=_refreshGeneration||_hardware.Gpu!=basic.Gpu||_hardware.Driver!=basic.Driver)return;
+            // Runtime diagnostics are display-only; configured HAGS and all safety inputs stay unchanged.
+            _hardware=_hardware with { Hags=completed.Hags };Notify(nameof(Hags));
+        }
+        catch(Exception e)
+        {
+            if(_closing||generation!=_refreshGeneration)return;
+            _hardware=_hardware with { Hags=EnvironmentStatus.HagsText(null,basic.HagsConfigured) };
+            Notify(nameof(Hags));Log("HAGS 后台检测未完成："+e.Message);
+        }
     }
     private async Task DeployAsync()
     {

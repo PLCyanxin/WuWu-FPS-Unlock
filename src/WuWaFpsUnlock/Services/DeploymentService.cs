@@ -23,7 +23,7 @@ public sealed class DeploymentService(Action<string> log)
         if(before.State=="Conflict")throw new IOException(before.Description);
         var plan=await PackageReader.PlanAsync(manifest,s.PackageManifest,s.GameRoot,Path.GetDirectoryName(exe)!,before.AddonDirectory,token);
         await EmbeddedDynamicAddon.AppendToPlanAsync(plan,s,before.AddonDirectory,token);
-        var configuration=MfgDeploymentConfiguration.Create(s,manifest,EnvironmentProbe.Read(log));
+        var configuration=MfgDeploymentConfiguration.Create(s,manifest,EnvironmentProbe.ReadBasic(log));
         ApprovalFingerprint=await PlanFingerprint(s,plan,before,configuration,token);
         var lines=new List<string>{"游戏根："+s.GameRoot,"原装 Shipping："+exe,"ReShade："+before.Description,"ReShade 配置："+before.Ini};
         lines.Add(configuration.PreviewText);
@@ -74,7 +74,7 @@ public sealed class DeploymentService(Action<string> log)
         if(!s.MfgSelected){log("没有选择多帧生成部署：未改动 ReShade、DLSS 和 Streamline。");return;}
         await CheckBaselineAsync(s,token);
         if(!File.Exists(s.PackageManifest))throw new FileNotFoundException("尚未提供完整的 MFG 文件包清单。");
-        var manifest=PackageReader.Load(s.PackageManifest);var hardware=EnvironmentProbe.Read(log);
+        var manifest=PackageReader.Load(s.PackageManifest);var hardware=EnvironmentProbe.ReadBasic(log);
         if(!hardware.IsAdaGeForce)throw new InvalidOperationException("未确认 GeForce RTX 40 系显卡。仅阻止 MFG 部署，不影响普通 FPS 启动。");
         if(hardware.Driver is null)log("驱动状态未知，不能确认 Dynamic；不把未知报告为不支持。");
         if(manifest.FixedMinimumDriver is int minimum && (hardware.Driver is null || hardware.Driver<minimum))throw new InvalidOperationException("驱动不满足该文件包声明的 Fixed 条件。");
