@@ -1,8 +1,8 @@
 {
   "file": "wuwa-dynamicmax.addon64",
   "version": "1.0.0",
-  "length": 174592,
-  "sha256": "bbae0845af24ce1eedba0fb41b62da580a64772b3def8539d7ccd010c04265bf",
+  "length": 188928,
+  "sha256": "c8fb6306dad15e763228da9cd27a33d8f587e310a9852859c09c38fabe29c850",
   "source": "tools/DynamicController",
   "license": "MIT",
   "buildScript": "tools/DynamicController/Build.ps1",
@@ -16,6 +16,7 @@
     "scope": "Native isolated fixtures and reference runtime read as data only",
     "configurationApiAssertions": 12,
     "gameIntegration": "Not yet tested",
-    "runtimeFixtureAssertions": 117
+    "runtimeFixtureAssertions": 117,
+    "nativeCursorIsolatedAssertions": 23
   }
 }

@@ -16,6 +16,8 @@ The same per-frame bound flows through native selection, RSYNC and the copied NG
 
 ## Build and test
 
+The companion also supplies a guarded Windows native cursor while the ReShade menu is open. This separates pointer motion from the game's base render rate; it does not increase the menu's render rate. Software cursor fallback remains active unless the native cursor is confirmed visible. See [native cursor lifecycle and limits](NATIVE_CURSOR.md).
+
 ```powershell
 ./Build.ps1 -DependencyDirectory E:/path/to/renodx-mfg-build -OutputDirectory E:/path/to/build
 ```

@@ -5,6 +5,7 @@
 #include <deps/imgui/imgui.h>
 #include <include/reshade.hpp>
 #include "dynamiclive.hpp"
+#include "native_cursor.hpp"
 namespace {
 namespace live = mfgunlock::dynamiclive;
 constexpr const char* kSection = "WuWa.DynamicMax";
@@ -84,6 +85,27 @@ void Overlay(reshade::api::effect_runtime*) {
  }
  DrawControls(false);
 }
+void OnOverlayCursor(reshade::api::effect_runtime* runtime) {
+ // ReShade supplies a compatible IO snapshot. Never write through GetIO():
+ // older ABI versions may receive a converted copy rather than the live IO.
+ const auto cursor = ImGui::GetMouseCursor();
+ using Shape = wuwa::native_cursor::Shape;
+ Shape shape = Shape::Arrow;
+ switch(cursor) {
+  case ImGuiMouseCursor_TextInput: shape=Shape::Text; break;
+  case ImGuiMouseCursor_ResizeAll: shape=Shape::ResizeAll; break;
+  case ImGuiMouseCursor_ResizeNS: shape=Shape::ResizeNS; break;
+  case ImGuiMouseCursor_ResizeEW: shape=Shape::ResizeEW; break;
+  case ImGuiMouseCursor_ResizeNESW: shape=Shape::ResizeNESW; break;
+  case ImGuiMouseCursor_ResizeNWSE: shape=Shape::ResizeNWSE; break;
+  case ImGuiMouseCursor_Hand: shape=Shape::Hand; break;
+  case ImGuiMouseCursor_NotAllowed: shape=Shape::NotAllowed; break;
+ }
+ const bool wanted=ImGui::GetIO().MouseDrawCursor && cursor!=ImGuiMouseCursor_None;
+ if(wuwa::native_cursor::Update(static_cast<HWND>(runtime->get_hwnd()),wanted,shape))
+  ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+}
+void OnDestroyRuntime(reshade::api::effect_runtime*) { wuwa::native_cursor::Stop(); }
 }
 extern "C" __declspec(dllexport) void DrawWuWaDynamicMaximumInTableV1(reshade::api::effect_runtime*) { DrawControls(true); }
 extern "C" __declspec(dllexport) constexpr const char* NAME = "WuWa Dynamic Maximum";
@@ -93,11 +115,15 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID reserved) {
   if (!reshade::register_addon(module)) return FALSE;
   LoadConfig();
   reshade::register_overlay(kOverlayTitle, Overlay);
+  reshade::register_event<reshade::addon_event::reshade_overlay>(OnOverlayCursor);
+  reshade::register_event<reshade::addon_event::destroy_effect_runtime>(OnDestroyRuntime);
   reshade::register_event<reshade::addon_event::present>(OnPresent);
  } else if (reason == DLL_PROCESS_DETACH && !reserved) {
   // A successfully installed hook pins this module. Explicit unload is only
   // possible before installation; process termination needs no patch transaction.
   user_enabled.store(false);
+  reshade::unregister_event<reshade::addon_event::reshade_overlay>(OnOverlayCursor);
+  reshade::unregister_event<reshade::addon_event::destroy_effect_runtime>(OnDestroyRuntime);
   reshade::unregister_event<reshade::addon_event::present>(OnPresent);
   reshade::unregister_overlay(kOverlayTitle, Overlay);
   reshade::unregister_addon(module);
