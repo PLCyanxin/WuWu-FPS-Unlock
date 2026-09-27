@@ -1,7 +1,7 @@
 {
   "sourceFile": "src/addons/mfgunlock/addon.cpp",
   "upstreamTag": "1.1.5",
-  "upstreamCommit": "066c734259f3672559078e68d9c7f0616bb6c1b0",
+  "upstreamCommit": "4406e4fadf4423afb500d8d9a08d5ace9a148d19",
   "referenceFileSha256": "a5e781a2c3d1bf1ab2a30ff26401e22f7a44281b1246be8d72cc225c2fb7e529",
   "uiFunctions": [
     { "name": "OnRegisterOverlay", "startAnchor": "void OnRegisterOverlay(reshade::api::effect_runtime* runtime)", "nextAnchor": "void LoadConfig()", "lineHint": 4193 },

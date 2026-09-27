@@ -56,25 +56,36 @@ void SaveRequest(int request) {
  live::requested.store(request);
  reshade::set_config_value(nullptr, kSection, live::kConfigKey, request);
 }
-void Overlay(reshade::api::effect_runtime*) {
- // ReShade opens overlays by title. A shared title appends to the same window;
- // keep this add-on's widget IDs separate from the upstream controls.
+void DrawControls(bool table) {
  ImGui::PushID(kSection);
- ImGui::Separator();
+ if (table) { ImGui::TableNextRow(); ImGui::TableNextColumn(); ImGui::TextUnformatted("启用 Dynamic 最大倍率限制"); ImGui::TableNextColumn(); }
+ else ImGui::Separator();
  bool enabled = user_enabled.load();
- if (ImGui::Checkbox("Enable Dynamic maximum", &enabled)) {
+ if (ImGui::Checkbox(table ? "##enabled" : "启用 Dynamic 最大倍率限制", &enabled)) {
   user_enabled.store(enabled);
   reshade::set_config_value(nullptr, kSection, "Enabled", enabled ? 1 : 0);
  }
- if (!live::installed.load() && ImGui::Button("Retry")) { live::TryInstall(user_enabled, native_mode_guard); LogStatus(); }
+ if (!live::installed.load() && ImGui::Button("重试")) { live::TryInstall(user_enabled, native_mode_guard); LogStatus(); }
  int request = live::requested.load(), selected = request == 0 ? 0 : request - 1;
- ImGui::TextUnformatted("Dynamic maximum multiplier");
- if (ImGui::Combo("##dynamic_max", &selected, "Native bound (restore)\0Up to 2x\0Up to 3x\0Up to 4x\0Up to 5x\0Up to 6x\0")) {
+ if (table) { ImGui::TableNextRow(); ImGui::TableNextColumn(); }
+ ImGui::TextUnformatted("Dynamic 最大倍率");
+ if (table) { ImGui::TableNextColumn(); ImGui::SetNextItemWidth(-1.0f); }
+ if (ImGui::Combo("##dynamic_max", &selected, "恢复原生上限\0最高 2x\0最高 3x\0最高 4x\0最高 5x\0最高 6x\0")) {
   SaveRequest(selected == 0 ? 0 : selected + 1);
  }
  ImGui::PopID();
 }
+void Overlay(reshade::api::effect_runtime*) {
+ HMODULE host = nullptr;
+ if (GetModuleHandleExW(0, L"renodx-mfgunlock.addon64", &host)) {
+  const bool integrated = GetProcAddress(host, "WuWaDynamicMaximumUiBridgeV1") != nullptr;
+  FreeLibrary(host);
+  if (integrated) return; // The host draws these controls beside native Dynamic.
+ }
+ DrawControls(false);
 }
+}
+extern "C" __declspec(dllexport) void DrawWuWaDynamicMaximumInTableV1(reshade::api::effect_runtime*) { DrawControls(true); }
 extern "C" __declspec(dllexport) constexpr const char* NAME = "WuWa Dynamic Maximum";
 extern "C" __declspec(dllexport) constexpr const char* DESCRIPTION = "Version-checked native Dynamic frame maximum companion";
 BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID reserved) {

@@ -1,8 +1,8 @@
 # MFG Unlock 简体中文界面映射
 
-`zh-CN.json` 是区分大小写的“原始 C++ 字符串字面量内容 → 中文内容”映射。基线为上游 `MFGAdaUnlock-RenoDx` 的 `1.1.5`（提交 `066c734259f3672559078e68d9c7f0616bb6c1b0`），目标文件为 `src/addons/mfgunlock/addon.cpp`。此映射仅描述界面文字，不更改插件功能。
+`zh-CN.json` 是区分大小写的“原始 C++ 字符串字面量内容 → 中文内容”映射。基线为上游 `MFGAdaUnlock-RenoDx` 的 `1.1.5`（提交 `4406e4fadf4423afb500d8d9a08d5ace9a148d19`），目标文件为 `src/addons/mfgunlock/addon.cpp`。此映射仅描述界面文字，不更改插件功能。
 
-应用时使用 C++ 字符串词法解析和函数／调用边界，不能全文件替换。JSON 中的 `\\n` 表示源码中的转义字符 `\n`；相邻 C++ 字符串分别映射，再由编译器连接。请按 UTF-8 写入，并使用 `/utf-8` 编译。保留映射的大小写区别，例如 `FRAME GENERATION` 与 `Frame Generation`。
+映射仅在 ImGui 显示调用的包装器中应用，不全局替换原始字符串。脚本包装文件内已支持的 ImGui 绘制调用，包括目前未调用的旧界面函数。JSON 中的 `\\n` 表示源码中的转义字符 `\n`；相邻 C++ 字符串组合后生成对应映射。请按 UTF-8 写入，并使用 `/utf-8` 编译。保留映射的大小写区别，例如 `FRAME GENERATION` 与 `Frame Generation`。
 
 ## 应用范围
 
@@ -28,3 +28,17 @@
 ## 验证
 
 映射共有 366 项。制作时检查了 JSON 可解析性、printf 格式项顺序一致、没有 `##` 内部 ID 或配置键条目。应用补丁后仍须检查配置键／API 调用不变、诊断导出不变、活动 UI 的英文遗漏、中文字体字形及实际换行。编译或字符串覆盖率不代表游戏内界面已经验收。
+
+构建入口：Build.ps1。prepare.py 仅把 ImGui 的可见绘制调用转交 ui_zh.hpp，运行时翻译显示参数，不更改共享状态、配置键或诊断字符串。原始生成数据必须通过 recover_kernel_tables.py 从指定上游发布二进制完整恢复并验证后提供；缺少表时构建停止。
+
+## 构建与原版数据校验
+
+准备标签 1.1.5 的上游源码及 Build.ps1 所需依赖。原始 addon 必须与 source.json 中 upstream.assetSha256 一致；不得使用已定制的 addon 作为恢复输入。
+
+```powershell
+python tools/MfgUiIntegration/recover_kernel_tables.py recover --root . --original <原始1.1.5-addon路径> --output <生成数据目录>
+./tools/MfgUiIntegration/Build.ps1 -UpstreamDirectory upstream/companion-origin -GeneratedDirectory <生成数据目录> -DependencyDirectory dependencies/renodx-build -OutputDirectory <全新输出目录>
+python tools/MfgUiIntegration/recover_kernel_tables.py verify --original <原始1.1.5-addon路径> --rebuilt <输出目录>/renodx-mfgunlock.addon64 --report <校验报告路径>
+```
+
+校验器逐字节比较 13 个 CUDA payload 及全部表字段和指针关系。此校验仅证明数据保全，不代替游戏内功能验收。界面翻译使用中文标签和原文 ID 后缀，首次切换到汉化版时部分折叠状态可能重置；功能配置键不变。

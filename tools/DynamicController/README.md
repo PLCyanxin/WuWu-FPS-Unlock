@@ -1,6 +1,6 @@
 # WuWa Dynamic Maximum
 
-Independent ReShade companion: `wuwa-dynamicmax.addon64`. Overlay: **MFG Unlock** (shared with the upstream controls); exported add-on NAME: **WuWa Dynamic Maximum**. Widget IDs use a private scope; configuration and plugin identity stay independent. This directory can be copied and built independently; it imports no MFG Unlock implementation or private state. The unmodified upstream MFG Unlock 1.1.5 remains a separate addon.
+Independent ReShade companion: `wuwa-dynamicmax.addon64`. Overlay: **MFG Unlock** (shared with the upstream controls); exported add-on NAME: **WuWa Dynamic Maximum**. Widget IDs use a private scope; configuration and plugin identity stay independent. This directory can be copied and built independently; it imports no MFG Unlock implementation or private state. MFG Unlock 1.1.5 remains a separate addon; the optional Chinese UI integration calls the versioned DrawWuWaDynamicMaximumInTableV1 export next to native Dynamic settings. Without that bridge, the companion keeps its shared-overlay fallback.
 
 The controls enable/disable the companion and select native bound (0) or a 2–6x maximum. Configuration uses `[WuWa.DynamicMax] Enabled` and `DynamicLiveMaxMultiplier`. A missing/invalid maximum defaults to 4. When the new maximum key is absent, the old `[RenoDX.MFGUnlock] DynamicLiveMaxMultiplier` is copied once, without changing that section. The retired static `DynamicMaxMultiplier` is never read. ReShade owns persistence; its void setter cannot report disk-write failure to the companion.
 

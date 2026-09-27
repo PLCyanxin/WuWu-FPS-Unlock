@@ -16,12 +16,12 @@ if not __debug__:
     raise RuntimeError("Run without -O: validation must remain enabled")
 
 
-def recover(root, output):
+def recover(root, output, original):
     import pathlib,struct as s,hashlib,importlib.util,json
     ROOT=pathlib.Path(root).resolve()
     OUT=pathlib.Path(output).resolve()
     OUT.mkdir(parents=True, exist_ok=True)
-    b=(ROOT/'release-assets/mfg/renodx-mfgunlock.addon64').read_bytes()
+    b=pathlib.Path(original).read_bytes()
     assert hashlib.sha256(b).hexdigest()=='0d04d858a62d3d19e7e3d478c0b8c46fe3ac43ec9fd11e4abb15617bd291d71a'
     p=s.unpack_from('<I',b,60)[0];base=s.unpack_from('<Q',b,p+48)[0];sec=p+24+s.unpack_from('<H',b,p+20)[0]
     sections=[s.unpack_from('<IIII',b,sec+40*i+8) for i in range(s.unpack_from('<H',b,p+6)[0])]
@@ -208,6 +208,7 @@ def main():
     commands = parser.add_subparsers(dest='command', required=True)
     recovery = commands.add_parser('recover')
     recovery.add_argument('--root', required=True, type=pathlib.Path)
+    recovery.add_argument('--original', required=True, type=pathlib.Path)
     recovery.add_argument('--output', required=True, type=pathlib.Path)
     verification = commands.add_parser('verify')
     verification.add_argument('--original', required=True, type=pathlib.Path)
@@ -215,7 +216,7 @@ def main():
     verification.add_argument('--report', type=pathlib.Path)
     args = parser.parse_args()
     if args.command == 'recover':
-        recover(args.root, args.output)
+        recover(args.root, args.output, args.original)
     else:
         report = json.dumps(verify(args.original, args.rebuilt), indent=2)
         if args.report:

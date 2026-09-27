@@ -1,16 +1,18 @@
 {
   "file": "renodx-mfgunlock.addon64",
   "addonVersion": "1.1.5",
-  "length": 931328,
-  "sha256": "0d04d858a62d3d19e7e3d478c0b8c46fe3ac43ec9fd11e4abb15617bd291d71a",
-  "fileVersion": "0.2026.0909.1640",
+  "length": 965632,
+  "sha256": "60152594f035ad0bd2b0b403d6791f733f9b9e151a83c1226a1256067a40fc16",
+  "fileVersion": "1.1.5.1",
   "upstream": {
     "tag": "1.1.5",
     "assetDigestVerified": true,
     "commit": "4406e4fadf4423afb500d8d9a08d5ace9a148d19",
     "release": "https://github.com/mavismmg/MFGAdaUnlock-RenoDx/releases/tag/1.1.5",
     "license": "MIT",
-    "repository": "https://github.com/mavismmg/MFGAdaUnlock-RenoDx"
+    "repository": "https://github.com/mavismmg/MFGAdaUnlock-RenoDx",
+    "assetSha256": "0d04d858a62d3d19e7e3d478c0b8c46fe3ac43ec9fd11e4abb15617bd291d71a"
   },
-  "modification": "Unmodified upstream release binary. Dynamic maximum control is supplied by a separate companion addon."
+  "modification": "Chinese display layer and versioned UI bridge beside NVIDIA Dynamic MFG. Runtime maximum control remains in the independent companion. All 13 original CUDA payloads and their table metadata are preserved byte-for-byte.",
+  "buildScript": "tools/MfgUiIntegration/Build.ps1"
 }

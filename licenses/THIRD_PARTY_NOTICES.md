@@ -10,7 +10,7 @@
 
 完整版包含维护者提供的 ReShade 6.8.0 Full Add-on 安装器、MFG addon 和 DLSS / Streamline 材料。相关组件的版权与使用条件属于其各自权利人。
 
-`renodx-mfgunlock.addon64` 使用 [mavismmg/MFGAdaUnlock-RenoDx 1.1.5](https://github.com/mavismmg/MFGAdaUnlock-RenoDx/releases/tag/1.1.5) 的原始发布文件，源码标签对应提交 `4406e4fadf4423afb500d8d9a08d5ace9a148d19`。本项目未修改该文件。
+`renodx-mfgunlock.addon64` 基于 [mavismmg/MFGAdaUnlock-RenoDx 1.1.5](https://github.com/mavismmg/MFGAdaUnlock-RenoDx/releases/tag/1.1.5)，源码标签对应提交 `4406e4fadf4423afb500d8d9a08d5ace9a148d19`。本项目增加中文显示层与倍率控件的界面桥接，源码和构建入口位于 `tools/MfgUiIntegration`；此文件是定制构建，并非上游原始发布文件。原版 CUDA 数据及其索引表保持不变。
 
 Dynamic 倍率上限由独立的 `wuwa-dynamicmax.addon64` 提供。其 MIT 许可、源码和构建说明位于 `tools/DynamicController`。该组件只适配经过核对的运行库版本，不修改驱动配置。启动器内嵌此组件，并在部署时安装到游戏的 ReShade addon 目录。
 
