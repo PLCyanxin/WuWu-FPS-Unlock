@@ -29,9 +29,10 @@ public sealed class ReShadeService(Action<string> log)
         string addon=dir;
         if(File.Exists(ini))
         {
-            if(!string.IsNullOrWhiteSpace(IniDocument.Load(ini).Get("INSTALL","BasePath")))
+            var document=IniDocument.Load(ini);
+            if(!string.IsNullOrWhiteSpace(document.Get("INSTALL","BasePath")))
                 return new("Conflict",proxy,ini,dir,"ReShade 配置含安装重定向 BasePath；保留原安装并停止自动写入。");
-            string? custom=IniDocument.Load(ini).Get("ADDON","AddonPath");
+            string? custom=document.Get("ADDON","AddonPath");
             if(!string.IsNullOrWhiteSpace(custom))
             {
                 addon=Path.GetFullPath(Path.IsPathRooted(custom)?custom:Path.Combine(dir,custom));

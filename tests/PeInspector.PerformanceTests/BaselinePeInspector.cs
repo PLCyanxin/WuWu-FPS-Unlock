@@ -1,20 +1,16 @@
+// Frozen pre-optimization implementation for fixture parity and allocation benchmarks only.
 using System.Diagnostics;
 using System.Reflection.PortableExecutable;
 using System.Text;
 namespace WuWaFpsUnlock.Services;
-public static class PeInspector
+public static class BaselinePeInspector
 {
     public static bool IsAmd64(string path)
     { using var stream=File.OpenRead(path); using var pe=new PEReader(stream); return pe.PEHeaders.CoffHeader.Machine==Machine.Amd64; }
-    private static byte[] ReadProxy(string path)
+    public static HashSet<string> Exports(string path)
     {
-        using var stream=File.OpenRead(path);
-        if(stream.Length>128*1024*1024)throw new InvalidDataException("不读取异常大小的代理 DLL。");
-        var bytes=new byte[checked((int)stream.Length)];stream.ReadExactly(bytes);return bytes;
-    }
-    public static HashSet<string> Exports(string path)=>Exports(ReadProxy(path));
-    private static HashSet<string> Exports(byte[] b)
-    {
+        if(new FileInfo(path).Length>128*1024*1024) throw new InvalidDataException("不读取异常大小的代理 DLL。");
+        byte[] b=File.ReadAllBytes(path); using var reader=new BinaryReader(new MemoryStream(b));
         int pe=I32(0x3c); if(pe<0 || pe+256>b.Length || I32(pe)!=0x00004550) throw new BadImageFormatException();
         int count=U16(pe+6), opt=pe+24, optSize=U16(pe+20), section=opt+optSize;
         int dir=opt+(U16(opt)==0x20b?112:96); uint exportRva=U32(dir);
@@ -34,11 +30,11 @@ public static class PeInspector
     public static string Version(string path)=>FileVersionInfo.GetVersionInfo(path).FileVersion??"未知";
     public static string AddonBuild(string path)
     {
-        var bytes=ReadProxy(path);
-        var exports=Exports(bytes);
+        var exports=Exports(path);
         if(!exports.Contains("ReShadeVersion")) return "Unknown";
-        if(bytes.AsSpan().IndexOf("only limited add-on functionality"u8)>=0) return "Limited";
-        if(exports.Contains("ReShadeRegisterAddon") && bytes.AsSpan().IndexOf("Loading add-on from"u8)>=0) return "FullCandidate";
+        var ascii=Encoding.ASCII.GetString(File.ReadAllBytes(path));
+        if(ascii.Contains("only limited add-on functionality",StringComparison.Ordinal)) return "Limited";
+        if(exports.Contains("ReShadeRegisterAddon") && ascii.Contains("Loading add-on from",StringComparison.Ordinal)) return "FullCandidate";
         return "UnknownReShade";
     }
 }

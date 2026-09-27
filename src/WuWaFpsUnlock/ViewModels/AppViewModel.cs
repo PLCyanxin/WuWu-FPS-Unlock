@@ -64,12 +64,12 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         CleanCommand=new(CleanAsync,()=>!Busy&&!IsGameRunning,ReportError);
         StartCommand=new(StartAsync,()=>!Busy&&_validFps,ReportError);
         InitializeUpdates();
-        _monitor.Tick+=Monitor;_monitor.Start();
+        _monitor.Tick+=Monitor;
         RememberValidSelection();
         Log("鸣潮 FPS Unlock 1.2.2RC 启动。");
     }
-    public bool Busy {get=>_busy;private set{_busy=value;NotifyAll();}}
-    public bool IsGameRunning {get=>_running;private set{_running=value;NotifyAll();}}
+    public bool Busy {get=>_busy;private set{if(_busy==value)return;_busy=value;NotifyAll();}}
+    public bool IsGameRunning {get=>_running;private set{if(_running==value)return;_running=value;if(value)_monitor.Start();else _monitor.Stop();NotifyAll();}}
     public bool CanChangeFpsMode=>!Busy;
     public bool CanEditFps=>!Busy&&FpsEnabled;
     public bool CanEditSettings=>!Busy&&!IsGameRunning;

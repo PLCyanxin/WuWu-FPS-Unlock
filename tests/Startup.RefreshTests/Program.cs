@@ -13,6 +13,14 @@ class Program
    void Check(bool condition,string name){if(!condition)throw new Exception(name);Console.WriteLine("PASS "+name);count++;}
    void Busy(bool value)=>typeof(AppViewModel).GetProperty("Busy")!.SetValue(vm,value);
    try {
+    var monitor=(System.Windows.Threading.DispatcherTimer)typeof(AppViewModel).GetField("_monitor",BindingFlags.NonPublic|BindingFlags.Instance)!.GetValue(vm)!;
+    Check(!monitor.IsEnabled,"idle VM schedules no process monitor ticks");
+    typeof(AppViewModel).GetProperty("IsGameRunning")!.SetValue(vm,true);
+    Check(monitor.IsEnabled&&monitor.Interval==TimeSpan.FromSeconds(1),"running monitor retains one-second interval");
+    typeof(AppViewModel).GetProperty("IsGameRunning")!.SetValue(vm,false);
+    Check(!monitor.IsEnabled,"session end stops idle polling");
+    int redundant=0;vm.PropertyChanged+=(_,_)=>redundant++;
+    Busy(false);Check(redundant==0,"identical Busy assignment avoids all binding/command notifications");
     var settingsBanner=new WuWaFpsUnlock.Controls.HeroBanner();
     Check(settingsBanner.ShowVersion,"settings banner retains version by default");
     var mainBanner=new WuWaFpsUnlock.Controls.HeroBanner {ShowVersion=false};
