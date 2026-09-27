@@ -1,0 +1,9 @@
+# Native cursor adapter
+
+`native_cursor.hpp` is independent of the ImGui ABI. On each ReShade overlay callback, pass the current software-cursor intent and requested shape to `wuwa::native_cursor::Update(HWND, bool, Shape)`. Only a `true` result permits `ImGui::SetMouseCursor(ImGuiMouseCursor_None)` for that frame. Pass `false` when the menu closes; call `Stop()` when the runtime is destroyed. Never call these functions from `DllMain`.
+
+The adapter accepts only a window owned by this process. A target-thread message hook installs a window subclass on its owner thread, then removes itself. The owner thread manages the native cursor and its own bounded visibility-count increments. Focus loss, leaving the client area, menu closure, window destruction, and a 250 ms render-heartbeat timeout restore those increments. Visibility failure retains the software-cursor fallback. Hook installation is rate limited; an unresponsive bootstrap is cancelled after one second.
+
+The module containing callbacks is pinned until process exit. This intentionally prevents runtime unloading, including after `Stop()`, so queued window, hook, and timer callbacks cannot reference unloaded code. The small threadpool timer remains allocated for process lifetime. A blocked owner message thread cannot process restoration until it resumes; the adapter does not manipulate another thread's visibility counter to work around that condition.
+
+Run `Test-NativeCursor.ps1` with installed Visual C++ x64 build tools. Tests use a hidden inert window and fake visibility counters. They verify owner-thread installation/removal, bootstrap removal, fallback, heartbeat policy, bounded counter restoration, and window destruction without moving the mouse, displaying a window, executing game code, or changing the real visibility counter. They do not validate in-game cursor smoothness or visible native-cursor activation.
