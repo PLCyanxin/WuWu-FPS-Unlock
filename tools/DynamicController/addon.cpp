@@ -8,6 +8,7 @@
 namespace {
 namespace live = mfgunlock::dynamiclive;
 constexpr const char* kSection = "WuWa.DynamicMax";
+constexpr const char* kOverlayTitle = "MFG Unlock";
 std::atomic_bool user_enabled{true};
 // Native callsite and snapshot mode, not a second UI toggle, decide Dynamic.
 const std::atomic_bool native_mode_guard{true};
@@ -56,6 +57,10 @@ void SaveRequest(int request) {
  reshade::set_config_value(nullptr, kSection, live::kConfigKey, request);
 }
 void Overlay(reshade::api::effect_runtime*) {
+ // ReShade opens overlays by title. A shared title appends to the same window;
+ // keep this add-on's widget IDs separate from the upstream controls.
+ ImGui::PushID(kSection);
+ ImGui::Separator();
  bool enabled = user_enabled.load();
  if (ImGui::Checkbox("Enable Dynamic maximum", &enabled)) {
   user_enabled.store(enabled);
@@ -67,6 +72,7 @@ void Overlay(reshade::api::effect_runtime*) {
  if (ImGui::Combo("##dynamic_max", &selected, "Native bound (restore)\0Up to 2x\0Up to 3x\0Up to 4x\0Up to 5x\0Up to 6x\0")) {
   SaveRequest(selected == 0 ? 0 : selected + 1);
  }
+ ImGui::PopID();
 }
 }
 extern "C" __declspec(dllexport) constexpr const char* NAME = "WuWa Dynamic Maximum";
@@ -75,14 +81,14 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID reserved) {
  if (reason == DLL_PROCESS_ATTACH) {
   if (!reshade::register_addon(module)) return FALSE;
   LoadConfig();
-  reshade::register_overlay("WuWa Dynamic Maximum", Overlay);
+  reshade::register_overlay(kOverlayTitle, Overlay);
   reshade::register_event<reshade::addon_event::present>(OnPresent);
  } else if (reason == DLL_PROCESS_DETACH && !reserved) {
   // A successfully installed hook pins this module. Explicit unload is only
   // possible before installation; process termination needs no patch transaction.
   user_enabled.store(false);
   reshade::unregister_event<reshade::addon_event::present>(OnPresent);
-  reshade::unregister_overlay("WuWa Dynamic Maximum", Overlay);
+  reshade::unregister_overlay(kOverlayTitle, Overlay);
   reshade::unregister_addon(module);
  }
  return TRUE;

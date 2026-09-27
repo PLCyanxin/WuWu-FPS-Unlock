@@ -2,7 +2,7 @@
   "file": "wuwa-dynamicmax.addon64",
   "version": "1.0.0",
   "length": 174080,
-  "sha256": "d979e2a2f877abe8be398fba9a8e9ce608db2cccc0f197899bc023b6a08eb764",
+  "sha256": "1035fbc37f296fcfeae865c4ff6503e870f7d16a924645b2967305e1bfecc89b",
   "source": "tools/DynamicController",
   "license": "MIT",
   "buildScript": "tools/DynamicController/Build.ps1",
