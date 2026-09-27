@@ -5,6 +5,7 @@ using System.Windows.Media.Imaging;
 namespace WuWaFpsUnlock.Controls;
 public partial class HeroBanner : UserControl
 {
+    public bool ShowVersion { get=>VersionLabel.Visibility==Visibility.Visible; set=>VersionLabel.Visibility=value?Visibility.Visible:Visibility.Collapsed; }
     private static readonly BitmapSource Cover = LoadCover();
     public HeroBanner() { InitializeComponent(); SizeChanged += (_,_) => InvalidateVisual(); }
     private static BitmapSource LoadCover()

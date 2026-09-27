@@ -23,20 +23,24 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     private FpsSession? _fpsSession;
     private UserSettings _settings;
     private HardwareInfo _hardware=HardwareInfo.Unknown;
-    private bool _busy,_running,_validFps=true;
+    private bool _busy,_running,_starting,_validFps=true;
     private string _status="请先在设置中确认游戏路径。",_logs="",_fpsInput="240",_reShade="未设置游戏路径",_deployState="未检测",_packageState="";
     private readonly Dispatcher _dispatcher=Application.Current.Dispatcher;
     private readonly DispatcherTimer _monitor=new(){Interval=TimeSpan.FromSeconds(1)};
     private string _lastValidExe="";
 
     private bool _findingGame;
+    private bool _refreshing;
+    private int _refreshGeneration;
+    private readonly Func<Action<string>,HardwareInfo> _probeEnvironment;
     private readonly Func<string,IEnumerable<string>,CancellationToken,Task<GameDiscoveryResult>> _discover;
     private Process? _game;
     private readonly CancellationTokenSource _lifetime=new();
     private readonly string _logFile;
     private readonly object _logLock=new();
-    public AppViewModel(Func<string,IEnumerable<string>,CancellationToken,Task<GameDiscoveryResult>>? discover=null)
+    public AppViewModel(Func<string,IEnumerable<string>,CancellationToken,Task<GameDiscoveryResult>>? discover=null, Func<Action<string>,HardwareInfo>? probeEnvironment=null)
     {
+        _probeEnvironment=probeEnvironment??EnvironmentProbe.Read;
         _discover=discover??((root,hints,token)=>GameDiscoveryService.DiscoverAsync(root,hints,true,token));
         Directory.CreateDirectory(AppPaths.Data);Directory.CreateDirectory(Path.Combine(AppPaths.Data,"logs"));
         _logFile=Path.Combine(AppPaths.Data,"logs",DateTime.Now.ToString("yyyyMMdd-HHmmss",CultureInfo.InvariantCulture)+".log");
@@ -53,7 +57,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         IncrementFpsCommand=new(()=>TargetFps=Math.Min(420,TargetFps+1),()=>CanEditFps);
         DecrementFpsCommand=new(()=>TargetFps=Math.Max(30,TargetFps-1),()=>CanEditFps);
         ClearLogCommand=new(()=>{_logs="";Notify(nameof(Logs));lock(_logLock)File.WriteAllText(_logFile,"");});
-        RefreshCommand=new(RefreshAsync,()=>!Busy,ReportError);
+        RefreshCommand=new(RefreshAsync,()=>!Busy&&!_refreshing,ReportError);
         DeployCommand=new(DeployAsync,()=>!Busy&&!IsGameRunning,ReportError);
         CleanCommand=new(CleanAsync,()=>!Busy&&!IsGameRunning,ReportError);
         StartCommand=new(StartAsync,()=>!Busy&&_validFps,ReportError);
@@ -105,7 +109,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     public string ReShadeStatus=>_reShade;
     public string DeploymentState=>_deployState;
     public string PackageStatus=>_packageState;
-    public string StartLabel=>Busy?"处理中…":IsGameRunning?"游戏中":"开始游戏";
+    public string StartLabel=>_starting?"正在启动…":IsGameRunning?"游戏中":"开始游戏";
     public string DeployLabel=>Busy?"处理中…":"开始部署";
     public RelayCommand OpenSettingsCommand{get;}
     public RelayCommand BrowseDirectoryCommand{get;}
@@ -151,24 +155,42 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     }
     public async Task RefreshAsync()
     {
-        if(Busy)return;Busy=true;
-        try{await RefreshCore();}finally{Busy=false;}
+        // A read-only diagnostic must not reserve the launch/deployment operation lock.
+        if(Busy||_refreshing||_closing)return;
+        _refreshing=true;RefreshCommand.Refresh();
+        try{await RefreshCore(passive:true);}
+        finally{_refreshing=false;RefreshCommand.Refresh();}
     }
-    private async Task RefreshCore()
+    private async Task RefreshCore(bool passive=false)
     {
-        _hardware=await Task.Run(()=>EnvironmentProbe.Read(Log));
+        int generation=++_refreshGeneration;
+        var hardware=await Task.Run(()=>_probeEnvironment(Log));
+        if(_closing||generation!=_refreshGeneration)return;
+        _hardware=hardware;NotifyAll();
         await RefreshRollbackAvailabilityAsync();
+        if(_closing||generation!=_refreshGeneration||(passive&&Busy))return;
+        var snapshot=_settings.Clone();
+        string reShade,deployState;
         try
         {
-            if(!string.IsNullOrWhiteSpace(GameRoot)&&!string.IsNullOrWhiteSpace(GameExe))
+            if(!string.IsNullOrWhiteSpace(snapshot.GameRoot)&&!string.IsNullOrWhiteSpace(snapshot.GameExe))
             {
-                var info=await Task.Run(()=>new ReShadeService(Log).Inspect(_settings.Clone()));_reShade=info.Description;
-                var receipt=AppPaths.LoadReceipt(_settings);
-                _deployState=receipt is null?"未部署":receipt.Status=="PartialFailure"?"上次部署未完成":receipt.Status=="Cleaned"?"已清除本工具插件":receipt.Status=="CleanedWithSkips"?"清除结束 · 部分已变化项目保留":"已有部署记录";
+                var result=await Task.Run(()=>
+                {
+                    var info=new ReShadeService(Log).Inspect(snapshot);
+                    return (info,receipt:AppPaths.LoadReceipt(snapshot));
+                });
+                reShade=result.info.Description;
+                var receipt=result.receipt;
+                deployState=receipt is null?"未部署":receipt.Status=="PartialFailure"?"上次部署未完成":receipt.Status=="Cleaned"?"已清除本工具插件":receipt.Status=="CleanedWithSkips"?"清除结束 · 部分已变化项目保留":"已有部署记录";
             }
-            else{_reShade="未设置游戏路径";_deployState="请先选择路径";}
+            else{reShade="未设置游戏路径";deployState="请先选择路径";}
         }
-        catch(Exception e){_reShade="检测未完成";_deployState=e.Message;Log(e.Message);}
+        catch(Exception e){reShade="检测未完成";deployState=e.Message;Log(e.Message);}
+        // A path change or a newer post-operation refresh invalidates older results.
+        if(_closing||generation!=_refreshGeneration||(passive&&Busy)||
+           snapshot.GameRoot!=GameRoot||snapshot.GameExe!=GameExe)return;
+        _reShade=reShade;_deployState=deployState;
         _packageState=File.Exists(_settings.PackageManifest)?"文件包："+Path.GetFileName(Path.GetDirectoryName(_settings.PackageManifest)):"尚未导入 MFG 文件包；点击开始部署时选择清单。";
         NotifyAll();
     }
@@ -251,7 +273,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     }
     private async Task StartAsync()
     {
-        if(Busy||_closing)return;Busy=true;
+        if(Busy||_closing)return;_starting=true;Busy=true;
         bool startedThisAttempt=false;
         var snapshot=_settings.Clone();
         try
@@ -315,7 +337,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
             }
             throw;
         }
-        finally{Busy=false;}
+        finally{_starting=false;Busy=false;}
     }
     private Task ReleaseFpsSessionAsync()
     {

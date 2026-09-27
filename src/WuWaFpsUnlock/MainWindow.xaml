@@ -6,7 +6,7 @@
 <StackPanel Grid.Column="1" Orientation="Horizontal" shell:WindowChrome.IsHitTestVisibleInChrome="True"><Button Style="{StaticResource CaptionButton}" Click="Minimize_Click" AutomationProperties.Name="最小化"><local:IconView Kind="minus" Width="17" Height="17"/></Button><Button Style="{StaticResource CaptionButton}" Click="Maximize_Click" AutomationProperties.Name="最大化"><local:IconView Kind="max" Width="16" Height="16"/></Button><Button Style="{StaticResource CaptionButton}" Click="Close_Click" AutomationProperties.Name="关闭"><local:IconView Kind="close" Width="18" Height="18"/></Button></StackPanel>
 </Grid>
 <Grid Grid.Row="1" Margin="14,8,14,12"><Grid.RowDefinitions><RowDefinition Height="82"/><RowDefinition Height="12"/><RowDefinition Height="*"/><RowDefinition Height="12"/><RowDefinition Height="48"/></Grid.RowDefinitions>
-<Viewbox Stretch="Fill"><local:HeroBanner Width="530" Height="94"/></Viewbox>
+<Viewbox Stretch="Fill"><local:HeroBanner Width="530" Height="94" ShowVersion="False"/></Viewbox>
 <local:FpsCard Grid.Row="2"/>
 <Grid Grid.Row="4"><Grid.ColumnDefinitions><ColumnDefinition Width="134"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
 <Button Command="{Binding OpenSettingsCommand}" FontSize="16"><StackPanel Orientation="Horizontal"><local:IconView Kind="settings" Width="23" Height="23" Margin="0,0,10,0"/><TextBlock Text="设置"/></StackPanel></Button>
