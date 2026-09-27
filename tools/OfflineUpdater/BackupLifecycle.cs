@@ -38,7 +38,7 @@ internal static partial class Program
         finally{try{if(File.Exists(temp))File.Delete(temp);}catch{}}
     }
 
-    static void PrunePreviousBackups(string root,string currentBackup)
+    static void PrunePreviousBackups(string root,string currentBackup,Action<string>? verifyLegacyProduct=null)
     {
         // Revalidate the new recoverable snapshot before touching an older one.
         var current=ReadSnapshot(currentBackup);RequireUnusedBackup(currentBackup,current);
@@ -48,6 +48,15 @@ internal static partial class Program
             if(Path.GetFullPath(candidate).Equals(Path.GetFullPath(currentBackup),StringComparison.OrdinalIgnoreCase))continue;
             try
             {
+                // Pre-snapshot updaters left only a hashed files.txt journal.
+                // Never reinterpret damaged or partially present Schema-1 metadata as legacy.
+                if(!File.Exists(Scoped(candidate,"snapshot.json")) && !Directory.Exists(Scoped(candidate,"snapshot.json"))
+                    && !File.Exists(Scoped(candidate,"snapshot.sha256")) && !Directory.Exists(Scoped(candidate,"snapshot.sha256")))
+                {
+                    DeleteLegacyBackup(root,candidate,verifyLegacyProduct);
+                    Console.WriteLine("已清理旧格式更新备份："+candidate);
+                    continue;
+                }
                 var previous=ReadSnapshot(candidate);
                 if((!previous.Complete && !File.Exists(Scoped(candidate,RollbackCompleted))) || !Path.GetFullPath(previous.Root).Equals(Path.GetFullPath(root),StringComparison.OrdinalIgnoreCase))continue;
                 DeleteVerifiedBackup(candidate,previous);

@@ -22,6 +22,43 @@ internal static partial class Program
             }
             finally{NoLinks(root);Directory.Delete(root,true);}
         }
+        string Legacy(string root)
+        {
+            string backup=Scoped(root,"update-backup-legacy");
+            Write(backup,"original/WuWaFpsUnlock.exe","legacy launcher");
+            string hash=FileHash(Scoped(backup,"original/WuWaFpsUnlock.exe"));
+            Write(backup,"files.txt",$"WuWaFpsUnlock.exe\told={hash}\tnew={hash}\n");
+            Directory.CreateDirectory(Scoped(backup,"staged"));return backup;
+        }
+        test("verified replacement clears registered legacy backup",()=>Fixture((root,create)=>
+        {
+            string old=Legacy(root),current=create("new",true);int identities=0;
+            PrunePreviousBackups(root,current,_=>identities++);
+            Check(identities==1&&!Directory.Exists(old)&&Directory.Exists(current));
+        }));
+        foreach(string corruption in new[]{"unknown file","unknown directory","tampered original","missing original","bad product","partial schema","traversal","duplicate","tampered staged","invalid hash"})
+        test("legacy cleanup preserves "+corruption,()=>Fixture((root,create)=>
+        {
+            string old=Legacy(root),current=create("new",true);
+            switch(corruption)
+            {
+                case "unknown file":Write(old,"personal.txt","keep");break;
+                case "unknown directory":Directory.CreateDirectory(Scoped(old,"personal"));break;
+                case "tampered original":Write(old,"original/WuWaFpsUnlock.exe","changed");break;
+                case "missing original":File.Delete(Scoped(old,"original/WuWaFpsUnlock.exe"));break;
+                case "partial schema":Write(old,"snapshot.sha256","incomplete");break;
+                case "traversal":File.AppendAllText(Scoped(old,"files.txt"),"../private.exe\told=(absent)\tnew="+new string('A',64)+"\n");break;
+                case "tampered staged":Write(old,"staged/WuWaFpsUnlock.exe","changed staged");break;
+                case "invalid hash":Write(old,"files.txt","WuWaFpsUnlock.exe\told=bad\tnew=bad\n");break;
+                case "duplicate":File.AppendAllText(Scoped(old,"files.txt"),File.ReadAllText(Scoped(old,"files.txt")));break;
+            }
+            PrunePreviousBackups(root,current,_=>{if(corruption=="bad product")throw new InvalidDataException("wrong product");});
+            Check(Directory.Exists(old)&&File.Exists(Scoped(old,"files.txt"))&&Directory.Exists(current));
+        }));
+        test("legacy backup survives incomplete replacement",()=>Fixture((root,create)=>
+        {
+            string old=Legacy(root),current=create("new",false);Reject(()=>PrunePreviousBackups(root,current,_=>{}));Check(Directory.Exists(old));
+        }));
         test("successful complete backup supersedes previous backup",()=>Fixture((root,create)=>
         {
             var old=create("old",true);var current=create("new",true);PrunePreviousBackups(root,current);
