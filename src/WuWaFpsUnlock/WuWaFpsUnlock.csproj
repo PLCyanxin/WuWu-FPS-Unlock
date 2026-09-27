@@ -11,7 +11,6 @@
   <ItemGroup>
     <EmbeddedResource Include="..\..\release-assets\dynamicmax\wuwa-dynamicmax.addon64" LogicalName="WuWaFpsUnlock.DynamicMax.addon64" />
     <Resource Include="Assets\Cover.original.png" /><Resource Include="Assets\Icon.original.jpg" /><Resource Include="Assets\Icon.transparent.png" /><Resource Include="Assets\App.ico" />
-    <Compile Remove="Services\ExternalUnlockerService.cs;Services\ExternalLaunchWorker.cs" />
     <Content Include="..\..\components\ww_plugin_base.dll" Link="components\fps\ww_plugin_base.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
     <Content Include="..\..\components\PROVENANCE.json" Link="components\PROVENANCE.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
     <Content Include="..\..\licenses\**\*" Link="licenses\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />

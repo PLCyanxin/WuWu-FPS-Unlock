@@ -18,26 +18,30 @@ internal static class EmbeddedDynamicAddon
         if (Directory.Exists(target)) throw new IOException("Dynamic 倍率控制组件的目标路径被目录占用。");
         using var resource = Assembly.GetExecutingAssembly().GetManifestResourceStream("WuWaFpsUnlock.DynamicMax.addon64")
             ?? throw new FileNotFoundException("启动器缺少内置 Dynamic 倍率控制组件。");
-        using var memory = new MemoryStream();
-        await resource.CopyToAsync(memory, token);
-        byte[] bytes = memory.ToArray();
-        string hash = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
+        token.ThrowIfCancellationRequested();
+        long length=resource.Length;
+        if(length<=0)throw new InvalidDataException("内置 Dynamic 倍率控制组件为空。");
+        string hash = Convert.ToHexString(await SHA256.HashDataAsync(resource,token)).ToLowerInvariant();
         string source = Path.Combine(AppPaths.Data, "components", hash, FileName);
         SafePaths.EnsureInside(AppPaths.Data, source);
         SafePaths.EnsureNoLinks(AppPaths.Base, source);
         Directory.CreateDirectory(Path.GetDirectoryName(source)!);
-        if (!File.Exists(source) || await SafePaths.HashAsync(source, token) != hash)
+        if (!File.Exists(source) || new FileInfo(source).Length!=length || await SafePaths.HashAsync(source, token) != hash)
         {
             string temporary = source + "." + Guid.NewGuid().ToString("N") + ".tmp";
             try
             {
-                await File.WriteAllBytesAsync(temporary, bytes, token);
+                resource.Position=0;
+                await using(var output=new FileStream(temporary,FileMode.CreateNew,FileAccess.Write,FileShare.None,81920,true))
+                    await resource.CopyToAsync(output,token);
+                if(new FileInfo(temporary).Length!=length || await SafePaths.HashAsync(temporary,token)!=hash)
+                    throw new InvalidDataException("内置 Dynamic 倍率控制组件解包校验失败。");
                 SafePaths.EnsureNoLinks(AppPaths.Base, source);
                 File.Move(temporary, source, true);
             }
             finally { if (File.Exists(temporary)) File.Delete(temporary); }
         }
         string? priorHash = File.Exists(target) ? await SafePaths.HashAsync(target, token) : null;
-        plan.Add(new(source, target, hash, bytes.LongLength, PayloadKind.Addon, priorHash));
+        plan.Add(new(source, target, hash, length, PayloadKind.Addon, priorHash));
     }
 }

@@ -44,6 +44,14 @@ await Test("corrupt cache reextracts resource without temp residue",async root=>
     Check(await SafePaths.HashAsync(expected.Source)==expected.Sha256,"corrupt cache not repaired");
     Check(!Directory.EnumerateFiles(AppPaths.Data,"*.tmp",SearchOption.AllDirectories).Any(),"temp files remain");
 });
+await Test("same-length corrupt cache must still be rehashed and repaired",async root=>
+{
+    var settings=Settings(root);var plan=new List<PlannedFile>();await Plan(plan,settings);var expected=plan.Single();
+    var bytes=File.ReadAllBytes(expected.Source);bytes[0]^=1;File.WriteAllBytes(expected.Source,bytes);
+    plan.Clear();await Plan(plan,settings);
+    Check(new FileInfo(expected.Source).Length==expected.Size&&await SafePaths.HashAsync(expected.Source)==expected.Sha256,"same-length corruption bypassed hash validation");
+    Check(!Directory.EnumerateFiles(AppPaths.Data,"*.tmp",SearchOption.AllDirectories).Any(),"repair left temporary data");
+});
 await Test("pre-cancelled extraction changes neither plan nor game nor cache",async root=>
 {
     var settings=Settings(root);var plan=new List<PlannedFile>();using var cancel=new CancellationTokenSource();cancel.Cancel();
