@@ -22,7 +22,11 @@ int main(){try{
  Check(!Update(window,true,Shape::Text),"unfocused hidden window falls back to software cursor");
  {std::lock_guard lock(detail::mutex);detail::last=GetTickCount64()-kWatchdogMs-1;}
  Sleep(100);
- {std::lock_guard lock(detail::mutex);Check(!detail::active&&detail::debt.increments==0,"owner watchdog handles stopped rendering");}
+ {std::lock_guard lock(detail::mutex);Check(!detail::active&&detail::debt.increments==0,"owner watchdog handles stopped rendering");Check(detail::timer==0,"expired heartbeat stops idle timer");}
+ Check(Wait([&]{Update(window,true);std::lock_guard lock(detail::mutex);return detail::timer!=0;}),"resumed rendering rearms watchdog");
+ Update(window,false);Check(Wait([]{std::lock_guard lock(detail::mutex);return detail::timer==0;}),"closed menu stops timer");
+ for(int i=0;i<1000;++i)Update(window,false);
+ {std::lock_guard lock(detail::mutex);Check(!detail::wakePending&&detail::timer==0,"closed frames do not wake owner");}
  Stop();Check(Wait([]{std::lock_guard lock(detail::mutex);return !detail::installed&&!detail::target;}),"cross-thread Stop detaches on owner thread");
  Check(Wait([&]{Update(window,true);std::lock_guard lock(detail::mutex);return detail::installed;}),"safe reattachment");
  PostMessageW(window,WM_APP+1,0,0);ui.join();

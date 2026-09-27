@@ -28,7 +28,7 @@ inline HWND target=nullptr;
 inline DWORD owner=0;
 inline HHOOK bootstrap=nullptr;
 inline PTP_TIMER timeout=nullptr;
-inline bool installed=false, requested=false, stopping=false, active=false, failed=false;
+inline bool installed=false, requested=false, stopping=false, active=false, failed=false, wakePending=false;
 inline ULONGLONG last=0, bootstrapDeadline=0, retryAfter=0;
 inline Shape shape=Shape::Arrow;
 inline VisibilityDebt debt;
@@ -70,11 +70,20 @@ inline LRESULT CALLBACK Subclass(HWND hwnd,UINT message,WPARAM wp,LPARAM lp,UINT
 inline void Detach(HWND hwnd) {
  Restore();if(timer){KillTimer(hwnd,timer);timer=0;}
  RemoveWindowSubclass(hwnd,Subclass,Id());
- installed=false;target=nullptr;owner=0;requested=false;stopping=false;failed=false;
+ installed=false;target=nullptr;owner=0;requested=false;stopping=false;failed=false;wakePending=false;
 }
 inline void Tick(HWND hwnd) {
  if(stopping){Detach(hwnd);return;}
- const bool eligible=Fresh(requested,GetTickCount64(),last) && InClient(hwnd);
+ const bool fresh=Fresh(requested,GetTickCount64(),last);
+ if(!fresh) {
+  Restore();failed=false;
+  if(timer){KillTimer(hwnd,timer);timer=0;}
+  return;
+ }
+ if(!timer)timer=SetTimer(hwnd,Id(),50,nullptr);
+ // A cursor must never activate without an owner-thread restoration watchdog.
+ if(!timer){Restore();failed=true;return;}
+ const bool eligible=InClient(hwnd);
  if(!eligible){Restore();failed=false;return;}
  if(failed)return;
  if(!active) {
@@ -93,7 +102,8 @@ inline LRESULT CALLBACK Subclass(HWND hwnd,UINT message,WPARAM wp,LPARAM lp,UINT
   std::lock_guard lock(mutex);
   if(hwnd==target) {
    if(message==WM_NCDESTROY) Detach(hwnd);
-   else if(message==wake || (message==WM_TIMER && wp==timer)){Tick(hwnd);handled=true;}
+   else if(message==wake){wakePending=false;Tick(hwnd);handled=true;}
+   else if(message==WM_TIMER && timer && wp==timer){Tick(hwnd);handled=true;}
    else if(message==WM_KILLFOCUS || (message==WM_ACTIVATEAPP && !wp) || (message==WM_ACTIVATE && LOWORD(wp)==WA_INACTIVE)) Restore();
    else if(message==WM_SETCURSOR && LOWORD(lp)==HTCLIENT) {Tick(hwnd);handled=active;}
   }
@@ -139,12 +149,16 @@ inline bool Begin(HWND hwnd) {
  if(!PostMessageW(hwnd,wake,0,0)){CancelBootstrap();target=nullptr;owner=0;return false;}
  return true;
 }
+inline void WakeOwner(HWND hwnd) {
+ if(!wakePending)wakePending=PostMessageW(hwnd,wake,0,0)!=FALSE;
+}
 } // namespace detail
 // Call once per overlay frame. True alone permits hiding that frame's software cursor.
 inline bool Update(HWND hwnd,bool softwareRequested,Shape cursor=Shape::Arrow) {
  std::lock_guard lock(detail::mutex);
  if(detail::target && detail::target!=hwnd)return false;
  if(detail::stopping)return false;
+ const bool changed=detail::requested!=softwareRequested || detail::shape!=cursor;
  detail::requested=softwareRequested;detail::last=GetTickCount64();detail::shape=cursor;
  if(!softwareRequested && !detail::target)return false;
  if(!detail::target) {
@@ -152,9 +166,9 @@ inline bool Update(HWND hwnd,bool softwareRequested,Shape cursor=Shape::Arrow) {
   detail::retryAfter=GetTickCount64()+1000;
   if(!detail::Begin(hwnd))return false;
  }
- if(detail::installed) {
+ if(detail::installed && (changed || (softwareRequested && !detail::timer))) {
   if(detail::owner==GetCurrentThreadId())detail::Tick(hwnd);
-  else PostMessageW(hwnd,detail::wake,0,0);
+  else detail::WakeOwner(hwnd);
  }
  return softwareRequested && detail::active && detail::InClient(hwnd) && detail::Visible();
 }
@@ -164,7 +178,7 @@ inline void Stop() {
  detail::requested=false;detail::stopping=true;
  if(!detail::installed){detail::CancelBootstrap();detail::target=nullptr;detail::owner=0;detail::stopping=false;}
  else if(detail::owner==GetCurrentThreadId())detail::Detach(detail::target);
- else PostMessageW(detail::target,detail::wake,0,0);
+ else detail::WakeOwner(detail::target);
 }
 } // namespace wuwa::native_cursor
 

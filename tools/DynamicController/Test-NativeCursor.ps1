@@ -21,3 +21,12 @@ exit /b %errorlevel%
 if ($LASTEXITCODE -ne 0) { throw 'Native cursor test compilation failed.' }
 & $binary 2>&1 | Tee-Object -FilePath (Join-Path $OutputDirectory 'test.log')
 if ($LASTEXITCODE -ne 0) { throw 'Native cursor tests failed.' }
+
+$dispatchSource = Join-Path $PSScriptRoot 'tests/cursor_dispatch_tests.cpp'
+$dispatchBinary = Join-Path $OutputDirectory 'cursor-dispatch-tests.exe'
+$dispatchObject = Join-Path $OutputDirectory 'cursor-dispatch-tests.obj'
+(Get-Content -Raw -LiteralPath $command).Replace($source,$dispatchSource).Replace($binary,$dispatchBinary).Replace($object,$dispatchObject) | Set-Content -LiteralPath $command -Encoding ascii
+& cmd /c $command 2>&1 | Tee-Object -FilePath (Join-Path $OutputDirectory 'dispatch-build.log')
+if ($LASTEXITCODE -ne 0) { throw 'Cursor dispatch compilation failed.' }
+& $dispatchBinary 2>&1 | Tee-Object -FilePath (Join-Path $OutputDirectory 'dispatch-test.log')
+if ($LASTEXITCODE -ne 0) { throw 'Cursor dispatch tests failed.' }
