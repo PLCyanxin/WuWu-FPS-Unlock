@@ -1,8 +1,8 @@
 {
   "file": "renodx-mfgunlock.addon64",
   "addonVersion": "1.1.5",
-  "length": 965632,
-  "sha256": "60152594f035ad0bd2b0b403d6791f733f9b9e151a83c1226a1256067a40fc16",
+  "length": 972288,
+  "sha256": "8312504c73f1c929d90a0c2acc6ff8985651ccb08f8d8afd8166ebd2c8ea3aab",
   "fileVersion": "1.1.5.1",
   "upstream": {
     "tag": "1.1.5",

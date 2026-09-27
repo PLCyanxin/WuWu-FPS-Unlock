@@ -149,10 +149,10 @@
     {
       "anchor": "AddonDir",
       "target": "renodx-mfgunlock.addon64",
-      "sha256": "60152594f035ad0bd2b0b403d6791f733f9b9e151a83c1226a1256067a40fc16",
+      "sha256": "8312504c73f1c929d90a0c2acc6ff8985651ccb08f8d8afd8166ebd2c8ea3aab",
       "source": "files/addon/renodx-mfgunlock.addon64",
       "kind": "Addon",
-      "size": 965632
+      "size": 972288
     }
   ],
   "fixedMinimumDriver": null,

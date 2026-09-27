@@ -49,6 +49,12 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Rollback backup tests failed' }
           dotnet run --project tests/Update.DeferredSessionTests -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Deferred update tests failed' }
+          dotnet run --project tests/Startup.RefreshTests -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Startup refresh tests failed' }
+          dotnet run --project tests/PeInspector.PerformanceTests -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Proxy inspection regression failed' }
+          dotnet run --project tests/Rollback.ResourceTests -c Release -- src/WuWaFpsUnlock/obj/embedded-updater/Release/WuWaUpdater.exe
+          if ($LASTEXITCODE -ne 0) { throw 'Embedded rollback worker tests failed' }
           ./tools/OfflineUpdater.IntegrationTests/Run.ps1
           dotnet publish src/WuWaFpsUnlock -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o build
           if ($LASTEXITCODE -ne 0) { throw 'Launcher build failed' }

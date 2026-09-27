@@ -7,6 +7,11 @@ public partial class HeroBanner : UserControl
 {
     public bool ShowVersion { get=>VersionLabel.Visibility==Visibility.Visible; set=>VersionLabel.Visibility=value?Visibility.Visible:Visibility.Collapsed; }
     private static readonly BitmapSource Cover = LoadCover();
+    private static readonly Brush Backdrop = Freeze(new SolidColorBrush(Color.FromRgb(40,53,81)));
+    private static readonly Brush Shade = Freeze(new LinearGradientBrush(new GradientStopCollection {
+        new(Color.FromArgb(255,40,53,81),0), new(Color.FromArgb(244,40,53,81),.39), new(Color.FromArgb(0,40,53,81),.68)
+    },new Point(0,0),new Point(1,0)));
+    private static Brush Freeze(Brush brush) { brush.Freeze(); return brush; }
     public HeroBanner() { InitializeComponent(); SizeChanged += (_,_) => InvalidateVisual(); }
     private static BitmapSource LoadCover()
     {
@@ -18,16 +23,12 @@ public partial class HeroBanner : UserControl
     {
         base.OnRender(dc);
         var bounds = new Rect(0,0,ActualWidth,ActualHeight); dc.PushClip(new RectangleGeometry(bounds,9,9));
-        dc.DrawRectangle(new SolidColorBrush(Color.FromRgb(40,53,81)),null,bounds);
+        dc.DrawRectangle(Backdrop,null,bounds);
         var visible = new Rect(ActualWidth*.43,0,ActualWidth*.57,ActualHeight);
         double scale = Math.Max(visible.Width/Cover.PixelWidth, visible.Height/Cover.PixelHeight);
         double w=Cover.PixelWidth*scale,h=Cover.PixelHeight*scale;
         dc.PushClip(new RectangleGeometry(visible));
         dc.DrawImage(Cover,new Rect(visible.Right-w,(ActualHeight-h)*.5,w,h)); dc.Pop();
-        var gradient = new LinearGradientBrush { StartPoint=new Point(0,0),EndPoint=new Point(1,0) };
-        gradient.GradientStops.Add(new GradientStop(Color.FromArgb(255,40,53,81),0));
-        gradient.GradientStops.Add(new GradientStop(Color.FromArgb(244,40,53,81),.39));
-        gradient.GradientStops.Add(new GradientStop(Color.FromArgb(0,40,53,81),.68));
-        dc.DrawRectangle(gradient,null,bounds); dc.Pop();
+        dc.DrawRectangle(Shade,null,bounds); dc.Pop();
     }
 }

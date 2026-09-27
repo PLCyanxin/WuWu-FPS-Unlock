@@ -1,5 +1,6 @@
 <Application x:Class="WuWaFpsUnlock.App" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Startup="OnStartup" ShutdownMode="OnMainWindowClose">
 <Application.Resources>
+  <BitmapImage x:Key="TitleAvatar" UriSource="pack://application:,,,/WuWaFpsUnlock;component/Assets/Icon.transparent.png" DecodePixelWidth="256" CacheOption="OnLoad"/>
   <SolidColorBrush x:Key="Ink" Color="#182443"/><SolidColorBrush x:Key="Muted" Color="#7083A4"/>
   <SolidColorBrush x:Key="Blue" Color="#087CFF"/><SolidColorBrush x:Key="Line" Color="#E0E9F7"/>
   <SolidColorBrush x:Key="Surface" Color="#F6FAFF"/>

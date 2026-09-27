@@ -31,5 +31,6 @@
     <MakeDir Directories="$(EmbeddedUpdaterDirectory)resource" />
     <Copy SourceFiles="$(EmbeddedUpdaterDirectory)WuWaUpdater.exe" DestinationFolder="$(EmbeddedUpdaterDirectory)resource" />
     <ZipDirectory SourceDirectory="$(EmbeddedUpdaterDirectory)resource" DestinationFile="$(EmbeddedUpdaterDirectory)WuWaUpdater.zip" Overwrite="true" />
+    <Delete Files="$(EmbeddedUpdaterDirectory)resource/WuWaUpdater.exe" />
   </Target>
 </Project>

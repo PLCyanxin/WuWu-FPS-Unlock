@@ -146,7 +146,7 @@
   {
     "name": "renodx-mfgunlock.addon64",
     "source": "payload/files/addon/renodx-mfgunlock.addon64",
-    "sha256": "60152594f035ad0bd2b0b403d6791f733f9b9e151a83c1226a1256067a40fc16",
+    "sha256": "8312504c73f1c929d90a0c2acc6ff8985651ccb08f8d8afd8166ebd2c8ea3aab",
     "targetPolicy": "经验证ReShade AddonDir/renodx-mfgunlock.addon64",
     "actualGameTargets": [],
     "gameMappingStatus": "Targets are resolved within the selected game directory during deployment.",

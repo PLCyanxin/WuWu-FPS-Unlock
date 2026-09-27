@@ -88,19 +88,28 @@ public static class Program
                 Check(typeof(WuWaFpsUnlock.Core.UserSettings).Assembly.GetType("WuWaFpsUnlock.Core.LaunchPlanBuilder")==null,"legacy launch plan compiled");
                 Check(typeof(App).Assembly.GetType("WuWaFpsUnlock.Services.FpsSession")!=null,"builtin core session missing");
             });
-            Test("all own assemblies use 0.1.0.0",()=>{
-                Check(typeof(App).Assembly.GetName().Version==new Version(0,1,0,0),"WPF version");
-                Check(typeof(WuWaFpsUnlock.Core.UserSettings).Assembly.GetName().Version==new Version(0,1,0,0),"Core version");
+            Test("all own assemblies use the shared release version",()=>{
+                var expected=typeof(Program).Assembly.GetName().Version;
+                Check(typeof(App).Assembly.GetName().Version==expected,"WPF version");
+                Check(typeof(WuWaFpsUnlock.Core.UserSettings).Assembly.GetName().Version==expected,"Core version");
+            });
+            Test("title avatar shares a bounded decode without modifying the source",()=>{
+                var avatar=(BitmapSource)app.Resources["TitleAvatar"];
+                Check(avatar.PixelWidth==256&&avatar.PixelHeight==256,"unexpected title bitmap dimensions");
+                var icons=new[]{MainRoot(),SettingsRoot()}.SelectMany(Tree).OfType<Image>().Where(i=>i.Width==23).ToArray();
+                Check(icons.Length==2&&icons.All(i=>ReferenceEquals(i.Source,avatar)),"title images do not share decoded bitmap");
             });
             Test("FPS disabled disables both native FPS editors",()=>{
                 vm.FpsEnabled=false;Layout(main);Layout(settings);Check(!Fps(MainRoot()).IsEnabled&&!Fps(SettingsRoot()).IsEnabled,"disabled FPS editors remain enabled");
                 vm.FpsEnabled=true;Layout(main);Layout(settings);
             });
-            Test("deployment and clean buttons are equal and fill same grid row",()=>{
-                var deploy=Command(SettingsRoot(),vm.DeployCommand);var clean=Command(SettingsRoot(),vm.CleanCommand);
-                Check(deploy.Parent is Grid&&ReferenceEquals(deploy.Parent,clean.Parent),"buttons do not share grid");var parent=(Grid)deploy.Parent;
-                Check(Math.Abs(deploy.ActualWidth-clean.ActualWidth)<0.6,"unequal widths: "+deploy.ActualWidth+" / "+clean.ActualWidth);
-                Check(Math.Abs(deploy.ActualWidth+clean.ActualWidth+12-parent.ActualWidth)<1,"buttons do not fill grid width");
+            Test("deployment rollback and clean buttons share and fill one row",()=>{
+                var deploy=Command(SettingsRoot(),vm.DeployCommand);var clean=Command(SettingsRoot(),vm.CleanCommand);var rollback=Command(SettingsRoot(),vm.RollbackVersionCommand);
+                Check(deploy.Parent is Grid&&ReferenceEquals(deploy.Parent,clean.Parent)&&ReferenceEquals(deploy.Parent,rollback.Parent),"buttons do not share grid");var parent=(Grid)deploy.Parent;
+                var widths=new[]{deploy.ActualWidth,rollback.ActualWidth,clean.ActualWidth};
+                Check(widths.Max()-widths.Min()<=1,"button widths exceed one layout rounding pixel");
+                var gaps=parent.ColumnDefinitions.Where(c=>c.Width.IsAbsolute).Sum(c=>c.ActualWidth);
+                Check(Math.Abs(widths.Sum()+gaps-parent.ActualWidth)<1,"buttons do not fill grid width");
                 Write($"METRIC deploy={deploy.ActualWidth:F2} clean={clean.ActualWidth:F2} row={parent.ActualWidth:F2}");
             });
             string longPath=@"E:\离屏测试（不是实际游戏目录）\"+string.Join("\\",Enumerable.Repeat("鸣潮 很长的路径",14));
