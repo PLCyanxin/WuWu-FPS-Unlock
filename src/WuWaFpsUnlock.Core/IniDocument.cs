@@ -73,6 +73,24 @@ public sealed class IniDocument
         else edit.Written = value;
         Set(section, key, value);
     }
+    private static string[] Csv(string? value) => (value ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    public void ApplyManagedAddonLoading(DeploymentReceipt receipt)
+    {
+        const string section = "ADDON", key = "LoadFromDllMain";
+        var current = Csv(Get(section, key)).ToList();
+        var edit = receipt.IniEdits.FirstOrDefault(e => e.Section.Equals(section, StringComparison.OrdinalIgnoreCase) && e.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
+        if (edit is not null)
+        {
+            // A newly observed entry on redeployment belongs to the user, not this tool.
+            var prior = Csv(edit.Previous).ToList();
+            foreach (string name in current.Where(ManagedAddons.Contains))
+                if (!Csv(edit.Written).Contains(name, StringComparer.OrdinalIgnoreCase) && !prior.Contains(name, StringComparer.OrdinalIgnoreCase)) prior.Add(name);
+            if (prior.Count > 0) edit.Previous = string.Join(',', prior);
+        }
+        foreach (string name in new[] { ManagedAddons.Main })
+            if (!current.Contains(name, StringComparer.OrdinalIgnoreCase)) current.Add(name);
+        ApplyOwned(section, key, string.Join(',', current), receipt);
+    }
     public void RemoveOwnedEdits(DeploymentReceipt receipt, Action<string> log)
     {
         foreach (var edit in receipt.IniEdits)
@@ -80,16 +98,14 @@ public sealed class IniDocument
             if (edit.Section != "RenoDX.MFGUnlock" && !(edit.Section == "ADDON" && edit.Key == "LoadFromDllMain"))
                 throw new InvalidDataException("拒绝清除不属于本工具范围的 INI 项。");
             var current = Get(edit.Section, edit.Key);
-            if (current == edit.Written) Set(edit.Section, edit.Key, edit.Previous);
-            else if (edit.Section == "ADDON" && edit.Key == "LoadFromDllMain")
+            if (edit.Section == "ADDON" && edit.Key == "LoadFromDllMain")
             {
-                var prior = (edit.Previous ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                if (!prior.Contains("renodx-mfgunlock.addon64", StringComparer.OrdinalIgnoreCase))
-                {
-                    var values = (current ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Where(v => !v.Equals("renodx-mfgunlock.addon64", StringComparison.OrdinalIgnoreCase));
-                    Set(edit.Section, edit.Key, string.Join(',', values));
-                }
+                var prior = Csv(edit.Previous);
+                var added = Csv(edit.Written).Where(name => ManagedAddons.Contains(name) && !prior.Contains(name, StringComparer.OrdinalIgnoreCase)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                var values = Csv(current).Where(name => !added.Contains(name)).ToArray();
+                Set(edit.Section, edit.Key, values.Length == 0 && edit.Previous is null ? null : string.Join(',', values));
             }
+            else if (current == edit.Written) Set(edit.Section, edit.Key, edit.Previous);
             else log($"保留后来被修改的配置：[{edit.Section}] {edit.Key}");
         }
     }

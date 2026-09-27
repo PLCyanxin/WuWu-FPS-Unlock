@@ -22,6 +22,7 @@ public sealed class DeploymentService(Action<string> log)
         var manifest=PackageReader.Load(s.PackageManifest);var before=new ReShadeService(log).Inspect(s,manifest.ReShade);
         if(before.State=="Conflict")throw new IOException(before.Description);
         var plan=await PackageReader.PlanAsync(manifest,s.PackageManifest,s.GameRoot,Path.GetDirectoryName(exe)!,before.AddonDirectory,token);
+        await EmbeddedDynamicAddon.AppendToPlanAsync(plan,s,before.AddonDirectory,token);
         var configuration=MfgDeploymentConfiguration.Create(s,manifest,EnvironmentProbe.Read(log));
         ApprovalFingerprint=await PlanFingerprint(s,plan,before,configuration,token);
         var lines=new List<string>{"游戏根："+s.GameRoot,"原装 Shipping："+exe,"ReShade："+before.Description,"ReShade 配置："+before.Ini};
@@ -85,6 +86,7 @@ public sealed class DeploymentService(Action<string> log)
         if(before.State=="Conflict")throw new IOException(before.Description);
         // Fully validate payload and ALL paths before running an external installer.
         var plan=await PackageReader.PlanAsync(manifest,s.PackageManifest,s.GameRoot,Path.GetDirectoryName(exe)!,before.AddonDirectory,token);
+        await EmbeddedDynamicAddon.AppendToPlanAsync(plan,s,before.AddonDirectory,token);
         if(string.IsNullOrEmpty(ApprovalFingerprint) || ApprovalFingerprint!=await PlanFingerprint(s,plan,before,configuration,token))throw new IOException("文件计划或 MFG 配置与确认时不同，或未经预览，请重新预览并确认。");
         var skippedVendors=manifest.Files.Where(f=>f.Kind==PayloadKind.Vendor&&!plan.Any(p=>p.Kind==PayloadKind.Vendor&&Path.GetFileName(p.Target).Equals(Path.GetFileName(f.Target),StringComparison.OrdinalIgnoreCase))).Select(f=>Path.GetFileName(f.Target)).ToList();
         log($"DLL 同名映射：{plan.Count(f=>f.Kind==PayloadKind.Vendor)} 个实际目标；{skippedVendors.Count} 个材料名称无同名目标而跳过。"+(skippedVendors.Count>0?" 跳过："+string.Join("、",skippedVendors):""));
@@ -113,8 +115,7 @@ public sealed class DeploymentService(Action<string> log)
             proxyEntry.InstalledHash=await SafePaths.HashAsync(receipt.ProxyPath,token);proxyEntry.Completed=true;
             var ini=IniDocument.Load(ready.Ini);
             configuration.ApplyOwned(ini,receipt,manifest.MfgConfig);
-            string early=ini.MergeCsv("ADDON","LoadFromDllMain","renodx-mfgunlock.addon64");
-            ini.ApplyOwned("ADDON","LoadFromDllMain",early,receipt);
+            ini.ApplyManagedAddonLoading(receipt);
             AppPaths.SaveReceipt(receipt);ini.Save(ready.Ini);
             receipt.PendingDeploymentChanges|=initialIniHash!=await SafePaths.HashAsync(ready.Ini,token);
             receipt.Status="Deployed";AppPaths.SaveReceipt(receipt);

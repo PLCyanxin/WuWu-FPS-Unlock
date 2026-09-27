@@ -73,7 +73,7 @@ public static class DeploymentFiles
         foreach (var f in receipt.Files)
         {
             token.ThrowIfCancellationRequested();
-            bool ownedAddon = f.Kind == "Addon" && f.CreatedByTool && Path.GetFileName(f.Path).Equals("renodx-mfgunlock.addon64", StringComparison.OrdinalIgnoreCase);
+            bool ownedAddon = f.Kind == "Addon" && f.CreatedByTool && ManagedAddons.Contains(Path.GetFileName(f.Path));
             bool ownedVendor = f.Kind == "Vendor" && f.ReplacedByTool && PackageReader.VendorNames.Contains(Path.GetFileName(f.Path));
             bool ownedReShade = ReShadeOwnership.CanClean(receipt, f);
             if (!ownedAddon && !ownedVendor && !ownedReShade) continue;
