@@ -12,7 +12,7 @@ public static class LaunchProcessTests
     }
     public static async Task RunAsync(Func<string,Func<Task>,Task> test)
     {
-        string root=Path.GetFullPath(Path.Combine("artifacts","test-work","真实子进程 空格-"+Guid.NewGuid().ToString("N")));
+        string root=Path.GetFullPath(Path.Combine("artifacts","tests","test-work","真实子进程 空格-"+Guid.NewGuid().ToString("N")));
         Directory.CreateDirectory(root);
         string fixtureDirectory=Path.Combine(root,"子程序 中文");Directory.CreateDirectory(fixtureDirectory);
         string assemblyDirectory=Path.GetDirectoryName(typeof(LaunchProcessTests).Assembly.Location)!;

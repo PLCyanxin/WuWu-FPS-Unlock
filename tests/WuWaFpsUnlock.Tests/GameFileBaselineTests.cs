@@ -7,7 +7,7 @@ public static class GameFileBaselineTests
         static void Check(bool value){if(!value)throw new Exception("baseline assertion failed");}
         static (string root,string exe,string dll) Fixture()
         {
-            string root=Path.GetFullPath(Path.Combine("artifacts","baseline-test",Guid.NewGuid().ToString("N")));
+            string root=Path.GetFullPath(Path.Combine("artifacts","tests","baseline-test",Guid.NewGuid().ToString("N")));
             Directory.CreateDirectory(Path.Combine(root,"engine"));
             string exe=Path.Combine(root,"Client-Win64-Shipping.exe"),dll=Path.Combine(root,"engine","nvngx_dlss.dll");
             File.WriteAllText(exe,"inert fake shipping");File.WriteAllText(dll,"inert initial dll");

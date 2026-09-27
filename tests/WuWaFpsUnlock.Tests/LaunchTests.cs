@@ -4,7 +4,7 @@ public static class LaunchTests
 {
     public static async Task RunAsync(Func<string,Func<Task>,Task> test)
     {
-        string root=Path.GetFullPath(Path.Combine("artifacts","test-work","launch-中文 空格-"+Guid.NewGuid().ToString("N")));
+        string root=Path.GetFullPath(Path.Combine("artifacts","tests","test-work","launch-中文 空格-"+Guid.NewGuid().ToString("N")));
         Directory.CreateDirectory(root);
         string game=Path.Combine(root,"游戏"),shipping=Path.Combine(game,"Client","Binaries","Win64","Client-Win64-Shipping.exe");
         Directory.CreateDirectory(Path.GetDirectoryName(shipping)!);File.WriteAllText(shipping,"fake: not executed");

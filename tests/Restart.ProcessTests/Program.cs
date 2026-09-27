@@ -7,7 +7,7 @@ if(args.Length==3&&args[0]=="--owned-fixture")
 {
     File.WriteAllText(args[1],Environment.ProcessId.ToString());await Task.Delay(int.Parse(args[2]));return;
 }
-string root=Path.GetFullPath(Path.Combine("artifacts","restart-process-tests 中文 空格",Guid.NewGuid().ToString("N")));Directory.CreateDirectory(root);
+string root=Path.GetFullPath(Path.Combine("artifacts","tests","restart-process-tests 中文 空格",Guid.NewGuid().ToString("N")));Directory.CreateDirectory(root);
 string CopyFixture(string name)
 {
     string target=Path.Combine(root,name);Directory.CreateDirectory(target);

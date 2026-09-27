@@ -3,7 +3,7 @@ using System.IO;
 using WuWaFpsUnlock.Core;
 using WuWaFpsUnlock.Services;
 
-string root=Path.GetFullPath(Path.Combine("artifacts","worker-protocol-测试",Guid.NewGuid().ToString("N")));Directory.CreateDirectory(root);
+string root=Path.GetFullPath(Path.Combine("artifacts","tests","worker-protocol-测试",Guid.NewGuid().ToString("N")));Directory.CreateDirectory(root);
 int passed=0,failed=0;
 async Task Test(string name,Func<Task> action){try{await action();Console.WriteLine("PASS "+name);passed++;}catch(Exception e){Console.WriteLine("FAIL "+name+": "+e);failed++;}}
 void Check(bool condition){if(!condition)throw new Exception("assertion failed");}

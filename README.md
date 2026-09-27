@@ -5,9 +5,9 @@
 > [!WARNING]
 > **使用本工具有被官方封号的风险。使用工具后录制视频或分享截图等，请遮挡 UID，请勿跳脸官方。**（维护者实测可以正常与他人联机；能正常联机不代表没有封号风险。）
 
-**当前版本：v1.2.1RC · Windows x64 · Pre-release**
+**当前源码版本：v1.2.2RC · Windows x64 · 尚未发布**
 
-[下载完整版](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/download/v1.2.1RC/WuWaFPSUnlock-1.2.1RC-win-x64.zip) · [下载更新包](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/download/v1.2.1RC/WuWaFPSUnlock-1.2.1RC-update.zip) · [所有版本](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases)
+[下载已发布版本](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases)
 
 ## Dynamic 运行时倍率上限
 
@@ -52,7 +52,7 @@
 GitHub、百度网盘分发的本项目旧版都可以使用更新包，不要求旧版本号或文件哈希相同。更新包需要配合已有安装使用；首次使用本工具的用户请选择完整版。
 
 1. 您需要正常退出游戏，再退出系统托盘中的启动器。
-2. 您需要下载并解压 `WuWaFPSUnlock-1.2.1RC-update.zip`。
+2. 您需要下载并解压 `WuWaFPSUnlock-1.2.2RC-update.zip`。
 3. 您需要找到原启动器目录。如果您平时使用桌面快捷方式，可以右键点击快捷方式，选择“打开文件所在的位置”。
 4. 您需要把解压后的**整个更新文件夹**放进原启动器目录，双击里面的 **`更新.exe`**。请保留独立文件夹，不要把新协议包平铺混进原安装目录，也不用先覆盖主程序。
 5. 您需要确认更新窗口显示的安装目录正确，然后等待备份和更新完成。更新器会检查自身目录及最多三层上级目录中的主程序；找不到或出现多个安装时会提示原因。
@@ -128,7 +128,7 @@ Dynamic 的驱动预检查门槛为 **595.41**，不是整个工具或 FPS 解�
 本项目使用 Windows x64 和 .NET SDK 10.0.100 作为开发环境。您可以使用以下命令构建程序：
 
 ```powershell
-dotnet publish ./src/WuWaFpsUnlock -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./artifacts/v1.2.1RC/win-x64
+dotnet publish ./src/WuWaFpsUnlock -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./artifacts/current/v1.2.2RC/win-x64
 ```
 
 源码构建不包含完整的第三方材料包；普通用户请下载 Release 完整版。第三方组件保持各自的版本与许可，您可以参阅 [第三方说明](licenses/THIRD_PARTY_NOTICES.md)。

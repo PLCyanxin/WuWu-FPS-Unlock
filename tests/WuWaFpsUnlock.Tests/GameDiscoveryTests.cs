@@ -4,7 +4,7 @@ public static class GameDiscoveryTests
 {
     public static async Task RunAsync(Func<string, Func<Task>, Task> test)
     {
-        var root = Path.GetFullPath(Path.Combine("artifacts", "test-work", "discovery-中文 空格-" + Guid.NewGuid().ToString("N")));
+        var root = Path.GetFullPath(Path.Combine("artifacts","tests","test-work", "discovery-中文 空格-" + Guid.NewGuid().ToString("N")));
         Directory.CreateDirectory(root);
         void Check(bool condition) { if (!condition) throw new Exception("discovery assertion failed"); }
         string MakeGame(string name, ushort machine = 0x8664, ushort flags = 0x0022)

@@ -1,7 +1,7 @@
 [CmdletBinding()]param()
 $ErrorActionPreference='Stop'
 $taskRoot=Split-Path $PSScriptRoot -Parent
-$taskArtifacts=Join-Path $taskRoot 'artifacts\v0.1'
+$taskArtifacts=Join-Path $taskRoot 'artifacts\legacy\v0.1'
 $taskPublish=Join-Path $taskArtifacts 'win-x64'
 $taskExe=Join-Path $taskPublish 'WuWaFpsUnlock.exe'
 if((Get-Item $taskExe).VersionInfo.FileVersion -ne '0.1.0.0'){throw 'Wrong own file version'}

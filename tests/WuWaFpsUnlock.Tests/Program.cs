@@ -3,7 +3,7 @@ using WuWaFpsUnlock.Core;
 
 
 // Real filesystem and self-built child-process tests; never starts a game or unlocker.
-string root=Path.GetFullPath(Path.Combine("artifacts","test-work",Guid.NewGuid().ToString("N")));
+string root=Path.GetFullPath(Path.Combine("artifacts","tests","test-work",Guid.NewGuid().ToString("N")));
 Directory.CreateDirectory(root);
 int passed=0,failed=0;
 async Task Test(string name,Func<Task> run)

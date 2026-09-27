@@ -26,8 +26,8 @@ jobs:
       - name: Deferred update session lifecycle
         run: dotnet run --project tests/Update.DeferredSessionTests -c Release
       - name: Compile WPF and publish
-        run: dotnet publish src/WuWaFpsUnlock -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=false -o artifacts/win-x64
+        run: dotnet publish src/WuWaFpsUnlock -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=false -o artifacts/current/win-x64
       - uses: actions/upload-artifact@v4
         with:
           name: WuWaFpsUnlock-win-x64-unvalidated
-          path: artifacts/win-x64/
+          path: artifacts/current/win-x64/

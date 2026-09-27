@@ -3,7 +3,7 @@ using WuWaFpsUnlock.Core;
 using WuWaFpsUnlock.Services;
 
 string root=Path.GetFullPath(args.Length>0?args[0]:".");
-string work=Path.Combine(root,"artifacts","windows-integration",DateTime.Now.ToString("yyyyMMdd-HHmmss"));
+string work=Path.Combine(root,"artifacts","tests","windows-integration",DateTime.Now.ToString("yyyyMMdd-HHmmss"));
 Directory.CreateDirectory(work);
 string fixture=Path.Combine(work,"中文 测试游戏","Client","Binaries","Win64");Directory.CreateDirectory(fixture);
 string exe=Path.Combine(fixture,"Client-Win64-Shipping.exe");

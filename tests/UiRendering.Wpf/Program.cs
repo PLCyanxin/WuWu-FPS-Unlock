@@ -15,7 +15,7 @@ public static class Program
     [STAThread]
     public static int Main(string[] args)
     {
-        string output=Path.GetFullPath(args.Length==1?args[0]:"artifacts/native-offscreen");Directory.CreateDirectory(output);
+        string output=Path.GetFullPath(args.Length==1?args[0]:"artifacts/tests/native-offscreen");Directory.CreateDirectory(output);
         using var log=new StreamWriter(Path.Combine(output,"offscreen-results.log")){AutoFlush=true};
         void Write(string line){Console.WriteLine(line);log.WriteLine(line);}
         int passed=0,failed=0;

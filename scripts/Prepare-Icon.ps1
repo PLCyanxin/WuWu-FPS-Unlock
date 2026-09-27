@@ -40,7 +40,7 @@ foreach($taskFrame in $taskDecoded.Frames){Write-Output "ICO frame $($taskFrame.
 $taskCheck=[Drawing.Icon]::new((Join-Path $taskRoot 'src\WuWaFpsUnlock\Assets\App.ico'),64,64)
 $taskCheckBitmap=$taskCheck.ToBitmap();$taskColorCount=0
 for($taskY=0;$taskY -lt 64;$taskY++){for($taskX=0;$taskX -lt 64;$taskX++){$taskPixel=$taskCheckBitmap.GetPixel($taskX,$taskY);if([Math]::Abs([int]$taskPixel.R-[int]$taskPixel.G) -gt 15 -or [Math]::Abs([int]$taskPixel.G-[int]$taskPixel.B) -gt 15){$taskColorCount++}}}
-$taskCheckBitmap.Save((Join-Path $taskRoot 'artifacts\v0.1\icon-color-preview.png'),[Drawing.Imaging.ImageFormat]::Png)
+$taskCheckBitmap.Save((Join-Path $taskRoot 'artifacts\legacy\v0.1\icon-color-preview.png'),[Drawing.Imaging.ImageFormat]::Png)
 $taskCheckBitmap.Dispose();$taskCheck.Dispose()
 if($taskColorCount -lt 1000){throw 'Icon lost original color'}
 Write-Output "PASS colored pixels=$taskColorCount/4096; original avatar format conversion only"

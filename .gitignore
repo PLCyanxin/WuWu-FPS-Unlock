@@ -37,3 +37,10 @@ docs/build-environment.txt
 docs/source-inventory.json
 docs/static-pe-inspection-used.py
 docs/UI-preview-not-native-WPF.png
+
+# Local workspace dependencies, reference checkouts and release archives
+/upstream/
+/dependencies/
+/releases/
+/WORKSPACE.md
+
