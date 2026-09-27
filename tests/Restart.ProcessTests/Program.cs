@@ -17,7 +17,30 @@ string CopyFixture(string name)
 string targetExe=CopyFixture("选定安装"),otherExe=CopyFixture("其他安装");
 var owned=new List<Process>();var catalog=new WindowsRestartProcessCatalog();int passed=0,failed=0;
 void Check(bool condition,string message="assertion failed"){if(!condition)throw new Exception(message);}
-async Task Test(string name,Func<Task> action){try{await action();passed++;Console.WriteLine("PASS "+name);}catch(Exception e){failed++;Console.WriteLine("FAIL "+name+": "+e);}finally{foreach(var p in owned.ToArray()){try{if(!p.HasExited){p.Kill();await p.WaitForExitAsync();}}catch{}p.Dispose();}owned.Clear();}}
+async Task Test(string name,Func<Task> action)
+{
+    try{await action();passed++;Console.WriteLine("PASS "+name);}
+    catch(Exception e){failed++;Console.WriteLine("FAIL "+name+": "+e);}
+    finally
+    {
+        foreach(var p in owned.ToArray())
+        {
+            try
+            {
+                if(!p.HasExited){p.Kill();await p.WaitForExitAsync();}
+                // HasExited/WaitForExitAsync may observe an exit code before the
+                // kernel process object signals; the next case requires full exit.
+                uint immediate=FixtureNative.WaitForSingleObject(p.SafeHandle,0);
+                if(immediate==258)Console.WriteLine($"CLEANUP waiting for kernel exit after managed exit PID={p.Id}");
+                uint wait=await Task.Run(()=>FixtureNative.WaitForSingleObject(p.SafeHandle,5000));
+                if(wait!=0)throw new IOException($"Owned fixture PID {p.Id} did not signal exit: {wait}");
+            }
+            catch(Exception error){throw new IOException("Fixture cleanup failed; stop instead of contaminating subsequent tests.",error);}
+            finally{p.Dispose();}
+        }
+        owned.Clear();
+    }
+}
 async Task<Process> StartOwned(string path,int life=60000)
 {
     string marker=Path.Combine(root,Guid.NewGuid()+".pid");var info=new ProcessStartInfo(path){UseShellExecute=false,WorkingDirectory=Path.GetDirectoryName(path)!};
@@ -158,4 +181,10 @@ sealed class FakeHeld(string path):IRestartProcess
     public void VerifyStillSameProcess(){if(Changed)throw new IOException("fake changed/exited identity");}
     public Task TerminateAndWaitAsync(TimeSpan timeout,CancellationToken token){StopCalls++;if(StopError is not null)throw StopError;return Task.CompletedTask;}
     public void Dispose(){}
+}
+
+static class FixtureNative
+{
+    [System.Runtime.InteropServices.DllImport("kernel32.dll",SetLastError=true)]
+    internal static extern uint WaitForSingleObject(Microsoft.Win32.SafeHandles.SafeProcessHandle handle,uint milliseconds);
 }
