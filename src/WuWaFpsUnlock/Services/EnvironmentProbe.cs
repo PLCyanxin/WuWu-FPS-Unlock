@@ -34,7 +34,19 @@ public static class EnvironmentProbe
         finally { try{unload?.Invoke();}catch{ } if(library!=IntPtr.Zero) NativeLibrary.Free(library); }
         bool? hags=null;
         try { using var key=Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\GraphicsDrivers"); object? v=key?.GetValue("HwSchMode"); if(v is int mode) hags=mode==2?true:mode==1?false:null; } catch(Exception e) { log("HAGS 读取失败："+e.Message); }
-        string hs=hags switch { true=>"已配置开启（运行态待确认）",false=>"已配置关闭",_=>"系统默认 / 未确认" };
-        return new(gpu,driver,ada,RuntimeInformation.OSDescription,hs,hags);
+        string os = RuntimeInformation.OSDescription;
+        try
+        {
+            using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion");
+            var version = Environment.OSVersion.Version;
+            int revision = key?.GetValue("UBR") is int ubr ? ubr : version.Revision;
+            os = EnvironmentStatus.WindowsName(version.Major, version.Minor, version.Build, revision,
+                key?.GetValue("ProductName") as string, key?.GetValue("InstallationType") as string, key?.GetValue("DisplayVersion") as string);
+        }
+        catch (Exception e) { log("Windows 产品名称读取未完成：" + e.Message); }
+        bool? runtimeHags = DxDiagHagsProbe.Read(gpu, log);
+        string hs = EnvironmentStatus.HagsText(runtimeHags, hags);
+        log("HAGS 检测（匹配 " + gpu + "）：" + hs);
+        return new(gpu,driver,ada,os,hs,hags);
     }
 }
