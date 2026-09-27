@@ -33,6 +33,8 @@ jobs:
         run: |
           dotnet run --project tests/WuWaFpsUnlock.Tests -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Core tests failed' }
+          dotnet run --project tests/EmbeddedDynamicAddon.Tests -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Embedded companion tests failed' }
           dotnet run --project tests/DynamicMultiplier.Tests -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Dynamic multiplier configuration tests failed' }
           dotnet run --project tests/Dynamic.SettingsTests -c Release

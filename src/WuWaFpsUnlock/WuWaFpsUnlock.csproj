@@ -9,6 +9,7 @@
   </PropertyGroup>
   <ItemGroup><Using Remove="System.Windows.Forms" /><Using Remove="System.Drawing" /></ItemGroup><ItemGroup><ProjectReference Include="..\WuWaFpsUnlock.Core\WuWaFpsUnlock.Core.csproj" /></ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="..\..\release-assets\dynamicmax\wuwa-dynamicmax.addon64" LogicalName="WuWaFpsUnlock.DynamicMax.addon64" />
     <Resource Include="Assets\Cover.original.png" /><Resource Include="Assets\Icon.original.jpg" /><Resource Include="Assets\Icon.transparent.png" /><Resource Include="Assets\App.ico" />
     <Compile Remove="Services\ExternalUnlockerService.cs;Services\ExternalLaunchWorker.cs" />
     <Content Include="..\..\components\ww_plugin_base.dll" Link="components\fps\ww_plugin_base.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />

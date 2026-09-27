@@ -73,6 +73,12 @@ await Test("existing game addon hash captured and original bytes preserved",asyn
     string before=await SafePaths.HashAsync(addon);var plan=new List<PlannedFile>();await Plan(plan,settings);
     Check(plan.Single().ExpectedTargetHash==before&&File.ReadAllText(addon)=="user existing version","preview overwrite or wrong prior hash");
 });
+await Test("target directory rejected before cache extraction",async root=>
+{
+    var settings=Settings(root);string target=Path.Combine(settings.GameRoot,"addons",EmbeddedDynamicAddon.FileName);Directory.CreateDirectory(target);
+    var plan=new List<PlannedFile>();await Reject<IOException>(()=>Plan(plan,settings));
+    Check(plan.Count==0&&!Directory.Exists(AppPaths.Data)&&Directory.Exists(target),"directory conflict mutated cache or target");
+});
 Console.WriteLine($"RESULT: {passed} passed, {failed} failed. Production helper with inert embedded bytes and temporary filesystem only; no addon execution or game writes.");
 return failed==0?0:1;
 

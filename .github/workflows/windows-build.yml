@@ -14,6 +14,8 @@ jobs:
         run: dotnet run --project tests/Update.ServiceTests -c Release
       - name: Update preference persistence tests
         run: dotnet run --project tests/Update.PreferenceTests -c Release
+      - name: Embedded Dynamic companion deployment planning
+        run: dotnet run --project tests/EmbeddedDynamicAddon.Tests -c Release
       - name: Update dialog and settings WPF layout
         run: dotnet run --project tests/Update.DialogLayoutTests -c Release
       - name: Rollback backup discovery

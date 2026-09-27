@@ -1,39 +1,16 @@
 {
   "file": "renodx-mfgunlock.addon64",
-  "addonVersion": "1.1+WuWu.DynamicMax.Runtime.1",
-  "length": 524288,
-  "sha256": "ebf43641ad70ea48b81e42a9bec68c87f90ae72f9ef40da44d0cd238aa7a9996",
-  "fileVersion": "1.1+WuWu.DynamicMax.Runtime.1",
+  "addonVersion": "1.1.5",
+  "length": 931328,
+  "sha256": "0d04d858a62d3d19e7e3d478c0b8c46fe3ac43ec9fd11e4abb15617bd291d71a",
+  "fileVersion": "0.2026.0909.1640",
   "upstream": {
-    "commit": "c3733d8afd51214c46a71d18feec520b0bf54864",
-    "repository": "https://github.com/mavismmg/MFGAdaUnlock-RenoDx",
-    "tag": "1.1",
-    "license": "MIT"
+    "tag": "1.1.5",
+    "assetDigestVerified": true,
+    "commit": "4406e4fadf4423afb500d8d9a08d5ace9a148d19",
+    "release": "https://github.com/mavismmg/MFGAdaUnlock-RenoDx/releases/tag/1.1.5",
+    "license": "MIT",
+    "repository": "https://github.com/mavismmg/MFGAdaUnlock-RenoDx"
   },
-  "modification": "Runtime Dynamic maximum with persisted in-game selection; first-use default 4x. No startup DRS cap override. Native scheduling and hardware limits retained.",
-  "patch": {
-    "path": "third_party/mfgunlock/dynamic-max.patch",
-    "sha256": "a784e517b4887a6b039ad7d8962022b6233b3b573d62ac6ebc37d8506bab920c"
-  },
-  "build": {
-    "windowsSdk": "10.0.26100.0",
-    "optimization": "/O2",
-    "standard": "C++20",
-    "script": "scripts/Build-DynamicMaxAddon.ps1",
-    "runtime": "static MSVC /MT",
-    "dependencies": "third_party/mfgunlock/README.md",
-    "architecture": "x64",
-    "linker": "/Brepro",
-    "visualStudio": "18.10.12210.168",
-    "compiler": "MSVC 14.51.36231"
-  },
-  "validation": {
-    "gameCeiling": "Not yet verified in game",
-    "configurationAbiAssertions": 49,
-    "runtimeAdapterFixtureAssertions": 117,
-    "scope": "Isolated native fixtures and data-only reference image validation; no game execution",
-    "noDrsOverrideAssertions": 12
-  },
-  "derivedCommit": "216228de950d6e0a2ec7f532412711e3ea785bce",
-  "derivedSourceCommit": "69595e4e75a5bf66cedd60dfc1181b9bd0d9c04c"
+  "modification": "Unmodified upstream release binary. Dynamic maximum control is supplied by a separate companion addon."
 }

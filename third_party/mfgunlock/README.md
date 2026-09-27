@@ -1,4 +1,7 @@
-# MFG Unlock：Dynamic 最大倍率派生构建
+# 旧版 MFG Unlock 派生构建
+
+此目录保留早期合并构建的补丁，供源码追溯。当前主插件使用上游 1.1.5 原始发布文件，倍率控制已独立为 [WuWa Dynamic Maximum](../../tools/DynamicController/README.md)。以下构建方法不用于当前发布包。
+
 
 基线为上游 mavismmg/MFGAdaUnlock-RenoDx tag 1.1，提交 c3733d8afd51214c46a71d18feec520b0bf54864。dynamic-max.patch 提供仅运行时的 Dynamic 最大倍率控制，默认4x，移除旧启动DRS覆盖；仍由 NVIDIA 原生调度决定实际倍率。版本门禁、线程校验和原生能力上限保留。使用方法见 [Dynamic 最大倍率](../../docs/DYNAMIC_MAX_MULTIPLIER.md)。
 

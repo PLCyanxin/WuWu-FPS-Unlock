@@ -149,10 +149,10 @@
     {
       "anchor": "AddonDir",
       "target": "renodx-mfgunlock.addon64",
-      "sha256": "ebf43641ad70ea48b81e42a9bec68c87f90ae72f9ef40da44d0cd238aa7a9996",
+      "sha256": "0d04d858a62d3d19e7e3d478c0b8c46fe3ac43ec9fd11e4abb15617bd291d71a",
       "source": "files/addon/renodx-mfgunlock.addon64",
       "kind": "Addon",
-      "size": 524288
+      "size": 931328
     }
   ],
   "fixedMinimumDriver": null,
@@ -167,5 +167,5 @@
   },
   "preferDynamic": true,
   "mfgConfig": {},
-  "addonVersion": "1.1+WuWu.DynamicMax.Runtime.1"
+  "addonVersion": "1.1.5"
 }

@@ -10,10 +10,11 @@
 
 完整版包含维护者提供的 ReShade 6.8.0 Full Add-on 安装器、MFG addon 和 DLSS / Streamline 材料。相关组件的版权与使用条件属于其各自权利人。
 
-带 Dynamic 最大倍率支持的 addon 基于 [mavismmg/MFGAdaUnlock-RenoDx](https://github.com/mavismmg/MFGAdaUnlock-RenoDx) tag `1.1`（提交 `c3733d8afd51214c46a71d18feec520b0bf54864`）重新构建，派生版本为 `1.1+WuWu.DynamicMax.Runtime.1`。修改提供版本限定的进程内 Dynamic 运行时上限控制与诊断，不使用旧的启动 DRS 上限覆盖，不是未经修改的上游发行文件。
+`renodx-mfgunlock.addon64` 使用 [mavismmg/MFGAdaUnlock-RenoDx 1.1.5](https://github.com/mavismmg/MFGAdaUnlock-RenoDx/releases/tag/1.1.5) 的原始发布文件，源码标签对应提交 `4406e4fadf4423afb500d8d9a08d5ace9a148d19`。本项目未修改该文件。
 
-源码补丁与构建方法见 `third_party/mfgunlock`。来源记录见源码中的 `release-assets/mfg/source.json`，随包记录为 `payload/addon-source.json`；它们列出源码基线、构建依赖和产物哈希。DLL 清单中的其他 DLSS / Streamline 材料保持既有字节，不随此补丁升级。
+Dynamic 倍率上限由独立的 `wuwa-dynamicmax.addon64` 提供。其 MIT 许可、源码和构建说明位于 `tools/DynamicController`。该组件只适配经过核对的运行库版本，不修改驱动配置。启动器内嵌此组件，并在部署时安装到游戏的 ReShade addon 目录。
 
+主插件来源和哈希见 `release-assets/mfg/source.json`（随包为 `payload/addon-source.json`）；独立组件来源见 `release-assets/dynamicmax/source.json`。其他 DLSS / Streamline 材料保持原有版本。
 MFG addon 遵循 [MIT 许可](MFGAdaUnlock-MIT.txt)，保留 Dreamt、dashdogy、mavismmg 及[上游完整 credits](MFGUnlock-UPSTREAM-CREDITS.md)。构建使用的 RenoDX、ReShade、Dear ImGui、Microsoft Detours、Streamline、NVAPI ABI 资料与 NVIDIA RTX SDK 保留各自随附许可。最小 NVAPI ABI 镜像仅用于已知 DRS V1 结构，不静态链接或分发 NVAPI 驱动库。
 
 ReShade 安装器及既有 NVIDIA 运行库来自维护者提供的材料。本地哈希用于区分文件，不证明这些材料与某个公开源码构建等价。Windows 驱动与运行库的支持范围仍由各自提供方决定。
