@@ -1,4 +1,5 @@
-param([string]$OutputDirectory = (Join-Path $PSScriptRoot '../../artifacts/tests/native-cursor'))
+param([Parameter(Mandatory)][string]$DependencyDirectory,[string]$OutputDirectory = (Join-Path $PSScriptRoot '../../artifacts/tests/native-cursor'))
+$DependencyDirectory = (Resolve-Path -LiteralPath $DependencyDirectory).Path
 $ErrorActionPreference = 'Stop'
 $OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
 New-Item -ItemType Directory -Force $OutputDirectory | Out-Null
@@ -14,7 +15,7 @@ $command = Join-Path $OutputDirectory 'build-tests.cmd'
 @echo off
 call "$vcvars" x64 >nul
 if errorlevel 1 exit /b 1
-cl /nologo /std:c++20 /EHsc /MT /O2 /DNOMINMAX /utf-8 "$source" /Fe:"$binary" /Fo:"$object"
+cl /I"$DependencyDirectory/external/Detours/include" /nologo /std:c++20 /EHsc /MT /O2 /DNOMINMAX /utf-8 "$source" /Fe:"$binary" /Fo:"$object" "$DependencyDirectory/external/Detours/lib.X64/detours.lib"
 exit /b %errorlevel%
 "@ | Set-Content -LiteralPath $command -Encoding ascii
 & cmd /c $command 2>&1 | Tee-Object -FilePath (Join-Path $OutputDirectory 'build.log')
@@ -30,3 +31,12 @@ $dispatchObject = Join-Path $OutputDirectory 'cursor-dispatch-tests.obj'
 if ($LASTEXITCODE -ne 0) { throw 'Cursor dispatch compilation failed.' }
 & $dispatchBinary 2>&1 | Tee-Object -FilePath (Join-Path $OutputDirectory 'dispatch-test.log')
 if ($LASTEXITCODE -ne 0) { throw 'Cursor dispatch tests failed.' }
+
+$ownershipSource = Join-Path $PSScriptRoot 'tests/cursor_ownership_tests.cpp'
+$ownershipBinary = Join-Path $OutputDirectory 'cursor-ownership-tests.exe'
+$ownershipObject = Join-Path $OutputDirectory 'cursor-ownership-tests.obj'
+(Get-Content -Raw -LiteralPath $command).Replace($dispatchSource,$ownershipSource).Replace($dispatchBinary,$ownershipBinary).Replace($dispatchObject,$ownershipObject) | Set-Content -LiteralPath $command -Encoding ascii
+& cmd /c $command 2>&1 | Tee-Object -FilePath (Join-Path $OutputDirectory 'ownership-build.log')
+if ($LASTEXITCODE -ne 0) { throw 'Cursor ownership compilation failed.' }
+& $ownershipBinary 2>&1 | Tee-Object -FilePath (Join-Path $OutputDirectory 'ownership-test.log')
+if ($LASTEXITCODE -ne 0) { throw 'Cursor ownership tests failed.' }

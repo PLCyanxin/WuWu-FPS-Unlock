@@ -34,5 +34,5 @@ $path=Join-Path $out 'build.cmd'
 [IO.File]::WriteAllText($path,$batch,[Text.Encoding]::Default)
 & $env:ComSpec /d /c ('"'+$path+'"') 2>&1 | Tee-Object (Join-Path $out 'build.log')
 if($LASTEXITCODE -ne 0){throw 'Companion build or tests failed'}
-& "$source/Test-NativeCursor.ps1" -OutputDirectory (Join-Path $out 'cursor-tests')
+& "$source/Test-NativeCursor.ps1" -DependencyDirectory $deps -OutputDirectory (Join-Path $out 'cursor-tests')
 Get-FileHash (Join-Path $out 'wuwa-dynamicmax.addon64')

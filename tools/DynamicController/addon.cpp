@@ -101,9 +101,26 @@ void OnOverlayCursor(reshade::api::effect_runtime* runtime) {
   case ImGuiMouseCursor_Hand: shape=Shape::Hand; break;
   case ImGuiMouseCursor_NotAllowed: shape=Shape::NotAllowed; break;
  }
- const bool wanted=ImGui::GetIO().MouseDrawCursor && cursor!=ImGuiMouseCursor_None;
- if(wuwa::native_cursor::Update(static_cast<HWND>(runtime->get_hwnd()),wanted,shape))
+ const bool menuDrawsCursor=ImGui::GetIO().MouseDrawCursor;
+ const bool wanted=menuDrawsCursor && cursor!=ImGuiMouseCursor_None;
+ if(wuwa::native_cursor::Update(static_cast<HWND>(runtime->get_hwnd()),wanted,shape,menuDrawsCursor))
   ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+ // Report transitions outside the cursor lock/hooks, never once per frame.
+ using CursorStatus=wuwa::cursor_hooks::Status;
+ static CursorStatus reported=CursorStatus::Idle;
+ const auto status=wuwa::cursor_hooks::status.load();
+ if(status!=reported) {
+  reported=status;const char* message=nullptr;
+  switch(status) {
+   case CursorStatus::InstallFailed:message="Native cursor: atomic hook installation unavailable; no retry until restart.";break;
+   case CursorStatus::AcquireFailed:message="Native cursor: bounded visibility acquisition failed.";break;
+   case CursorStatus::DeltaLimit:message="Native cursor: display-count delta limit reached; game intent restored.";break;
+   case CursorStatus::VisibilityLost:message="Native cursor: visibility changed outside managed APIs; ownership released.";break;
+   case CursorStatus::WatchdogExpired:message="Native cursor: overlay heartbeat expired; game intent restored.";break;
+   default:break;
+  }
+  if(message)reshade::log::message(reshade::log::level::warning,message);
+ }
 }
 void OnDestroyRuntime(reshade::api::effect_runtime*) { wuwa::native_cursor::Stop(); }
 }

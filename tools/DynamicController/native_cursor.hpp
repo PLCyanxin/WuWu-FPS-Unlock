@@ -3,36 +3,30 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <mutex>
+#include "cursor_hooks.hpp"
 #pragma comment(lib, "comctl32.lib")
 #pragma comment(lib, "user32.lib")
 
 namespace wuwa::native_cursor {
 enum class Shape { Arrow, Text, ResizeAll, ResizeNS, ResizeEW, ResizeNESW, ResizeNWSE, Hand, NotAllowed };
 inline constexpr ULONGLONG kWatchdogMs = 250;
-inline constexpr int kMaximumShowCalls = 8;
 inline bool Fresh(bool requested, ULONGLONG now, ULONGLONG last) {
  return requested && now >= last && now-last <= kWatchdogMs;
 }
-// The counter tracks only increments made by this module, not the game's state.
-struct VisibilityDebt {
- int increments=0;
- template<class Show> void Restore(Show show) { while(increments>0) { show(false); --increments; } }
- template<class Show> bool Enter(Show show) {
-  for(int i=0;i<kMaximumShowCalls;++i) { ++increments; if(show(true)>=0) return true; }
-  Restore(show); return false;
- }
-};
 namespace detail {
 inline std::mutex mutex;
 inline HWND target=nullptr;
 inline DWORD owner=0;
 inline HHOOK bootstrap=nullptr;
 inline PTP_TIMER timeout=nullptr;
-inline bool installed=false, requested=false, stopping=false, active=false, failed=false, wakePending=false;
-inline ULONGLONG last=0, bootstrapDeadline=0, retryAfter=0;
+inline bool installed=false, stopping=false, failed=false, wakePending=false;
+inline auto& requested=cursor_hooks::wanted;
+inline auto& active=cursor_hooks::owned;
+inline auto& last=cursor_hooks::heartbeat;
+inline ULONGLONG bootstrapDeadline=0, retryAfter=0;
 inline Shape shape=Shape::Arrow;
-inline VisibilityDebt debt;
-inline HCURSOR previous=nullptr, current=nullptr;
+
+inline HCURSOR current=nullptr;
 inline UINT wake=0;
 inline UINT_PTR timer=0;
 inline int anchor;
@@ -56,10 +50,8 @@ inline HCURSOR Cursor(Shape value) {
 }
 inline bool Visible() { CURSORINFO info{sizeof(info)}; return GetCursorInfo(&info) && current!=nullptr && info.hCursor==current && (info.flags&CURSOR_SHOWING)!=0; }
 inline void Restore() {
- active=false;
- debt.Restore([](bool show){return ShowCursor(show);});
- if(current && GetCursor()==current) SetCursor(previous);
- current=nullptr;previous=nullptr;
+ cursor_hooks::lease.End();
+ current=nullptr;
 }
 inline void CancelBootstrap() { if(bootstrap){UnhookWindowsHookEx(bootstrap);bootstrap=nullptr;} }
 inline void CALLBACK BootstrapTimeout(PTP_CALLBACK_INSTANCE,void*,PTP_TIMER) {
@@ -70,12 +62,13 @@ inline LRESULT CALLBACK Subclass(HWND hwnd,UINT message,WPARAM wp,LPARAM lp,UINT
 inline void Detach(HWND hwnd) {
  Restore();if(timer){KillTimer(hwnd,timer);timer=0;}
  RemoveWindowSubclass(hwnd,Subclass,Id());
- installed=false;target=nullptr;owner=0;requested=false;stopping=false;failed=false;wakePending=false;
+ installed=false;target=nullptr;owner=0;requested=false;stopping=false;failed=false;wakePending=false;cursor_hooks::blocked=false;
 }
 inline void Tick(HWND hwnd) {
  if(stopping){Detach(hwnd);return;}
  const bool fresh=Fresh(requested,GetTickCount64(),last);
- if(!fresh) {
+ if(!fresh && requested && active)cursor_hooks::Block(cursor_hooks::Status::WatchdogExpired);
+ if(!fresh || cursor_hooks::blocked) {
   Restore();failed=false;
   if(timer){KillTimer(hwnd,timer);timer=0;}
   return;
@@ -86,15 +79,16 @@ inline void Tick(HWND hwnd) {
  const bool eligible=InClient(hwnd);
  if(!eligible){Restore();failed=false;return;}
  if(failed)return;
- if(!active) {
-  previous=GetCursor();
-  if(!debt.Enter([](bool show){return ShowCursor(show);})){previous=nullptr;failed=true;return;}
-  active=true;
- }
- current=Cursor(shape);
- if(!current){Restore();failed=true;return;}
- SetCursor(current);
- if(!Visible()){Restore();failed=true;}
+ if(active && current && !Visible()){cursor_hooks::Block(cursor_hooks::Status::VisibilityLost);Restore();failed=true;return;}
+ const bool acquiring=!active;
+ if(acquiring && !cursor_hooks::lease.Begin(hwnd)){failed=true;return;}
+ const auto desired=Cursor(shape);
+ const bool change=acquiring || desired!=current;
+ current=desired;
+ if(!current){cursor_hooks::Block(cursor_hooks::Status::VisibilityLost);Restore();failed=true;return;}
+ if(change){cursor_hooks::Bypass bypass;cursor_hooks::realSet(current);}
+ if(!Visible()){cursor_hooks::Block(cursor_hooks::Status::VisibilityLost);Restore();failed=true;}
+
 }
 inline LRESULT CALLBACK Subclass(HWND hwnd,UINT message,WPARAM wp,LPARAM lp,UINT_PTR,DWORD_PTR) {
  bool handled=false;
@@ -154,11 +148,17 @@ inline void WakeOwner(HWND hwnd) {
 }
 } // namespace detail
 // Call once per overlay frame. True alone permits hiding that frame's software cursor.
-inline bool Update(HWND hwnd,bool softwareRequested,Shape cursor=Shape::Arrow) {
+inline bool Update(HWND hwnd,bool softwareRequested,Shape cursor,bool menuOpen) {
+ if(softwareRequested && !cursor_hooks::installed.load()) {
+  DWORD process=0;GetWindowThreadProcessId(hwnd,&process);
+  if(process!=GetCurrentProcessId()||!cursor_hooks::Install())return false;
+ }
  std::lock_guard lock(detail::mutex);
  if(detail::target && detail::target!=hwnd)return false;
  if(detail::stopping)return false;
  const bool changed=detail::requested!=softwareRequested || detail::shape!=cursor;
+ if(!menuOpen)cursor_hooks::blocked=false;
+ if(!menuOpen)detail::failed=false;
  detail::requested=softwareRequested;detail::last=GetTickCount64();detail::shape=cursor;
  if(!softwareRequested && !detail::target)return false;
  if(!detail::target) {
@@ -166,16 +166,29 @@ inline bool Update(HWND hwnd,bool softwareRequested,Shape cursor=Shape::Arrow) {
   detail::retryAfter=GetTickCount64()+1000;
   if(!detail::Begin(hwnd))return false;
  }
- if(detail::installed && (changed || (softwareRequested && !detail::timer))) {
+ if(detail::installed && !cursor_hooks::blocked && (changed || (softwareRequested && !detail::timer))) {
   if(detail::owner==GetCurrentThreadId())detail::Tick(hwnd);
   else detail::WakeOwner(hwnd);
  }
- return softwareRequested && detail::active && detail::InClient(hwnd) && detail::Visible();
+ const bool eligible=softwareRequested && detail::InClient(hwnd);
+ const bool visible=detail::Visible();
+ if(detail::active && eligible && !visible) {
+  // Unsupported writers bypassing the public APIs stop management safely.
+  cursor_hooks::Block(cursor_hooks::Status::VisibilityLost);
+  if(detail::owner==GetCurrentThreadId())detail::Tick(hwnd);
+  else detail::WakeOwner(hwnd);
+ }
+ const bool native=eligible && detail::active && visible && !cursor_hooks::blocked;
+ return native;
+}
+// Convenience form when cursor intent itself represents menu visibility.
+inline bool Update(HWND hwnd,bool softwareRequested,Shape cursor=Shape::Arrow) {
+ return Update(hwnd,softwareRequested,cursor,softwareRequested);
 }
 // Requests owner-thread restoration/removal. Never call from DllMain or while holding the loader lock.
 inline void Stop() {
  std::lock_guard lock(detail::mutex);
- detail::requested=false;detail::stopping=true;
+ detail::requested=false;cursor_hooks::blocked=false;detail::stopping=true;
  if(!detail::installed){detail::CancelBootstrap();detail::target=nullptr;detail::owner=0;detail::stopping=false;}
  else if(detail::owner==GetCurrentThreadId())detail::Detach(detail::target);
  else detail::WakeOwner(detail::target);
