@@ -22,10 +22,12 @@ public static class UserMaterialRemoval
             var actual = await PackageReader.ReadSourceFingerprintAsync(source, token);
             validated.Add((file, source, actual.Sha256, actual.Size));
         }
+        var targets = PackageReader.FindExistingMaterialTargets(gameRoot,
+            validated.Select(v => Path.GetFileName(v.File.Target.Replace('\\', '/'))), token);
         foreach (var (file, source, sha256, size) in validated)
         {
             string name = Path.GetFileName(file.Target.Replace('\\', '/'));
-            var matches = PackageReader.FindExistingMaterialTargets(gameRoot, name);
+            var matches = targets[name];
             if (matches.Count == 0) preserved.Add("无同名文件：" + name);
             foreach (var path in matches)
             {

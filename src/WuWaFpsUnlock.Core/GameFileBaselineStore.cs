@@ -41,10 +41,11 @@ public static class GameFileBaselineStore
         SafePaths.EnsureInside(gameRoot, gameExe); SafePaths.EnsureNoLinks(gameRoot, gameExe);
         if (!File.Exists(gameExe)) throw new FileNotFoundException("所选原装游戏程序不存在。", gameExe);
         var baseline = new GameFileBaseline { GameRoot = gameRoot, GameExe = gameExe };
+        var targets = PackageReader.FindExistingMaterialTargets(gameRoot, PackageReader.VendorNames, token);
         foreach (var name in PackageReader.VendorNames.OrderBy(n => n, StringComparer.OrdinalIgnoreCase))
         {
             token.ThrowIfCancellationRequested();
-            var found = PackageReader.FindExistingVendorTargets(gameRoot, name);
+            var found = targets[name];
             if (found.Count == 0) baseline.AbsentNamesForReferenceOnly.Add(name);
             foreach (string path in found)
                 baseline.Files.Add(new(Path.GetRelativePath(gameRoot, path), await SafePaths.HashAsync(path, token), new FileInfo(path).Length));

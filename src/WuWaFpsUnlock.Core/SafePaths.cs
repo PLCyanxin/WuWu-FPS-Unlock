@@ -82,6 +82,11 @@ public static class PackageReader
     {
         string sourceRoot = Path.GetDirectoryName(Path.GetFullPath(manifestPath))!;
         var list = new List<PlannedFile>(); var destinations = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var vendorNames = m.Files.Where(f => f.Kind == PayloadKind.Vendor)
+            .Select(f => Path.GetFileName(f.Target.Replace('\\', '/'))).ToArray();
+        foreach (string name in vendorNames)
+            if (!VendorNames.Contains(name)) throw new InvalidDataException("拒绝未知运行库：" + name);
+        var vendorTargets = FindExistingMaterialTargets(gameRoot, vendorNames, token);
         foreach (var f in m.Files)
         {
             token.ThrowIfCancellationRequested();
@@ -91,7 +96,7 @@ public static class PackageReader
             // Latest user rule: flat vendor materials replace every existing same-name file
             // strictly under the selected root. Missing names are never newly deployed.
             var targets = f.Kind == PayloadKind.Vendor
-                ? FindExistingVendorTargets(gameRoot, Path.GetFileName(f.Target.Replace('\\', '/')))
+                ? vendorTargets[Path.GetFileName(f.Target.Replace('\\', '/'))]
                 : [SafePaths.Under(anchor, f.Target)];
             foreach (var target in targets)
             {
@@ -119,22 +124,37 @@ public static class PackageReader
         if (!VendorNames.Contains(name)) throw new InvalidDataException("拒绝未知运行库：" + name);
         return FindExistingMaterialTargets(gameRoot, name);
     }
-    public static List<string> FindExistingMaterialTargets(string gameRoot, string name)
+    public static List<string> FindExistingMaterialTargets(string gameRoot, string name) =>
+        FindExistingMaterialTargets(gameRoot, new[] { name })[name];
+
+    // One scan per operation, never cached across preview/approval/execution.
+    public static Dictionary<string, List<string>> FindExistingMaterialTargets(string gameRoot, IEnumerable<string> names, CancellationToken token = default)
     {
-        if (!VendorNames.Contains(name) && !name.Equals("renodx-mfgunlock.addon64", StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("拒绝未知材料：" + name);
+        token.ThrowIfCancellationRequested();
+        var found = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (string name in names)
+        {
+            if (!VendorNames.Contains(name) && !name.Equals("renodx-mfgunlock.addon64", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException("拒绝未知材料：" + name);
+            found.TryAdd(name, []);
+        }
+        if (found.Count == 0) return found;
         gameRoot = SafePaths.GameRoot(gameRoot);
-        var found = new List<string>(); var pending = new Stack<string>(); pending.Push(gameRoot);
+        var pending = new Stack<string>(); pending.Push(gameRoot);
         while (pending.Count > 0)
         {
+            token.ThrowIfCancellationRequested();
             var directory = pending.Pop(); SafePaths.EnsureNoLinks(gameRoot, directory);
             foreach (var entry in Directory.EnumerateFileSystemEntries(directory))
             {
+                token.ThrowIfCancellationRequested();
                 var attributes = File.GetAttributes(entry);
                 if ((attributes & FileAttributes.ReparsePoint) != 0) continue;
                 if ((attributes & FileAttributes.Directory) != 0) pending.Push(entry);
-                else if (Path.GetFileName(entry).Equals(name, StringComparison.OrdinalIgnoreCase)) found.Add(entry);
+                else if (found.TryGetValue(Path.GetFileName(entry), out var matches)) matches.Add(entry);
             }
         }
-        found.Sort(StringComparer.OrdinalIgnoreCase); return found;
+        foreach (var matches in found.Values) matches.Sort(StringComparer.OrdinalIgnoreCase);
+        return found;
     }
 }

@@ -39,7 +39,7 @@ public static class DeploymentFiles
                 }
                 // Do not claim ownership over a same-hash file already present before this tool.
                 if (currentHash == f.Sha256)
-                { entry.InstalledHash = f.Sha256; entry.Completed = true; persist(); log("已一致，跳过：" + f.Target); continue; }
+                { entry.InstalledHash = f.Sha256; entry.Completed = true; RecordSource(entry, f); persist(); log("已一致，跳过：" + f.Target); continue; }
                 entry.InstalledHash = f.Sha256; entry.Completed = false; persist();
                 Directory.CreateDirectory(Path.GetDirectoryName(f.Target)!);
                 string temp = f.Target + ".wwfps-" + Guid.NewGuid().ToString("N") + ".tmp";
@@ -60,12 +60,20 @@ public static class DeploymentFiles
                     else File.Replace(temp, f.Target, null);
                     receipt.PendingDeploymentChanges = true;
                     if (await SafePaths.HashAsync(f.Target, token) != f.Sha256) throw new IOException("写入后校验失败：" + f.Target);
-                    entry.Completed = true; persist(); log("已写入并校验：" + f.Target);
+                    entry.Completed = true; RecordSource(entry, f); persist(); log("已写入并校验：" + f.Target);
                 }
                 finally { if (File.Exists(temp)) File.Delete(temp); }
             }
         }
         catch { receipt.Status = "PartialFailure"; persist(); throw; }
+    }
+    private static void RecordSource(FileReceipt entry, PlannedFile file)
+    {
+        // Vendor/addon provenance follows the last verified deployment. Ownership
+        // flags are independent; ReShade retains its installer-source semantics.
+        if (file.Kind is not (PayloadKind.Vendor or PayloadKind.Addon)) return;
+        entry.SourcePath = Path.GetFullPath(file.Source);
+        entry.SourceHash = file.Sha256;
     }
     public static async Task CleanOwnedAddonsAsync(DeploymentReceipt receipt, Action persist, Action<string> log, CancellationToken token = default)
     {

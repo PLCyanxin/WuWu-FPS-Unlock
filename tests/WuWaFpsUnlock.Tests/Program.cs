@@ -88,6 +88,61 @@ await Test("runtime ForceMultiplier change warns without blocking or rewriting",
 await Test("integrity details distinguish payload corruption from INI warning",async()=>{var x=await Fixture();var r=new DeploymentReceipt{GameRoot=x.game};await DeploymentFiles.ApplyAsync(x.plan,r,()=>{},_=>{});r.Status="Deployed";File.WriteAllText(x.plan[0].Target,"other payload");var report=await DeploymentFiles.InspectIntegrityAsync(r);Check(!report.CanLaunch&&!report.FilesMatch);var diff=report.Differences.Single(d=>d.Code=="FileHashMismatch");Check(diff.Path==x.plan[0].Target&&diff.Expected==x.plan[0].Sha256&&diff.Actual!=diff.Expected);});
 await Test("integrity details distinguish missing payload without recreating it",async()=>{var x=await Fixture();var r=new DeploymentReceipt{GameRoot=x.game};await DeploymentFiles.ApplyAsync(x.plan,r,()=>{},_=>{});r.Status="Deployed";File.Delete(x.plan[0].Target);var report=await DeploymentFiles.InspectIntegrityAsync(r);Check(!report.CanLaunch&&report.Differences.Any(d=>d.Code=="FileMissing"&&d.Path==x.plan[0].Target));Check(!File.Exists(x.plan[0].Target));});
 await Test("extra runtime INI values and skipped vendor names remain transparent",async()=>{var x=await Fixture();var r=new DeploymentReceipt{GameRoot=x.game,IniPath=Path.Combine(x.exe,"ReShade.ini"),SkippedVendorNames=["sl.nvperf.dll"]};await DeploymentFiles.ApplyAsync(x.plan,r,()=>{},_=>{});var ini=IniDocument.Load(r.IniPath);ini.ApplyOwned("RenoDX.MFGUnlock","Enabled","1",r);ini.Set("RenoDX.MFGUnlock","DynamicTargetFPS","160");ini.Set("OVERLAY","ShowFPS","2");ini.Save(r.IniPath);r.Status="Deployed";var report=await DeploymentFiles.InspectIntegrityAsync(r);Check(report.CanLaunch&&report.IsStrictlyIntact&&report.Differences.Any(d=>d.Code=="SkippedVendorMaterials"&&d.Message.Contains("sl.nvperf.dll")));});
+await Test("verified deployment updates source provenance without changing ownership",async()=>{
+    var x=await Fixture();var r=new DeploymentReceipt{GameRoot=x.game};
+    await DeploymentFiles.ApplyAsync(x.plan,r,()=>{},_=>{});
+    foreach(var entry in r.Files){Check(entry.SourceHash==entry.InstalledHash);Check(entry.SourcePath==x.plan.Single(f=>f.Target==entry.Path).Source);entry.SourceHash="legacy";entry.SourceKind="ToolInstalled";}
+    var flags=r.Files.Select(f=>(f.CreatedByTool,f.ReplacedByTool)).ToArray();
+    var again=await PackageReader.PlanAsync(x.m,x.file,x.game,x.exe,x.exe);
+    await DeploymentFiles.ApplyAsync(again,r,()=>{},_=>{});
+    Check(r.Files.Select(f=>(f.CreatedByTool,f.ReplacedByTool)).SequenceEqual(flags));
+    Check(r.Files.All(f=>f.SourceKind=="ToolInstalled"&&f.SourceHash==f.InstalledHash));
+    File.WriteAllText(x.plan[1].Source,"new addon version");
+    again=await PackageReader.PlanAsync(x.m,x.file,x.game,x.exe,x.exe);
+    await DeploymentFiles.ApplyAsync(again,r,()=>{},_=>{});
+    Check(r.Files[1].SourceHash==await SafePaths.HashAsync(x.plan[1].Source));
+    await DeploymentFiles.CleanOwnedAddonsAsync(r,()=>{},_=>{});
+    Check(r.Files.All(f=>!File.Exists(f.Path)));
+});
+await Test("source refresh does not claim existing same-hash material",async()=>{
+    var x=await Fixture();foreach(var f in x.plan)File.Copy(f.Source,f.Target,true);
+    var plan=await PackageReader.PlanAsync(x.m,x.file,x.game,x.exe,x.exe);
+    var r=new DeploymentReceipt{GameRoot=x.game};await DeploymentFiles.ApplyAsync(plan,r,()=>{},_=>{});
+    Check(r.Files.All(f=>!f.CreatedByTool&&!f.ReplacedByTool&&f.SourceHash==f.InstalledHash));
+    await DeploymentFiles.CleanOwnedAddonsAsync(r,()=>{},_=>{});Check(plan.All(f=>File.Exists(f.Target)));
+});
+await Test("failed deployment keeps previous source evidence",async()=>{
+    var x=await Fixture();var r=new DeploymentReceipt{GameRoot=x.game};await DeploymentFiles.ApplyAsync(x.plan,r,()=>{},_=>{});
+    var before=r.Files.Select(f=>f.SourceHash).ToArray();File.WriteAllText(x.plan[1].Source,"updated");
+    var plan=await PackageReader.PlanAsync(x.m,x.file,x.game,x.exe,x.exe);File.WriteAllText(x.plan[1].Source,"changed after approval");
+    await Throws<InvalidDataException>(()=>DeploymentFiles.ApplyAsync(plan,r,()=>{},_=>{}));
+    Check(r.Files.Select(f=>f.SourceHash).SequenceEqual(before));
+});
+await Test("bulk material scan preserves mappings and reduces traversal time",()=>Sync(()=>{
+    var game=NewDir();var names=PackageReader.VendorNames.ToArray();
+    for(int n=0;n<180;n++){var dir=Path.Combine(game,n.ToString(),"leaf");Directory.CreateDirectory(dir);for(int j=0;j<12;j++)File.WriteAllText(Path.Combine(dir,$"other{j}.dat"),"");if(n%3==0)File.WriteAllText(Path.Combine(dir,names[n%17].ToUpperInvariant()),"fixture");}
+    var watch=System.Diagnostics.Stopwatch.StartNew();
+    var repeated=names.ToDictionary(n=>n,n=>PackageReader.FindExistingVendorTargets(game,n));watch.Stop();var repeatedMs=watch.Elapsed.TotalMilliseconds;
+    watch.Restart();var bulk=PackageReader.FindExistingMaterialTargets(game,names);watch.Stop();
+    foreach(var name in names)Check(repeated[name].SequenceEqual(bulk[name]));
+    Check(bulk[names[17]].Count==0);Check(bulk.Values.Sum(v=>v.Count)==60);
+    Console.WriteLine($"MEASURE material scan: 361 directories/2220 files; 18 traversals {repeatedMs:F1} ms; one traversal {watch.Elapsed.TotalMilliseconds:F1} ms (fixture, not game timing)");
+    using var cancellation=new CancellationTokenSource();cancellation.Cancel();
+    try{PackageReader.FindExistingMaterialTargets(game,names,cancellation.Token);throw new Exception("cancellation ignored");}catch(OperationCanceledException){}
+    try{PackageReader.FindExistingMaterialTargets(game,new[]{"unknown.dll"});throw new Exception("unknown accepted");}catch(InvalidDataException){}
+}));
+await Test("bulk scan does not follow a directory junction",async()=>{
+    var game=NewDir();var outside=NewDir();var link=Path.Combine(game,"junction");
+    File.WriteAllText(Path.Combine(outside,"nvngx_dlss.dll"),"outside");
+    var start=new System.Diagnostics.ProcessStartInfo("powershell.exe"){UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true};
+    start.ArgumentList.Add("-NoProfile");start.ArgumentList.Add("-Command");
+    start.ArgumentList.Add("New-Item -ItemType Junction -Path $env:WW_TEST_LINK -Target $env:WW_TEST_OUTSIDE -ErrorAction Stop | Out-Null");
+    start.Environment["WW_TEST_LINK"]=link;start.Environment["WW_TEST_OUTSIDE"]=outside;
+    using var process=System.Diagnostics.Process.Start(start)!;await process.WaitForExitAsync();Check(process.ExitCode==0,await process.StandardError.ReadToEndAsync());
+    try{var targets=PackageReader.FindExistingMaterialTargets(game,PackageReader.VendorNames);Check(targets.Values.All(v=>v.Count==0));}
+    finally{Directory.Delete(link);}
+    Check(File.ReadAllText(Path.Combine(outside,"nvngx_dlss.dll"))=="outside");
+});
 await GameFileBaselineTests.RunAsync(Test);
 await DualAddonTests.RunAsync(Test);
 await NoticeTests.RunAsync(Test);
