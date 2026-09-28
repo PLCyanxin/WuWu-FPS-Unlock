@@ -32,5 +32,8 @@ text=text.replace(anchor,'#include "ui_zh.hpp"\n#include "dynamic_ui_bridge.hpp"
 anchor='if (block_dynamic_enable) ImGui::EndDisabled();'
 if text.count(anchor)!=1:raise SystemExit('Dynamic insertion anchor is ambiguous')
 text=text.replace(anchor,anchor+'\n    DrawDynamicMaximumCompanion(runtime);',1)
+anchor='if (wuwa_ui::Combo("##frame_multiplier", &force_choice,\n                     kMultiplierModes,\n                     static_cast<int>(std::size(kMultiplierModes)))) {\n      force = force_choice == 0 ? 0 : force_choice + 1;'
+if text.count(anchor)!=1:raise SystemExit('Active fixed multiplier insertion anchor is ambiguous')
+text=text.replace(anchor,'if (DrawFixedMultiplierCompanion(&force)) {',1)
 (a.output/'addon.cpp').write_text(text,encoding='utf-8')
 print(f'Applied {len(mapping)} display mappings and one Dynamic UI bridge; input source unchanged')

@@ -33,10 +33,15 @@ ConfigText ReadConfig(const char* section, const char* key) {
 void LoadConfig() {
  auto config = ReadConfig(kSection, live::kConfigKey);
  if (!config.present) {
-  config = ReadConfig("RenoDX.MFGUnlock", live::kConfigKey);
-  if (config.present) reshade::set_config_value(nullptr, kSection, live::kConfigKey, live::ParseConfig(config.count, config.first));
+  config = ReadConfig(kSection, live::kLegacyConfigKey);
+  if (!config.present) config = ReadConfig("RenoDX.MFGUnlock", live::kLegacyConfigKey);
+  const int migrated=live::MigrateLegacy(config.count,config.first);
+  if (config.present) reshade::set_config_value(nullptr, kSection, live::kConfigKey, migrated);
+  config={true,1,std::to_string(migrated)};
  }
  live::requested.store(live::ParseConfig(config.count, config.first));
+ auto fixed = ReadConfig(kSection, "FixedFrameGenerationEnabled");
+ live::fixed_enabled.store(!(fixed.present && fixed.count==1 && fixed.first=="0"));
  auto enabled = ReadConfig(kSection, "Enabled");
  user_enabled.store(!enabled.present || (enabled.count == 1 && enabled.first == "1"));
 }
@@ -57,6 +62,24 @@ void SaveRequest(int request) {
  live::requested.store(request);
  reshade::set_config_value(nullptr, kSection, live::kConfigKey, request);
 }
+// -1 is the separate Off selection; 0 retains upstream game-decides semantics.
+bool SaveFixedChoice(int selected,int* multiplier) {
+ if(!multiplier||selected<0||selected>6)return false;
+ const bool on=selected!=0;
+ live::fixed_enabled.store(on);
+ reshade::set_config_value(nullptr,kSection,"FixedFrameGenerationEnabled",on?1:0);
+ if(!on)return false; // Preserve the upstream multiplier while disabled.
+ *multiplier=selected==1?0:selected;
+ return true;
+}
+bool DrawFixedMultiplier(int* multiplier) {
+ if(!multiplier)return false;
+ int selected=live::fixed_enabled.load() ? (*multiplier==0?1:*multiplier) : 0;
+ if(!ImGui::Combo("##frame_multiplier", &selected, "关闭\0跟随游戏设置\0" "2x\0" "3x\0" "4x\0" "5x\0" "6x\0"))return false;
+ const bool changed=SaveFixedChoice(selected,multiplier);
+ if(!live::installed.load()){live::TryInstall(user_enabled,native_mode_guard);LogStatus();}
+ return changed;
+}
 void DrawControls(bool table) {
  ImGui::PushID(kSection);
  if (table) { ImGui::TableNextRow(); ImGui::TableNextColumn(); ImGui::TextUnformatted("启用 Dynamic 最大倍率限制"); ImGui::TableNextColumn(); }
@@ -67,13 +90,15 @@ void DrawControls(bool table) {
   reshade::set_config_value(nullptr, kSection, "Enabled", enabled ? 1 : 0);
  }
  if (!live::installed.load() && ImGui::Button("重试")) { live::TryInstall(user_enabled, native_mode_guard); LogStatus(); }
- int request = live::requested.load(), selected = request == 0 ? 0 : request - 1;
+ int request = live::requested.load(), selected = request == live::kNativeBound ? 0 : (request == 0 ? 1 : request);
  if (table) { ImGui::TableNextRow(); ImGui::TableNextColumn(); }
  ImGui::TextUnformatted("Dynamic 最大倍率");
  if (table) { ImGui::TableNextColumn(); ImGui::SetNextItemWidth(-1.0f); }
- if (ImGui::Combo("##dynamic_max", &selected, "恢复原生上限\0最高 2x\0最高 3x\0最高 4x\0最高 5x\0最高 6x\0")) {
-  SaveRequest(selected == 0 ? 0 : selected + 1);
+ ImGui::BeginDisabled(!enabled);
+ if (ImGui::Combo("##dynamic_max", &selected, "跟随原生上限\0" "关闭\0最高 2x\0最高 3x\0最高 4x\0最高 5x\0最高 6x\0")) {
+  SaveRequest(selected == 0 ? live::kNativeBound : (selected == 1 ? 0 : selected));
  }
+ ImGui::EndDisabled();
  ImGui::PopID();
 }
 void Overlay(reshade::api::effect_runtime*) {
@@ -124,6 +149,7 @@ void OnOverlayCursor(reshade::api::effect_runtime* runtime) {
 }
 void OnDestroyRuntime(reshade::api::effect_runtime*) { wuwa::native_cursor::Stop(); }
 }
+extern "C" __declspec(dllexport) bool DrawWuWaFixedMultiplierV1(int* multiplier) { return DrawFixedMultiplier(multiplier); }
 extern "C" __declspec(dllexport) void DrawWuWaDynamicMaximumInTableV1(reshade::api::effect_runtime*) { DrawControls(true); }
 extern "C" __declspec(dllexport) constexpr const char* NAME = "WuWa Dynamic Maximum";
 extern "C" __declspec(dllexport) constexpr const char* DESCRIPTION = "Version-checked native Dynamic frame maximum companion";

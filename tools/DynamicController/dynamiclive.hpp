@@ -18,11 +18,15 @@ namespace mfgunlock::dynamiclive {
 constexpr unsigned kEntry=0x464a0, kReturn=0x47275;
 constexpr char kHash[]="F4A6B2B14DCC0B1485989E430D3B4E3A44AC1800B92BA1AD74F476E64FB2B09C";
 using NativeFn=void(*)(void*,void*);
+using ValidateFn=bool(*)(void*,void*,void*,void*);
+constexpr unsigned kValidateEntry=0x4bbc0,kValidateReturn=0x476f4;
+inline ValidateFn original_validate=nullptr;
+inline std::atomic_bool fixed_enabled{true};
 inline NativeFn original=nullptr;
 inline HMODULE owner=nullptr;
 inline const std::atomic_bool* addon_enabled=nullptr;
 inline const std::atomic_bool* dynamic_enabled=nullptr;
-inline std::atomic<int> requested{kDefaultRequest}; // persisted request; zero restores each frame's native bound
+inline std::atomic<int> requested{kDefaultRequest}; // V2: -1 follows native bound; 0 disables generated output for this frame
 inline std::atomic<bool> installed{false}, enabled{false}, invalid{false};
 inline std::atomic<unsigned long long> observation{0}; // coherent request/bound/submitted sample
 inline std::atomic_flag installing=ATOMIC_FLAG_INIT;
@@ -35,10 +39,22 @@ inline bool Policy(void* snapshot,int request,unsigned long long& sample) {
  unsigned mode=0,bound=0;
  std::memcpy(&mode,static_cast<char*>(snapshot)+0x20,4);
  std::memcpy(&bound,static_cast<char*>(snapshot)+0x44,4);
- if(mode!=3||bound<1||bound>5||request<0||request==1||request>6)return false;
+ if(mode!=3||bound<1||bound>5||request<kNativeBound||request==1||request>6)return false;
  unsigned applied=Limit(bound,request);
- if(request)std::memcpy(static_cast<char*>(snapshot)+0x44,&applied,4);
- sample=(1ull<<63)|static_cast<unsigned>(request)|(static_cast<unsigned long long>(bound+1)<<8)|(static_cast<unsigned long long>(applied+1)<<16);
+ if(request>=2)std::memcpy(static_cast<char*>(snapshot)+0x44,&applied,4);
+ sample=(1ull<<63)|static_cast<unsigned>(request==kNativeBound?7:request)|(static_cast<unsigned long long>(bound+1)<<8)|(static_cast<unsigned long long>(request==0?1:applied+1)<<16);
+ return true;
+}
+// Called after the original selector, before the caller queues/copies this frame.
+// This is the audited frame's native Off mode, not a zero maximum or SetOptions call.
+inline bool SubmitOff(void* snapshot) {
+ unsigned mode=0;std::memcpy(&mode,static_cast<char*>(snapshot)+0x20,4);
+ if(mode!=3)return false;
+ const unsigned zero=0,one=1;
+ std::memcpy(static_cast<char*>(snapshot)+0x20,&zero,4);
+ std::memcpy(static_cast<char*>(snapshot)+0x00,&zero,4);
+ std::memcpy(static_cast<char*>(snapshot)+0x04,&zero,4);
+ std::memcpy(static_cast<char*>(snapshot)+0x08,&one,4);
  return true;
 }
 inline bool Writable(const void* snapshot,size_t size) {
@@ -61,14 +77,49 @@ __declspec(noinline) inline void Wrapped(void* context,void* snapshot) {
  // The native caller owns and serializes this per-frame stack object. Do not retain it,
  // restore the cap afterwards, call SL APIs, or read UI state again during this frame.
  const void* caller=_ReturnAddress();
+ bool submitOff=false;unsigned long long sample=0;
  if(enabled.load(std::memory_order_acquire)&&addon_enabled&&dynamic_enabled&&
     addon_enabled->load(std::memory_order_relaxed)&&dynamic_enabled->load(std::memory_order_relaxed)){
-  unsigned long long sample=0;int value=requested.load(std::memory_order_relaxed);
+  int value=requested.load(std::memory_order_relaxed);
   if(reinterpret_cast<ULONG_PTR>(caller)!=reinterpret_cast<ULONG_PTR>(owner)+kReturn||!StackPolicy(snapshot,value,sample)){
    enabled.store(false,std::memory_order_release);invalid.store(true); // retain safe trampoline
-  }else observation.store(sample,std::memory_order_relaxed);
+  }else {submitOff=value==0;if(!submitOff)observation.store(sample,std::memory_order_relaxed);}
  }
  original(context,snapshot);
+ if(submitOff) {
+  if(SubmitOff(snapshot))observation.store(sample,std::memory_order_relaxed);
+  else {enabled.store(false,std::memory_order_release);invalid.store(true);}
+ }
+}
+// The shared native validator runs after frame counts are finalized. Ordinary
+// Off changes only mode 1/2. Dynamic retains its earlier, once-sampled selector.
+inline bool FixedOffPolicy(void* snapshot,bool allowGeneration) {
+ unsigned mode=0;std::memcpy(&mode,static_cast<char*>(snapshot)+0x20,4);
+ if(mode>3)return false;
+ if(!allowGeneration&&(mode==1||mode==2)) {
+  const unsigned zero=0,one=1;
+  std::memcpy(static_cast<char*>(snapshot)+0x20,&zero,4);
+  std::memcpy(static_cast<char*>(snapshot),&zero,4);
+  std::memcpy(static_cast<char*>(snapshot)+4,&zero,4);
+  std::memcpy(static_cast<char*>(snapshot)+8,&one,4);
+ }
+ return true;
+}
+inline bool StackFixedOff(void* snapshot,bool allowGeneration) {
+ ULONG_PTR low=0,high=0;GetCurrentThreadStackLimits(&low,&high);
+ auto p=reinterpret_cast<ULONG_PTR>(snapshot);
+ if(p<low||p>high||high-p<0x58||!Writable(snapshot,0x58))return false;
+ __try{return FixedOffPolicy(snapshot,allowGeneration);}__except(EXCEPTION_EXECUTE_HANDLER){return false;}
+}
+__declspec(noinline) inline bool WrappedValidate(void* context,void* snapshot,void* third,void* fourth) {
+ const void* caller=_ReturnAddress();
+ if(enabled.load(std::memory_order_acquire)) {
+  const bool allowGeneration=fixed_enabled.load(std::memory_order_relaxed);
+  if(reinterpret_cast<ULONG_PTR>(caller)!=reinterpret_cast<ULONG_PTR>(owner)+kValidateReturn||!StackFixedOff(snapshot,allowGeneration)) {
+   enabled.store(false,std::memory_order_release);invalid.store(true);
+  }
+ }
+ return original_validate(context,snapshot,third,fourth);
 }
 inline std::string HashHandle(HANDLE f) {
  if(f==INVALID_HANDLE_VALUE)return {};
@@ -95,9 +146,10 @@ inline bool Anchors(HMODULE module) {
   if(dos->e_magic!=IMAGE_DOS_SIGNATURE||dos->e_lfanew<=0||dos->e_lfanew>0x1000)return false;
   auto nt=reinterpret_cast<const IMAGE_NT_HEADERS64*>(base+dos->e_lfanew);
   if(nt->Signature!=IMAGE_NT_SIGNATURE||nt->FileHeader.Machine!=IMAGE_FILE_MACHINE_AMD64||nt->OptionalHeader.Magic!=IMAGE_NT_OPTIONAL_HDR64_MAGIC)return false;
-  if(nt->OptionalHeader.SizeOfImage<0x77990)return false;
+  if(nt->OptionalHeader.SizeOfImage<0x79da0)return false;
   if(*reinterpret_cast<const ULONG_PTR*>(base+0x77858)!=reinterpret_cast<ULONG_PTR>(base)+0x40830||
-     *reinterpret_cast<const ULONG_PTR*>(base+0x77988)!=reinterpret_cast<ULONG_PTR>(base)+0x40870)return false;
+     *reinterpret_cast<const ULONG_PTR*>(base+0x77988)!=reinterpret_cast<ULONG_PTR>(base)+0x40870||
+     *reinterpret_cast<const ULONG_PTR*>(base+0x79d98)!=reinterpret_cast<ULONG_PTR>(base)+0x4d5c0)return false;
   for(const auto& a:anchors){if(a.rva+a.size>nt->OptionalHeader.SizeOfImage||std::memcmp(base+a.rva,a.bytes,a.size))return false;}
   return true;
  }__except(EXCEPTION_EXECUTE_HANDLER){return false;}
@@ -138,7 +190,7 @@ inline bool Attach(void** target,void* replacement,const std::vector<HANDLE>& th
  return ops.commit()==NO_ERROR; // Detours ends/rolls back a failed commit itself.
 }
 inline bool AttachStable(void** target,void* replacement,HMODULE module,std::vector<HANDLE>& threads,
- const TransactionOps& ops={},bool(*enumerate)(std::vector<HANDLE>&)=Threads,bool(*validate)(HMODULE)=Anchors) {
+ const TransactionOps& ops={},bool(*enumerate)(std::vector<HANDLE>&)=Threads,bool(*validate)(HMODULE)=Anchors,void** secondTarget=nullptr,void* secondReplacement=nullptr) {
  if(!enumerate(threads)||ops.begin()!=NO_ERROR)return false;
  if(ops.update(GetCurrentThread())!=NO_ERROR){ops.abort();return false;}
  size_t enrolled=0;bool stable=false;
@@ -149,11 +201,12 @@ inline bool AttachStable(void** target,void* replacement,HMODULE module,std::vec
   if(threads.size()==before){stable=true;break;}
  }
  if(!stable||!validate(module)||ops.attach(target,replacement)!=NO_ERROR){ops.abort();return false;}
+ if(secondTarget&&ops.attach(secondTarget,secondReplacement)!=NO_ERROR){ops.abort();return false;}
  return ops.commit()==NO_ERROR;
 }
 // Called from normal Present or manual overlay retry, outside DllMain. Never loads Streamline/NVAPI.
 inline bool TryInstall(const std::atomic_bool& addon,const std::atomic_bool& dynamic) {
- if(!addon.load()||!dynamic.load()){status="Enable addon and Dynamic first; native behavior unchanged";return false;}
+ if((!addon.load()&&fixed_enabled.load())||!dynamic.load()){status="Enable addon and Dynamic first; native behavior unchanged";return false;}
  if(installed.load())return !invalid.load();
  if(installing.test_and_set())return false;
  struct Reset{~Reset(){installing.clear();}} reset;
@@ -173,10 +226,11 @@ inline bool TryInstall(const std::atomic_bool& addon,const std::atomic_bool& dyn
  }
  std::vector<HANDLE> threads;threads.reserve(4096);bool ok;
  owner=module;original=reinterpret_cast<NativeFn>(reinterpret_cast<char*>(module)+kEntry);
+ original_validate=reinterpret_cast<ValidateFn>(reinterpret_cast<char*>(module)+kValidateEntry);
  addon_enabled=&addon;dynamic_enabled=&dynamic;
- ok=AttachStable(reinterpret_cast<void**>(&original),reinterpret_cast<void*>(&Wrapped),module,threads);
+ ok=AttachStable(reinterpret_cast<void**>(&original),reinterpret_cast<void*>(&Wrapped),module,threads,{},Threads,Anchors,reinterpret_cast<void**>(&original_validate),reinterpret_cast<void*>(&WrappedValidate));
  for(auto h:threads)CloseHandle(h);
- if(!ok){original=nullptr;owner=nullptr;addon_enabled=nullptr;dynamic_enabled=nullptr;status="Detour transaction refused; native behavior unchanged";return false;}
+ if(!ok){original_validate=nullptr;original=nullptr;owner=nullptr;addon_enabled=nullptr;dynamic_enabled=nullptr;status="Detour transaction refused; native behavior unchanged";return false;}
  installed.store(true);enabled.store(true,std::memory_order_release);status="Armed; waiting for a matching native Dynamic frame";return true;
 }
 // Normal Present callback only, never loader callbacks. One installation attempt,
@@ -185,7 +239,7 @@ inline std::atomic<unsigned> auto_checks{0};
 inline std::atomic<ULONGLONG> next_auto_check{0};
 inline std::atomic_bool auto_finished{false};
 inline void AutoInstall(const std::atomic_bool& addon,const std::atomic_bool& dynamic) {
- if(installed.load()||auto_finished.load()||!addon.load()||!dynamic.load())return;
+ if(installed.load()||auto_finished.load()||(!addon.load()&&fixed_enabled.load())||!dynamic.load())return;
  auto now=GetTickCount64(),due=next_auto_check.load();
  if(now<due||!next_auto_check.compare_exchange_strong(due,now+1000))return;
  if(GetModuleHandleW(L"sl.dlss_g.dll")){
