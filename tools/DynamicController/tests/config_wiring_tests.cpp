@@ -6,6 +6,8 @@
 #include <stdexcept>
 std::map<std::pair<std::string,std::string>,std::string> config;
 unsigned writes=0, checks=0;
+std::vector<std::string> logs;
+extern "C" __declspec(dllexport) void ReShadeLogMessage(void*,int,const char* message){logs.emplace_back(message);}
 extern "C" __declspec(dllexport) bool ReShadeGetConfigValue(void*,reshade::api::effect_runtime*,const char* section,const char* key,char* value,size_t* size) {
  auto found=config.find({section,key});if(found==config.end())return false;
  size_t required=found->second.size()+1;
@@ -14,6 +16,8 @@ extern "C" __declspec(dllexport) bool ReShadeGetConfigValue(void*,reshade::api::
 }
 extern "C" __declspec(dllexport) void ReShadeSetConfigValue(void*,reshade::api::effect_runtime*,const char* section,const char* key,const char* value) {config[{section,key}]=value;++writes;}
 void Check(bool value,const char* name){if(!value)throw std::runtime_error(name);++checks;std::cout<<"PASS "<<name<<'\n';}
+unsigned retries=0;
+bool FakeInstall(const std::atomic_bool&,const std::atomic_bool&){++retries;return false;}
 int main(){
  reshade::internal::get_reshade_module_handle(GetModuleHandleW(nullptr));
  LoadConfig();Check(live::requested==4&&user_enabled,"fresh companion default4 enabled");
@@ -44,6 +48,33 @@ int main(){
  LoadConfig();Check(!live::fixed_enabled,"ordinary Off survives companion load");
  Check(SaveFixedChoice(3,&fixedMultiplier)&&fixedMultiplier==3&&live::fixed_enabled&&live::requested==dynamicChoice,"ordinary resume preserves Dynamic choice");
  Check(SaveFixedChoice(1,&fixedMultiplier)&&fixedMultiplier==0,"ordinary follow-game retains original multiplier0 meaning");
+ SaveRequest(6);const auto logged=logs.size();LogFrameObservation();Check(logs.size()==logged,"no new native frame never claims observation");
+ live::observation=(1ull<<63)|6|(6ull<<8)|(6ull<<16)|(4ull<<24);live::observed_frames.fetch_add(1);
+ LogFrameObservation();Check(logs.size()==logged+1,"native observation logs separately from saved request");
+ LogFrameObservation();Check(logs.size()==logged+1,"native observation is bounded once per selection");
+ alignas(8) unsigned char native[0x58]{};
+ unsigned mode=0,total=1;memcpy(native+0x20,&mode,4);memcpy(native+8,&total,4);
+ live::PublishUiFrame(native,live::ui_revision.load());Check(live::UiFrameStatus()==1,"native off snapshot reports native frames");
+ const auto oldRevision=live::ui_revision.load();live::UiChoiceChanged();
+ live::PublishUiFrame(native,live::ui_revision.load());Check(live::UiFrameStatus()==0,"in-progress choice cannot acknowledge old request");
+ live::UiChoiceCommitted();live::PublishUiFrame(native,oldRevision);Check(live::UiFrameStatus()==0,"late old frame cannot acknowledge newer choice");
+ for(unsigned testMode=1;testMode<=3;++testMode)for(unsigned testTotal=2;testTotal<=6;++testTotal){
+  memcpy(native+0x20,&testMode,4);memcpy(native+8,&testTotal,4);live::PublishUiFrame(native,live::ui_revision.load());
+  Check(live::UiFrameStatus()==testTotal,"native mode reports observed total, not requested multiplier");
+ }
+ unsigned enabledMode=3,one=1;memcpy(native+0x20,&enabledMode,4);memcpy(native+8,&one,4);live::PublishUiFrame(native,live::ui_revision.load());
+ Check(live::UiFrameStatus()==7,"enabled Dynamic one-frame result is not Off");
+ live::enabled=true;live::invalid=true;Check(GetWuWaNativeFrameStatusV1()==0,"guard failure suppresses previous valid frame");live::invalid=false;
+ live::enabled=false;Check(GetWuWaNativeFrameStatusV1()==0,"inactive hook never claims native observation");
+ Check(live::UiFrameStatus(GetTickCount()+2100)==0,"stale frame expires during pause or loss of new frames");
+ unsigned badMode=0,badTotal=3;memcpy(native+0x20,&badMode,4);memcpy(native+8,&badTotal,4);live::PublishUiFrame(native,live::ui_revision.load());
+ Check(live::UiFrameStatus()==0,"inconsistent Off snapshot cannot display a stale multiplier");
+ live::auto_finished=true;user_enabled=true;live::installed=false;live::invalid=false;
+ RetryForUserChoice(FakeInstall);Check(retries==1&&live::auto_finished,"explicit choice retries exhausted startup without restarting automatic polling");
+ live::invalid=true;RetryForUserChoice(FakeInstall);Check(retries==1&&live::invalid,"explicit choice never clears native guard failure");
+ live::invalid=false;user_enabled=false;live::fixed_enabled=true;RetryForUserChoice(FakeInstall);Check(retries==1,"disabled features do not retry");
+ live::fixed_enabled=false;RetryForUserChoice(FakeInstall);Check(retries==2,"ordinary Off can retry independently of Dynamic toggle");
+ live::installed=true;RetryForUserChoice(FakeInstall);Check(retries==2,"installed hooks are not reinstalled by choices");
  Check(GetModuleHandleW(L"sl.dlss_g.dll")==nullptr&&GetModuleHandleW(L"nvapi64.dll")==nullptr,"no real runtime or driver loaded");
  std::cout<<checks<<"/"<<checks<<" companion API configuration tests passed\n";
 }

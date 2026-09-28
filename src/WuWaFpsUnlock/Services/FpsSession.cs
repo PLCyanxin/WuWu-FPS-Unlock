@@ -6,17 +6,27 @@ using Microsoft.Win32.SafeHandles;
 using WuWaFpsUnlock.Core;
 namespace WuWaFpsUnlock.Services;
 
-// Uses ONLY the unmodified FPS-only native DLL extracted from the user's supplied tool.
+// Uses the source-built FPS-only core; its exact build is recorded in components/PROVENANCE.json.
 // No database writes, FOV, UID changes, anti-cheat workarounds, or advanced plugin loading.
 public sealed class FpsSession : IAsyncDisposable
 {
-    public const string PluginHash="844d7552692f53e8a1bfe45edf360a094597c5bf2b26dc058ff59b21d2250c3a";
+    public const string PluginHash="8027528f9ee6f5ee7a851f3d1499f848a0b219f4f9aa88f41dba4d7c707a1816";
     private const string PipeName="55984705-F24C-45C2-B2B7-27F047B43A56";
-    private NamedPipeClientStream? _pipe;
-    private readonly SemaphoreSlim _sendGate=new(1,1);
+    private readonly FpsControlChannel _channel=new();
     public Process? Game {get;private set;}
-    public bool Connected=>_pipe?.IsConnected==true && Game is not null && !Game.HasExited;
+    public bool Connected
+    {
+        get{try{return _channel.Connected && Game is not null && !Game.HasExited;}catch(InvalidOperationException){return false;}}
+    }
     public async Task ConnectAsync(Process game,string pluginPath,Action<string> log,CancellationToken token)
+    {
+        await _channel.ConnectAsync(cancellation=>CreatePipeAsync(game,pluginPath,log,cancellation),stream=>
+        {
+            if(game.HasExited||stream is not NamedPipeClientStream pipe||!GetNamedPipeServerProcessId(pipe.SafePipeHandle,out uint server)||server!=(uint)game.Id)
+                throw new IOException("FPS 通信管道不属于本次仍存活的游戏进程；没有发送设置。");
+        },token);
+    }
+    private async Task<Stream> CreatePipeAsync(Process game,string pluginPath,Action<string> log,CancellationToken token)
     {
         using var sourceLock=new FileStream(pluginPath,FileMode.Open,FileAccess.Read,FileShare.Read);
         if(await SafePaths.HashAsync(pluginPath,token)!=PluginHash)throw new InvalidDataException("FPS 插件哈希不符，拒绝载入。");
@@ -31,26 +41,13 @@ public sealed class FpsSession : IAsyncDisposable
             await pipe.ConnectAsync(20000,token);
             if(!GetNamedPipeServerProcessId(pipe.SafePipeHandle,out uint server)||server!=(uint)game.Id)
                 throw new IOException("FPS 通信管道不属于本次游戏进程；没有发送设置。请关闭其他解锁器。");
-            _pipe=pipe; log("FPS 基础插件已加载，IPC 已连接；实际帧率仍需在游戏中确认。");
+            log("FPS 基础插件已加载，IPC 已连接；实际帧率仍需在游戏中确认。");return pipe;
         }
         catch(OperationCanceledException){await pipe.DisposeAsync();throw;}
         catch(Exception error){await pipe.DisposeAsync();throw BuiltinFpsService.ExplainFailure("FPS/IPC连接或PID校验",game.Id,error);}
     }
-    public async Task SetFpsAsync(int fps,CancellationToken token=default)
-    {
-        if(fps is <30 or >420)throw new ArgumentOutOfRangeException(nameof(fps));
-        await _sendGate.WaitAsync(token);
-        try
-        {
-            if(!Connected)throw new IOException("FPS 控制通道未连接。");
-            if(!GetNamedPipeServerProcessId(_pipe!.SafePipeHandle,out uint id)||id!=(uint)Game!.Id)throw new IOException("FPS 管道进程标识不匹配。");
-            // Six-field protocol used by ww_plugin_base; advanced fields are always disabled.
-            byte[] msg=Encoding.ASCII.GetBytes($"0,0,45.0,0,0,{fps}");
-            await _pipe.WriteAsync(msg,token);await _pipe.FlushAsync(token);
-        }
-        finally{_sendGate.Release();}
-    }
-    public async ValueTask DisposeAsync(){if(_pipe is not null)await _pipe.DisposeAsync();_pipe=null;Game=null;}
+    public Task SetFpsAsync(int fps,CancellationToken token=default)=>_channel.SendAsync(fps,token);
+    public async ValueTask DisposeAsync(){await _channel.DisposeAsync();Game=null;}
     private static void Inject(Process game,string dll,Action<string> log)
     {
         string phase="FPS/验证渲染进程";

@@ -30,7 +30,7 @@ public static class ElevatedWorker
             // Only fixed deploy/clean operations, not arbitrary commands or caller-supplied file operations.
             var psi=new ProcessStartInfo(exe){UseShellExecute=true,Verb="runas",WorkingDirectory=AppPaths.Base};
             psi.ArgumentList.Add("--worker");psi.ArgumentList.Add(request);
-            using var process=Process.Start(psi)??throw new IOException("管理员工作进程未启动。");
+            using var process=LauncherScheduling.StartProcess(psi)??throw new IOException("管理员工作进程未启动。");
             await process.WaitForExitAsync();
             if(!File.Exists(result))throw new IOException("管理员操作没有返回结果。请查看逐文件部署记录。");
             var response=JsonFiles.Read<WorkerResult>(result);

@@ -68,7 +68,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         RememberValidSelection();
         Log("鸣潮 FPS Unlock 1.2.2RC 启动。");
     }
-    public bool Busy {get=>_busy;private set{if(_busy==value)return;_busy=value;NotifyAll();}}
+    public bool Busy {get=>_busy;private set{if(_busy==value)return;_busy=value;LauncherScheduling.SetBusy(value);NotifyAll();}}
     public bool IsGameRunning {get=>_running;private set{if(_running==value)return;_running=value;if(value)_monitor.Start();else _monitor.Stop();NotifyAll();}}
     public bool CanChangeFpsMode=>!Busy;
     public bool CanEditFps=>!Busy&&FpsEnabled;
@@ -327,7 +327,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
                     token.ThrowIfCancellationRequested();
                     var startInfo=new ProcessStartInfo(exe){UseShellExecute=true,WorkingDirectory=Path.GetDirectoryName(exe)!};
                     if(snapshot.MfgSelected){startInfo.ArgumentList.Add("-dx12");Log("多帧生成启动参数：-dx12；实际D3D12加载以游戏日志为准。");}
-                    var process=Process.Start(startInfo)??throw new IOException("系统未返回游戏进程。");
+                    var process=LauncherScheduling.StartProcess(startInfo)??throw new IOException("系统未返回游戏进程。");
                     _game=process;startedThisAttempt=true;IsGameRunning=true;_deferredUpdate.GameStarted();GameStarted?.Invoke();
                     Log($"仅启动所选Shipping一次：{exe}；PID={process.Id}；FPS={(snapshot.FpsEnabled?"ON":"OFF")}；目标={snapshot.TargetFps}");
                     return Task.FromResult(process);

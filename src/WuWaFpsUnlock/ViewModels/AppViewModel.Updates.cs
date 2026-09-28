@@ -87,7 +87,7 @@ public sealed partial class AppViewModel
             start.ArgumentList.Add("--wait-for-rollback");
             start.ArgumentList.Add(Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
             start.ArgumentList.Add(exe); start.ArgumentList.Add(selected.Directory);
-            using var process = Process.Start(start) ?? throw new IOException("回退程序未能启动。");
+            using var process = LauncherScheduling.StartProcess(start) ?? throw new IOException("回退程序未能启动。");
             started = true; Log("已交接独立回退程序；保留部署记录，完成后请重新部署。");
         }
         catch (OperationCanceledException) { RollbackStatus = "回退已取消"; }
@@ -207,7 +207,7 @@ public sealed partial class AppViewModel
         start.ArgumentList.Add("--wait-for-exit");
         start.ArgumentList.Add(Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
         start.ArgumentList.Add(Path.GetFullPath(appExe));
-        using var process = Process.Start(start) ?? throw new IOException("更新程序未能启动。");
+        using var process = LauncherScheduling.StartProcess(start) ?? throw new IOException("更新程序未能启动。");
         Log("已启动更新程序；启动器退出后才会替换文件。");
         return true;
     }

@@ -17,7 +17,11 @@ public partial class App:Application
         _singleInstance=new Mutex(true,@"Local\WuWaFPSUnlock_0_9",out bool created);
         if(!created){await SingleInstanceActivation.RequestAsync();if(e.Args.Contains("--update-completed"))MessageBox.Show("更新完成，请点击重新部署。\n已有启动器窗口正在运行，请打开更新后安装目录的启动器设置。","更新完成",MessageBoxButton.OK,MessageBoxImage.Information,MessageBoxResult.OK,MessageBoxOptions.DefaultDesktopOnly);Shutdown();return;}
         try{
-            var vm=new AppViewModel();MainWindow=new MainWindow(vm);
+            LauncherScheduling.Initialize();
+            Activated+=(_,_)=>LauncherScheduling.SetBackground(false);
+            Deactivated+=(_,_)=>LauncherScheduling.SetBackground(true);
+            Exit+=(_,_)=>LauncherScheduling.SetBackground(false);
+            var vm=new AppViewModel();LauncherScheduling.StatusChanged+=vm.Log;vm.Log(LauncherScheduling.Status);MainWindow=new MainWindow(vm);
             if(e.Args.Contains("--update-completed")) ((MainWindow)MainWindow).StartupCompleted=()=>
             {
                 MainWindow.Activate();vm.OpenSettingsCommand.Execute(null);

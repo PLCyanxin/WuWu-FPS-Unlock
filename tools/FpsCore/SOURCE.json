@@ -1,0 +1,13 @@
+{
+  "repository": "https://github.com/30launchers/WutheringWaves-FPS-unlocker",
+  "commit": "5f73ebcf0166c899ff347593492fe523ccbab89f",
+  "license": "MIT",
+  "sources": [
+    "ww_plugin_base/dllmain.cpp",
+    "ww_plugin_base/PatternScanner.hpp",
+    "ww_plugin_base/HookUtility.h"
+  ],
+  "originalBinarySha256": "844d7552692f53e8a1bfe45edf360a094597c5bf2b26dc058ff59b21d2250c3a",
+  "status": "Built-in FPS core for v1.2.2RC; compatibility depends on the game runtime",
+  "integratedBinarySha256": "8027528f9ee6f5ee7a851f3d1499f848a0b219f4f9aa88f41dba4d7c707a1816"
+}

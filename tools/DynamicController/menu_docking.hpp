@@ -23,7 +23,7 @@ public:
     }
 };
 template<class Log> inline bool Configure(Log&& log) {
-    static Policy policy;
+    static thread_local Policy policy;
     return policy.Apply(ImGui::GetVersion(), []() -> ImGuiIO& { return ImGui::GetIO(); }, log);
 }
 }

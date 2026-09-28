@@ -126,6 +126,12 @@ int wmain(int argc,wchar_t** argv){
  Check(requested==0 ? mode==0&&generated==0&&total==1 : mode==3,"off submits native mode0/count0/total1 and later frame restores Dynamic");
  // Consumer model matches the pinned branches: mode0 skips Evaluate entirely.
  Check((mode!=0)==(requested!=0),"queued off snapshot takes native Evaluate bypass");}
+ Snapshot schedulerLimited(5);live::requested=6;Invoke(schedulerLimited);
+ Check(((live::observation.load()>>16)&255)==6&&((live::observation.load()>>24)&255)==5,"requested6 cap and native-selected5 are reported separately");
+ live::requested=2;Snapshot lowered(5);Invoke(lowered);
+ Check(((live::observation.load()>>24)&255)==2&&lowered.cap()==1,"lower maximum is consumed on next selector invocation without options refresh");
+ live::requested=0;Snapshot disabledNext(5);Invoke(disabledNext);
+ Check(((live::observation.load()>>24)&255)==1,"Off submits native-only total1 on next selector invocation");
  Snapshot changingOff;int nextOn=6;live::requested=0;Invoke(changingOff,&nextOn);unsigned offMode=99;std::memcpy(&offMode,changingOff.bytes+0x20,4);
  Check(offMode==0&&live::requested==6,"off decision is sampled once despite mid-call UI resume");
  Snapshot resumed;Invoke(resumed);unsigned resumedMode=0;std::memcpy(&resumedMode,resumed.bytes+0x20,4);Check(resumedMode==3,"next fresh frame resumes after off");

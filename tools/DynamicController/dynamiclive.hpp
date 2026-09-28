@@ -28,7 +28,28 @@ inline const std::atomic_bool* addon_enabled=nullptr;
 inline const std::atomic_bool* dynamic_enabled=nullptr;
 inline std::atomic<int> requested{kDefaultRequest}; // V2: -1 follows native bound; 0 disables generated output for this frame
 inline std::atomic<bool> installed{false}, enabled{false}, invalid{false};
-inline std::atomic<unsigned long long> observation{0}; // coherent request/bound/submitted sample
+inline std::atomic<unsigned long long> observation{0}; // coherent request/native bound/cap + observed native total (bits24..31)
+inline std::atomic<unsigned long long> observed_frames{0};
+inline std::atomic<unsigned> ui_revision{2};
+inline std::atomic<unsigned long long> ui_frame{0};
+inline thread_local const void* ui_dynamic_snapshot=nullptr;
+inline thread_local unsigned ui_dynamic_revision=0;
+inline void UiChoiceChanged(){ui_revision.fetch_add(1);ui_frame.store(0);}
+inline void UiChoiceCommitted(){ui_revision.fetch_add(1);}
+inline void PublishUiFrame(const void* snapshot,unsigned revision) {
+ unsigned mode=0,total=0;std::memcpy(&mode,static_cast<const char*>(snapshot)+0x20,4);std::memcpy(&total,static_cast<const char*>(snapshot)+8,4);
+ if((revision&1)||revision!=ui_revision.load())return;
+ if(mode>3||total<1||total>6||(mode==0&&total!=1)){ui_frame.store(0);return;}
+ ui_frame.store((static_cast<unsigned long long>(GetTickCount())<<32)|(static_cast<unsigned long long>(revision&0xffffff)<<8)|(total<<2)|mode);
+}
+// 0 = no current observation; 1 = native Off; 2..6 = observed snapshot total.
+inline unsigned UiFrameStatus(unsigned now=GetTickCount()) {
+ const auto sample=ui_frame.load();
+ if(!sample||((sample>>8)&0xffffff)!=(ui_revision.load()&0xffffff)||now-static_cast<unsigned>(sample>>32)>2000)return 0;
+ const auto mode=sample&3,total=(sample>>2)&7;
+ return mode==0&&total==1?1:(total==1?7:static_cast<unsigned>(total));
+}
+
 inline std::atomic_flag installing=ATOMIC_FLAG_INIT;
 inline std::atomic<const char*> status{"Waiting for supported Streamline; configured live request ready"};
 inline unsigned Limit(unsigned native, int request) {
@@ -78,17 +99,24 @@ __declspec(noinline) inline void Wrapped(void* context,void* snapshot) {
  // restore the cap afterwards, call SL APIs, or read UI state again during this frame.
  const void* caller=_ReturnAddress();
  bool submitOff=false;unsigned long long sample=0;
+ ui_dynamic_snapshot=snapshot;ui_dynamic_revision=ui_revision.load();
  if(enabled.load(std::memory_order_acquire)&&addon_enabled&&dynamic_enabled&&
     addon_enabled->load(std::memory_order_relaxed)&&dynamic_enabled->load(std::memory_order_relaxed)){
   int value=requested.load(std::memory_order_relaxed);
   if(reinterpret_cast<ULONG_PTR>(caller)!=reinterpret_cast<ULONG_PTR>(owner)+kReturn||!StackPolicy(snapshot,value,sample)){
    enabled.store(false,std::memory_order_release);invalid.store(true); // retain safe trampoline
-  }else {submitOff=value==0;if(!submitOff)observation.store(sample,std::memory_order_relaxed);}
+  }else {submitOff=value==0;}
  }
  original(context,snapshot);
  if(submitOff) {
-  if(SubmitOff(snapshot))observation.store(sample,std::memory_order_relaxed);
-  else {enabled.store(false,std::memory_order_release);invalid.store(true);}
+  if(!SubmitOff(snapshot)){enabled.store(false,std::memory_order_release);invalid.store(true);sample=0;}
+ }
+ if(sample) {
+  // A limit is not the scheduler's selected multiplier. Observe only after the
+  // native selector and our Off policy have completed for this snapshot.
+  unsigned total=0;std::memcpy(&total,static_cast<char*>(snapshot)+8,4);
+  observation.store(sample|(static_cast<unsigned long long>(total&255)<<24),std::memory_order_relaxed);
+  observed_frames.fetch_add(1,std::memory_order_release);
  }
 }
 // The shared native validator runs after frame counts are finalized. Ordinary
@@ -114,11 +142,13 @@ inline bool StackFixedOff(void* snapshot,bool allowGeneration) {
 __declspec(noinline) inline bool WrappedValidate(void* context,void* snapshot,void* third,void* fourth) {
  const void* caller=_ReturnAddress();
  if(enabled.load(std::memory_order_acquire)) {
+  const unsigned revision=ui_dynamic_snapshot==snapshot?ui_dynamic_revision:ui_revision.load();
   const bool allowGeneration=fixed_enabled.load(std::memory_order_relaxed);
   if(reinterpret_cast<ULONG_PTR>(caller)!=reinterpret_cast<ULONG_PTR>(owner)+kValidateReturn||!StackFixedOff(snapshot,allowGeneration)) {
    enabled.store(false,std::memory_order_release);invalid.store(true);
-  }
+  } else PublishUiFrame(snapshot,revision);
  }
+ ui_dynamic_snapshot=nullptr;
  return original_validate(context,snapshot,third,fourth);
 }
 inline std::string HashHandle(HANDLE f) {

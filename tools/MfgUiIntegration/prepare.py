@@ -31,9 +31,23 @@ anchor='namespace {'
 text=text.replace(anchor,'#include "ui_zh.hpp"\n#include "dynamic_ui_bridge.hpp"\n\n'+anchor,1)
 anchor='if (block_dynamic_enable) ImGui::EndDisabled();'
 if text.count(anchor)!=1:raise SystemExit('Dynamic insertion anchor is ambiguous')
-text=text.replace(anchor,anchor+'\n    DrawDynamicMaximumCompanion(runtime);',1)
+text=text.replace(anchor,anchor+'\n    DrawDynamicMaximumCompanion(runtime, dynamic_mfg);',1)
 anchor='if (wuwa_ui::Combo("##frame_multiplier", &force_choice,\n                     kMultiplierModes,\n                     static_cast<int>(std::size(kMultiplierModes)))) {\n      force = force_choice == 0 ? 0 : force_choice + 1;'
 if text.count(anchor)!=1:raise SystemExit('Active fixed multiplier insertion anchor is ambiguous')
-text=text.replace(anchor,'if (DrawFixedMultiplierCompanion(&force)) {',1)
+text=text.replace(anchor,'if (DrawFixedMultiplierCompanion(&force, dynamic_enabled && !dynamic_game_blocked)) {',1)
+# Replace only visible status rows. Diagnostic exports retain their upstream fields.
+for label in ('MFG', 'Active FG multiplier'):
+ anchor='StatusRow("'+label+'", multiplier_text.c_str(),'
+ if text.count(anchor)!=1:raise SystemExit(label+' status anchor is ambiguous')
+ text=text.replace(anchor,'StatusRow("'+label+'", CompanionFrameStatus(),',1)
+# Remove local computations made obsolete by the two read-only status rows.
+patterns=(
+ r'    const bool dynamic_applied =\n        mfgunlock::framecount::g_dynamic_applied.load\(\n            std::memory_order_relaxed\);\n    const std::string multiplier_text =[\s\S]*?;\n(?=    const std::string sync_text)',
+ r'      const unsigned int live_multiplier =\n          mfgunlock::framecount::g_latency_guard_live_multiplier.load\(\n              std::memory_order_relaxed\);\n',
+ r'      const std::string multiplier_text =\n          live_multiplier < 2 \? "Not reported"\n                              : std::to_string\(live_multiplier\) \+ "x live";\n',
+)
+for pattern in patterns:
+ text,count=re.subn(pattern,'',text)
+ if count!=1:raise SystemExit('Obsolete visible status local anchor is ambiguous')
 (a.output/'addon.cpp').write_text(text,encoding='utf-8')
 print(f'Applied {len(mapping)} display mappings and one Dynamic UI bridge; input source unchanged')

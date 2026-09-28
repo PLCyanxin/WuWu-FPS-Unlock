@@ -5,7 +5,7 @@
 > [!WARNING]
 > **使用本工具有被官方封号的风险。使用工具后录制视频或分享截图等，请遮挡 UID，请勿跳脸官方。**（维护者实测可以正常与他人联机；能正常联机不代表没有封号风险。）
 
-**当前源码版本：v1.2.2RC · Windows x64 · 尚未发布**
+**当前版本：v1.2.2RC · Windows x64 · Pre-release**
 
 [下载已发布版本](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases)
 
@@ -132,3 +132,10 @@ dotnet publish ./src/WuWaFpsUnlock -c Release -r win-x64 --self-contained true -
 ```
 
 源码构建不包含完整的第三方材料包；普通用户请下载 Release 完整版。第三方组件保持各自的版本与许可，您可以参阅 [第三方说明](licenses/THIRD_PARTY_NOTICES.md)。
+
+
+## 分别关闭普通帧生成与 Dynamic
+
+普通帧生成倍率和 Dynamic 最大倍率均提供 **关闭** 选项。两项选择独立保存：普通帧生成的关闭仅作用于普通模式，Dynamic 的关闭仅作用于 Dynamic 模式，不会改写另一项设置。在当前模式中选择关闭后，控制器请求仅输出原生渲染帧；恢复时，选择该模式所需的倍率即可。关闭“启用 Dynamic 最大倍率限制”表示停止干预 Dynamic，并不等于关闭帧生成。
+
+更新前选择的“原生上限”会继续保留，不会因选项调整变为关闭。所有运行时控制均需通过组件兼容性检查。

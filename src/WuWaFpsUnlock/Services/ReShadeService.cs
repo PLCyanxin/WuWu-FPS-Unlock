@@ -70,7 +70,7 @@ public sealed class ReShadeService(Action<string> log)
         psi.ArgumentList.Add(s.GameExe);psi.ArgumentList.Add("--headless");psi.ArgumentList.Add("--api");psi.ArgumentList.Add(api);
         if(info.Proxy is not null){psi.ArgumentList.Add("--state");psi.ArgumentList.Add("update");}
         log(info.Proxy is null?"正在静默安装官方 ReShade Full Add-on…":"正在更新 ReShade 本体，保留原有配置…");
-        using var process=Process.Start(psi)??throw new IOException("无法启动 ReShade Setup。");
+        using var process=LauncherScheduling.StartProcess(psi)??throw new IOException("无法启动 ReShade Setup。");
         // Do not kill Setup midway or imply it is rolled back. UI stays in a real busy state.
         // Keep the operation busy until Setup exits, including its compatibility-list network wait.
         // Do not allow retry/cleanup to race an installer still writing the same directory.

@@ -4,7 +4,7 @@
 
 ## 帧率模块
 
-`components/fps/ww_plugin_base.dll` 来自维护者提供的 FPS 解锁程序，来源说明见 `components/PROVENANCE.json`，相关 MIT 许可见 `WutherFPSUnlocker-MIT.txt`。本工具启动游戏并加载该模块，不需要运行外部 `unlock.exe`。
+`components/fps/ww_plugin_base.dll` 由 [30launchers/WutheringWaves-FPS-unlocker](https://github.com/30launchers/WutheringWaves-FPS-unlocker) 的 FPS-only 源码重构编译，修改源码位于 `tools/FpsCore`，来源说明见 `components/PROVENANCE.json`，相关 MIT 许可见 `WutherFPSUnlocker-MIT.txt`。本工具启动游戏并加载该模块，不需要运行外部 `unlock.exe`。
 
 ## 多帧生成、ReShade 与 NVIDIA 运行库
 

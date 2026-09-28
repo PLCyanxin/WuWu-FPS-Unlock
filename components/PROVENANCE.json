@@ -1,11 +1,14 @@
 {
   "route": "builtin-fps-only",
   "runtimePath": "components/fps/ww_plugin_base.dll",
-  "source": "Maintainer-supplied FPS module extracted from the original launcher resource; distributed with the WutherFPSUnlocker MIT license.",
-  "size": 34304,
-  "sha256": "844d7552692f53e8a1bfe45edf360a094597c5bf2b26dc058ff59b21d2250c3a",
-  "sourceExeSha256": "5b9cba854357a4d9ce9c56676e22e397be8d5dbd2dc10de9393155e378050fae",
-  "sourceOffset": 4230325,
-  "verification": "The recorded hash identifies the original x64 module. Compatibility with a particular game build must be evaluated at runtime.",
-  "externalUnlocker": "The launcher hosts the FPS module directly; an external unlock.exe and .NET 8 runtime are not required."
+  "source": "Source-built FPS-only core derived from 30launchers/WutheringWaves-FPS-unlocker; project modifications in tools/FpsCore.",
+  "size": 149504,
+  "sha256": "8027528f9ee6f5ee7a851f3d1499f848a0b219f4f9aa88f41dba4d7c707a1816",
+  "upstreamRepository": "https://github.com/30launchers/WutheringWaves-FPS-unlocker",
+  "upstreamCommit": "5f73ebcf0166c899ff347593492fe523ccbab89f",
+  "originalBinarySha256": "844d7552692f53e8a1bfe45edf360a094597c5bf2b26dc058ff59b21d2250c3a",
+  "license": "MIT",
+  "buildScript": "tools/FpsCore/Build.ps1",
+  "verification": "46 isolated native fixtures passed; game compatibility and actual FPS remain unverified.",
+  "externalUnlocker": "Built-in core; no external unlock.exe."
 }

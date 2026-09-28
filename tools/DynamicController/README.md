@@ -18,6 +18,12 @@ Activation occurs from normal Present, outside loader callbacks: at most one mod
 
 The same per-frame bound flows through native selection, RSYNC and the copied NGX submission snapshot. A request may reduce or restore the current native bound, never increase it: a native 4x bound cannot become 6x. A maximum is not a guarantee of actual generated/displayed multiplier. Queued frames may retain the preceding request. Thread enumeration is bounded and checked, but cannot absolutely prevent an external new thread after the final snapshot or a third-party patch after activation.
 
+## When a choice takes effect
+
+Saving a choice, observing it in a native frame, and displaying generated frames are separate events. Selection changes log a saved/waiting message; after a matching Dynamic selector invocation, one additional log records the native limit and the actual snapshot total. The native count is read after the selector, not inferred from the configured maximum. No new frame means no acknowledgement. These observations do not verify the displayed frame rate.
+
+Lowering the Dynamic maximum and selecting Off are applied to the next matching selector invocation. Raising the maximum allows the native scheduler to increase its selection; it does not force that multiplier. The supported native scheduler retains timing/history state. Ordinary multiplier changes still wait for an enabled game-side SetOptions call. Replaying cached options from an arbitrary render callback is intentionally avoided because thread ownership, viewport teardown and concurrent game Off cannot be proven safe. Neither focus changes nor simulated movement are triggered by this companion.
+
 ## Build and test
 
 The companion also supplies a guarded Windows native cursor while the ReShade menu is open. This separates pointer motion from the game's base render rate; it does not increase the menu's render rate. Menu sessions coordinate the owner thread's cursor requests so the game and menu do not repeatedly replace or hide the hardware cursor. Bounded restoration and exceptional failure checks remain in place. See [native cursor lifecycle and limits](NATIVE_CURSOR.md).

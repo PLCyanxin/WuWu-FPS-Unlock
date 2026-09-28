@@ -31,7 +31,7 @@ internal static class DxDiagHagsProbe
             Directory.CreateDirectory(directory);
             var start = new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "dxdiag.exe")) { UseShellExecute = false, CreateNoWindow = true, WindowStyle = ProcessWindowStyle.Hidden };
             start.ArgumentList.Add("/whql:off"); start.ArgumentList.Add("/x"); start.ArgumentList.Add(report);
-            using var process = Process.Start(start) ?? throw new IOException("无法启动系统诊断。");
+            using var process = LauncherScheduling.StartProcess(start) ?? throw new IOException("无法启动系统诊断。");
             if (!process.WaitForExit(30_000))
             {
                 // Only terminate the process we created, never a user/game process or process tree.
