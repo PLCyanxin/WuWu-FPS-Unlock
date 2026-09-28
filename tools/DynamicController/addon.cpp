@@ -107,10 +107,10 @@ void OnOverlayCursor(reshade::api::effect_runtime* runtime) {
   ImGui::SetMouseCursor(ImGuiMouseCursor_None);
  // Report transitions outside the cursor lock/hooks, never once per frame.
  using CursorStatus=wuwa::cursor_hooks::Status;
- static CursorStatus reported=CursorStatus::Idle;
+ static std::atomic<CursorStatus> reported{CursorStatus::Idle};
  const auto status=wuwa::cursor_hooks::status.load();
- if(status!=reported) {
-  reported=status;const char* message=nullptr;
+ if(reported.exchange(status)!=status) {
+  const char* message=nullptr;
   switch(status) {
    case CursorStatus::InstallFailed:message="Native cursor: atomic hook installation unavailable; no retry until restart.";break;
    case CursorStatus::AcquireFailed:message="Native cursor: bounded visibility acquisition failed.";break;

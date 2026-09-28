@@ -1,8 +1,8 @@
 {
   "file": "wuwa-dynamicmax.addon64",
   "version": "1.0.0",
-  "length": 188928,
-  "sha256": "17748d2148644668c12925217684697cac9acea809d884d09f3b17c0ae5d58d2",
+  "length": 192512,
+  "sha256": "c55fde16956ebaa986e963bb73b7db914cc33a98ac971a4f8d1469bfb68d8bde",
   "source": "tools/DynamicController",
   "license": "MIT",
   "buildScript": "tools/DynamicController/Build.ps1",
@@ -17,6 +17,7 @@
     "configurationApiAssertions": 12,
     "gameIntegration": "Not yet tested",
     "runtimeFixtureAssertions": 117,
-    "nativeCursorIsolatedAssertions": 27
+    "nativeCursorIsolatedAssertions": 15,
+    "nativeCursorOwnershipAssertions": 375
   }
 }
