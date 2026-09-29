@@ -99,7 +99,7 @@ Client\Binaries\Win64\Client-Win64-Shipping.exe
 
 **取消勾选“启用 Dynamic 最大倍率限制”仅停止自定义上限控制，不等于关闭帧生成。** 要在 Dynamic 模式下关闭帧生成，请在启用该控制时选择“关闭”。
 
-> [!WARNING]
+> [!IMPORTANT]
 > **使用 Dynamic 自定义“目标输出帧率”前，请关闭游戏内和 NVIDIA 驱动中的垂直同步（VSync），并检查 G-SYNC 等显示同步设置。VSync 生效时，Dynamic 会跟随显示器当前启用的刷新率，忽略自定义目标输出帧率。** 单独开启 G-SYNC 不等于启用 VSync；显示器当前刷新率也不一定是其支持的最大刷新率。此处的目标输出帧率与启动器中的 FPS 解锁目标是两项不同设置。
 
 ### Dynamic 最大倍率如何使用
