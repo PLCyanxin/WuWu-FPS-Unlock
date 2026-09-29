@@ -59,6 +59,18 @@ var newer=Path.Combine(fixture,"2.7.0.0");Directory.CreateDirectory(Path.Combine
 await Expect(PredownloadState.Unknown,"highest launcher invalid config never falls back to older channel");
 var equivalent=Path.Combine(fixture,"2.7.0");Directory.CreateDirectory(Path.Combine(equivalent,"Assets"));File.WriteAllText(Path.Combine(equivalent,"launcher_main.dll"),"");File.WriteAllText(Path.Combine(equivalent,"launcher_main.exe"),"");File.WriteAllText(Path.Combine(equivalent,"Assets","KRApp.conf"),"malformed");
 await Expect(PredownloadState.Unknown,"equivalent highest versions are ambiguous");
+var preferences = new WuWaFpsUnlock.Core.UserSettings();
+var prefsPath = Path.Combine(fixture, "preferences.json");
+void PreferenceCheck(bool ok,string name){if(!ok)throw new Exception(name);tests++;Console.WriteLine("PASS "+name);}
+PreferenceCheck(!WuWaFpsUnlock.Core.PredownloadReminders.IsIgnored(preferences,root,"3.7.0"),"default reminder enabled");
+WuWaFpsUnlock.Core.PredownloadReminders.SetIgnored(preferences,root,"3.7.0",true);
+WuWaFpsUnlock.Core.JsonFiles.Save(prefsPath,preferences);
+var restored=JsonSerializer.Deserialize<WuWaFpsUnlock.Core.UserSettings>(File.ReadAllText(prefsPath))!;
+PreferenceCheck(WuWaFpsUnlock.Core.PredownloadReminders.IsIgnored(restored,root.ToUpperInvariant()+"\\","3.7.0"),"same version stays ignored after restart with normalized path");
+PreferenceCheck(!WuWaFpsUnlock.Core.PredownloadReminders.IsIgnored(restored,root,"3.8.0"),"new predownload version reminds again");
+PreferenceCheck(!WuWaFpsUnlock.Core.PredownloadReminders.IsIgnored(restored,root+"other","3.7.0"),"other installation remains independent");
+WuWaFpsUnlock.Core.PredownloadReminders.SetIgnored(restored,root,"3.7.0",false);
+PreferenceCheck(!WuWaFpsUnlock.Core.PredownloadReminders.IsIgnored(restored,root,"3.7.0"),"uncheck restores reminder");
 Console.WriteLine($"{tests}/{tests} isolated official predownload tests passed. No official executable started.");
 // Unique test root only, never an installation directory.
 Directory.Delete(fixture,true);

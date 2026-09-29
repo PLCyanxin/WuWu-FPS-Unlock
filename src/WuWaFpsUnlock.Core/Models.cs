@@ -5,6 +5,7 @@ namespace WuWaFpsUnlock.Core;
 
 public sealed class UserSettings
 {
+    public Dictionary<string, string> IgnoredPredownloadVersions { get; set; } = new();
     [JsonExtensionData] public Dictionary<string, JsonElement>? ExtensionData { get; set; }
     public string GameRoot { get; set; } = "";
     public string GameExe { get; set; } = "";
