@@ -8,11 +8,11 @@
 > [!IMPORTANT]
 > **本工具仅适用于 NVIDIA GeForce RTX 40 系列显卡，且仅支持通过鸣潮官方启动器安装的游戏版本。未来不计划扩大显卡或游戏渠道的支持范围，其他系列显卡及其他启动器或渠道版本不在支持范围内。**
 
-**Windows x64 · 当前功能说明对应 v1.2.2RC**
+**Windows x64 · 当前功能说明对应 v1.2.2**
 
-[下载正式版本](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/latest) · [下载 v1.2.2RC](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/tag/v1.2.2RC) · [全部版本与更新日志](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases)
+[下载正式版本](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/latest) · [下载 v1.2.2](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/tag/v1.2.2) · [全部版本与更新日志](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases)
 
-v1.2.2RC 目前标记为 Pre-release，需要手动下载。启动器仅检测正式 Release；维护者验证稳定后，会将该版本转为 Release，供启动器检测和更新。旧版本可能不包含本文的全部功能。
+v1.2.2 为正式 Release，可通过启动器检查更新，也可手动下载。旧版本可能不包含本文的全部功能。
 
 ## 主要功能
 
@@ -63,6 +63,12 @@ Client\Binaries\Win64\Client-Win64-Shipping.exe
 **使用多帧生成：** 先退出游戏，在设置中开启“多帧生成部署”，点击 **开始部署**，核对文件计划并确认。完成后通过本工具启动游戏，再按 Home 打开游戏内菜单。**无需开启帧率解锁，也可以单独使用多帧生成；两项功能可按需分别开启或一起使用。**
 
 成功部署后，首次开始游戏会显示风险与须知。确认后会保存本次部署的确认状态，日常启动不重复提示；取消时不会结束现有游戏或启动新实例。
+
+## 大版本预下载提醒
+
+每次打开工具时，会在后台检查所选鸣潮安装是否有可用的大版本预下载。检测到尚未完成的预下载时，会打开对应的官方启动器并提示下载；游戏包由官方启动器下载，本工具不会代为下载或安装。
+
+检查只针对预下载，不提示普通游戏更新或官方启动器自身升级。已存在官方下载完成记录时不重复提醒；网络异常、安装路径无法识别时不阻止正常启动游戏。如果正在游戏或执行部署等操作，只记录提醒，不自动打开官方启动器。
 
 ## 日常启动与托盘
 
