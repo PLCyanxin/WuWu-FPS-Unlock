@@ -18,6 +18,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     public event Action? GameExited;
     public event Action? LaunchFailed;
     private bool _closing;
+    private bool _gameExitPending, _completingGameExit;
     private Task _sessionCleanup=Task.CompletedTask;
     private readonly RestartController _restart=new();
     private FpsSession? _fpsSession;
@@ -384,20 +385,37 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     }
     private async void Monitor(object? sender,EventArgs e)
     {
-        if(_closing||_game is null||Busy)return;
+        // Only an update offer may keep its modal operation lock while observing exit.
+        // Launch/deployment/cleanup locks retain their original exclusion.
+        if(_closing||_game is null||(Busy&&_updateDialog is null))return;
         var game=_game;
         bool exited;
-        try{exited=game.HasExited;}catch{return;} // Unreadable identity is not evidence of exit.
+        try{exited=game.HasExited;}catch{return;}
         if(!exited)return;
-        Busy=true;_game=null;IsGameRunning=false;
+        _game=null;
+        try{await CompleteObservedGameExitAsync();}
+        finally{game.Dispose();}
+    }
+    private async Task CompleteObservedGameExitAsync()
+    {
+        bool ownsBusy=!Busy;
+        if(ownsBusy)Busy=true;
+        _completingGameExit=true;_gameExitPending=true;IsGameRunning=false;
+        _updateDialog?.SetGameRunning(false);
         try
         {
             await ReleaseFpsSessionAsync();
             Status=HasDeferredUpdate?"游戏已退出，准备执行预约更新。":"游戏已退出，启动器即将退出。";Log(Status);
         }
         catch(Exception error){Log("释放游戏会话失败："+error.Message);}
-        finally{game.Dispose();Busy=false;}
-        if(!_closing)GameExited?.Invoke();
+        finally{_completingGameExit=false;if(ownsBusy)Busy=false;}
+        DispatchPendingGameExit();
+    }
+    private void DispatchPendingGameExit()
+    {
+        if(_closing||Busy||_updateDialog is not null||_completingGameExit||!_gameExitPending)return;
+        _gameExitPending=false;
+        GameExited?.Invoke();
     }
     public async Task CloseAsync()
     {

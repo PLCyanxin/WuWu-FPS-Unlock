@@ -171,15 +171,20 @@ public sealed partial class AppViewModel
             {
                 if (string.Equals(_settings.SkippedUpdateTag, release.Tag, StringComparison.OrdinalIgnoreCase))
                     PersistUpdatePreference(settings => settings.SkippedUpdateTag = "");
-                _deferredUpdate.Queue(release, IsGameRunning);
-                UpdateStatus = IsGameRunning ? "已预约 " + release.Tag + "，本次游戏退出后更新" : "已预约 " + release.Tag + "，下次由启动器启动的游戏退出后更新（仅本次工具会话）";
+                _deferredUpdate.Queue(release, IsGameRunning || _gameExitPending);
+                UpdateStatus = (IsGameRunning || _gameExitPending) ? "已预约 " + release.Tag + "，本次游戏退出后更新" : "已预约 " + release.Tag + "，下次由启动器启动的游戏退出后更新（仅本次工具会话）";
             }
             else if (!started) UpdateStatus = HasDeferredUpdate
                 ? "预约更新尚未完成；可点击检查更新重试，或关闭工具取消本次预约"
                 : string.Equals(_settings.SkippedUpdateTag, release.Tag, StringComparison.OrdinalIgnoreCase) ? "已跳过版本 " + release.Tag : "暂未安装 " + release.Tag;
             Log(UpdateStatus);
         }
-        finally { _updateDialog = null; Busy = false; }
+        finally
+        {
+            _updateDialog = null; Busy = false;
+            // Let the offer finish processing defer/install before delivering an exit.
+            _dispatcher.BeginInvoke(new Action(DispatchPendingGameExit));
+        }
         if (started) { _deferredUpdate.CompleteAttempt(true); UpdateExitRequested?.Invoke(); }
         return started;
     }
