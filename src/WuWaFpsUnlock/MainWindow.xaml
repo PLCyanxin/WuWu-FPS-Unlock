@@ -11,6 +11,28 @@
 <Grid Grid.Row="4"><Grid.ColumnDefinitions><ColumnDefinition Width="92"/><ColumnDefinition Width="8"/><ColumnDefinition Width="116"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
 <Button Command="{Binding OpenSettingsCommand}" FontSize="16"><StackPanel Orientation="Horizontal"><local:IconView Kind="settings" Width="23" Height="23" Margin="0,0,10,0"/><TextBlock Text="设置"/></StackPanel></Button>
 <ComboBox Grid.Column="2" SelectedIndex="{Binding ResourceTierIndex}" IsEnabled="{Binding CanChangeFpsMode}" VerticalContentAlignment="Center" FontSize="14" ToolTip="包体档位：下次启动生效；所选档位资源需在官方启动器下载" AutomationProperties.Name="包体档位">
+<ComboBox.Template>
+<ControlTemplate TargetType="ComboBox">
+<Grid>
+<ToggleButton Focusable="False" ClickMode="Press" IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+<ToggleButton.Template><ControlTemplate TargetType="ToggleButton">
+<Border x:Name="TierBorder" Background="#F0EBFC" BorderBrush="#D8CAEF" BorderThickness="1" CornerRadius="7">
+<Grid Margin="10,4"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/></Grid.ColumnDefinitions>
+<StackPanel VerticalAlignment="Center"><TextBlock Text="包体档位" FontSize="10" Foreground="#80709A" HorizontalAlignment="Center" Margin="0,0,0,2"/>
+<ContentPresenter Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}" HorizontalAlignment="Center" TextElement.Foreground="#62438B" TextElement.FontSize="13"/>
+</StackPanel><Path Grid.Column="1" Data="M 0,0 L 4,4 L 8,0" Stroke="#80629F" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+</Grid></Border>
+<ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="TierBorder" Property="Background" Value="#E7DEF8"/></Trigger><Trigger Property="IsChecked" Value="True"><Setter TargetName="TierBorder" Property="Background" Value="#DED1F3"/></Trigger></ControlTemplate.Triggers>
+</ControlTemplate></ToggleButton.Template>
+</ToggleButton>
+<Popup x:Name="PART_Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
+<Border Background="#FCFAFF" BorderBrush="#D8CAEF" BorderThickness="1" CornerRadius="7" Padding="4" Margin="0,4,0,0" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
+<ScrollViewer MaxHeight="240" CanContentScroll="True"><ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/></ScrollViewer>
+</Border></Popup>
+</Grid><ControlTemplate.Triggers><Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.42"/></Trigger></ControlTemplate.Triggers>
+</ControlTemplate>
+</ComboBox.Template>
+<ComboBox.ItemContainerStyle><Style TargetType="ComboBoxItem"><Setter Property="Padding" Value="10,7"/><Setter Property="Foreground" Value="#62438B"/><Setter Property="HorizontalContentAlignment" Value="Center"/><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ComboBoxItem"><Border x:Name="ItemBorder" CornerRadius="4" Padding="{TemplateBinding Padding}" Background="Transparent"><ContentPresenter HorizontalAlignment="Center"/></Border><ControlTemplate.Triggers><Trigger Property="IsHighlighted" Value="True"><Setter TargetName="ItemBorder" Property="Background" Value="#E7DEF8"/></Trigger><Trigger Property="IsSelected" Value="True"><Setter TargetName="ItemBorder" Property="Background" Value="#EEE6FA"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter></Style></ComboBox.ItemContainerStyle>
 <ComboBoxItem Content="跟随官方"/><ComboBoxItem Content="极致（uhd）"/><ComboBoxItem Content="高清（hd）"/><ComboBoxItem Content="流畅（sd）"/>
 </ComboBox>
 <Button Grid.Column="4" Style="{StaticResource PrimaryButton}" Command="{Binding StartCommand}" FontSize="17"><StackPanel Orientation="Horizontal"><local:IconView Kind="play" Width="22" Height="22" Stroke="White" Margin="0,0,12,0"/><TextBlock Text="{Binding StartLabel}"/></StackPanel></Button>
