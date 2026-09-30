@@ -22,6 +22,17 @@ public sealed class ReShadeService(Action<string> log)
         }
         if(hits.Count>1)return new("Conflict",null,Path.Combine(dir,"ReShade.ini"),dir,"检测到多个 ReShade 代理，须先处理冲突。");
         string? proxy=hits.Count==1?hits[0].path:null;
+        if(proxy is not null)
+        {
+            // The filename is the loading API, not merely a recognizable ReShade binary.
+            // Overview callers omit spec; use the selected package instead of guessing an API.
+            spec ??= File.Exists(s.PackageManifest)?PackageReader.Load(s.PackageManifest).ReShade:null;
+            if(spec?.ProxyApi is not ("dxgi" or "d3d12"))
+                return new("Conflict",proxy,Path.Combine(dir,"ReShade.ini"),dir,"尚未确认文件包要求的 ReShade 代理 API；保留已有安装，请先指定有效的材料清单。");
+            string required=spec.ProxyApi+".dll";
+            if(!Path.GetFileName(proxy).Equals(required,StringComparison.OrdinalIgnoreCase))
+                return new("Conflict",proxy,Path.Combine(dir,"ReShade.ini"),dir,$"已有 ReShade 代理 {Path.GetFileName(proxy)} 与文件包要求的 {required} 不一致；已保留原文件、配置和滤镜，未自动覆盖或复用。请先确认该游戏的正确安装方式。");
+        }
         string standard=Path.Combine(dir,"ReShade.ini"),alternate=proxy is null?standard:Path.ChangeExtension(proxy,".ini");
         if(File.Exists(standard)&&alternate!=standard&&File.Exists(alternate))return new("Conflict",proxy,standard,dir,"存在 ReShade.ini 与代理同名 INI，配置位置有歧义；未修改。");
         string ini=File.Exists(alternate)?alternate:standard;
