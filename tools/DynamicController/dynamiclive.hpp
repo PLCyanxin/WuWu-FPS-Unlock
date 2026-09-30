@@ -141,15 +141,28 @@ inline bool StackFixedOff(void* snapshot,bool allowGeneration) {
 }
 __declspec(noinline) inline bool WrappedValidate(void* context,void* snapshot,void* third,void* fourth) {
  const void* caller=_ReturnAddress();
+ const unsigned revision=ui_dynamic_snapshot==snapshot?ui_dynamic_revision:ui_revision.load();
+ std::array<unsigned char,0x58> observed{};bool captured=false;
  if(enabled.load(std::memory_order_acquire)) {
-  const unsigned revision=ui_dynamic_snapshot==snapshot?ui_dynamic_revision:ui_revision.load();
   const bool allowGeneration=fixed_enabled.load(std::memory_order_relaxed);
   if(reinterpret_cast<ULONG_PTR>(caller)!=reinterpret_cast<ULONG_PTR>(owner)+kValidateReturn||!StackFixedOff(snapshot,allowGeneration)) {
-   enabled.store(false,std::memory_order_release);invalid.store(true);
-  } else PublishUiFrame(snapshot,revision);
+   enabled.store(false,std::memory_order_release);invalid.store(true);ui_frame.store(0);
+  } else {
+   // Preserve the input snapshot without retaining the caller's stack pointer.
+   std::memcpy(observed.data(),snapshot,observed.size());captured=true;
+  }
  }
  ui_dynamic_snapshot=nullptr;
- return original_validate(context,snapshot,third,fourth);
+ const bool accepted=original_validate(context,snapshot,third,fourth);
+ if(captured) {
+  unsigned mode=0,total=0;
+  std::memcpy(&mode,observed.data()+0x20,4);std::memcpy(&total,observed.data()+8,4);
+  // Native Off deliberately returns false. Other rejected frames are not an
+  // accepted multiplier observation, even if their input requested several frames.
+  if(accepted||(mode==0&&total==1))PublishUiFrame(observed.data(),revision);
+  else if(revision==ui_revision.load())ui_frame.store(0);
+ }
+ return accepted;
 }
 inline std::string HashHandle(HANDLE f) {
  if(f==INVALID_HANDLE_VALUE)return {};

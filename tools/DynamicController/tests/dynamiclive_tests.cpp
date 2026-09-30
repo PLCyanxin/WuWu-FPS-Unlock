@@ -17,11 +17,12 @@ __declspec(noinline) void FakeNative(void* context,void* memory){
 live::NativeFn volatile entry=&FakeNative; volatile unsigned completed=0;
 __declspec(noinline) void Invoke(Snapshot& snapshot,void* context=nullptr){entry(context,&snapshot);completed=completed+1;}
 unsigned checks=0;void Check(bool value,const char* name){if(!value)throw std::runtime_error(name);++checks;std::cout<<"PASS "<<name<<'\n';}
-void* validatorReturn=nullptr;unsigned validateCalls=0;
+void* validatorReturn=nullptr;unsigned validateCalls=0;bool rejectFrame=false,changeChoiceDuringValidation=false;
 __declspec(noinline) bool FakeValidate(void* ctx,void* memory,void* third,void* fourth) {
  if(!validatorReturn)validatorReturn=_ReturnAddress();++validateCalls;
  if(ctx!=third||third!=fourth)throw std::runtime_error("validator arguments changed");
- unsigned mode=0;std::memcpy(&mode,static_cast<char*>(memory)+0x20,4);return mode!=0;
+ if(changeChoiceDuringValidation){live::UiChoiceChanged();live::requested=2;live::UiChoiceCommitted();}
+ unsigned mode=0;std::memcpy(&mode,static_cast<char*>(memory)+0x20,4);return !rejectFrame&&mode!=0;
 }
 live::ValidateFn volatile validatorEntry=&FakeValidate;
 __declspec(noinline) bool InvokeValidate(Snapshot& frame) {bool result=validatorEntry(nullptr,&frame,nullptr,nullptr);completed=completed+1;return result;}
@@ -110,6 +111,25 @@ int wmain(int argc,wchar_t** argv){
   Check(actual==(off?0:mode)&&result==(actual!=0)&&validateCalls==before+1,"shared validator mode isolation and exact original call/return");
   Check(off?total==1:std::memcmp(&f,&previous,sizeof f)==0,"ordinary Off total1; nativeOff/Dynamic bytes untouched");
  }
+ // Exercise the real wrapper through the inert Detours validator above.
+ live::fixed_enabled=true;
+ for(unsigned mode:{1u,2u,3u}) {
+  Snapshot f(3,mode);unsigned total=3;std::memcpy(f.bytes+8,&total,4);const Snapshot beforeFrame=f;
+  rejectFrame=false;unsigned before=validateCalls;
+  Check(InvokeValidate(f)&&validateCalls==before+1&&live::UiFrameStatus()==3,"accepted native frame publishes multiplier and preserves return/call count");
+  rejectFrame=true;before=validateCalls;
+  Check(!InvokeValidate(f)&&validateCalls==before+1&&live::UiFrameStatus()==0,"rejected enabled frame clears previous multiplier without changing return/call count");
+  Check(std::memcmp(&f,&beforeFrame,sizeof f)==0,"status publication never mutates native frame");
+ }
+ Snapshot nativeOff(3,0);unsigned one=1;std::memcpy(nativeOff.bytes+8,&one,4);
+ unsigned beforeOff=validateCalls;
+ Check(!InvokeValidate(nativeOff)&&validateCalls==beforeOff+1&&live::UiFrameStatus()==1,"native Off false remains observed Off");
+ rejectFrame=false;changeChoiceDuringValidation=true;
+ Snapshot late(3,1);unsigned three=3;std::memcpy(late.bytes+8,&three,4);
+ Check(InvokeValidate(late)&&live::UiFrameStatus()==0,"choice changed during accepted native call rejects late acknowledgement");
+ rejectFrame=true;
+ Check(!InvokeValidate(late)&&live::UiFrameStatus()==0,"choice changed during rejected call remains unobserved");
+ changeChoiceDuringValidation=false;rejectFrame=false;
  Snapshot badFixed(3,4);Snapshot badBefore=badFixed;
  Check(!live::StackFixedOff(&badFixed,false)&&std::memcmp(&badFixed,&badBefore,sizeof badFixed)==0,"unknown ordinary mode fails before mutation");
  auto fixedHeap=new Snapshot(3,1);Check(!live::StackFixedOff(fixedHeap,false),"shared validator rejects nonstack snapshot");delete fixedHeap;
