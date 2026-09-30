@@ -66,7 +66,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         InitializeUpdates();
         _monitor.Tick+=Monitor;
         RememberValidSelection();
-        Log("鸣潮 FPS Unlock 1.2.2 启动。");
+        Log("鸣潮 FPS Unlock 1.2.3RC 启动。");
     }
     public bool Busy {get=>_busy;private set{if(_busy==value)return;_busy=value;LauncherScheduling.SetBusy(value);NotifyAll();}}
     public bool IsGameRunning {get=>_running;private set{if(_running==value)return;_running=value;if(value)_monitor.Start();else _monitor.Stop();NotifyAll();}}
@@ -75,6 +75,16 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     public bool CanEditSettings=>!Busy&&!IsGameRunning;
     public bool FpsEnabled {get=>_settings.FpsEnabled;set{if(!CanChangeFpsMode)return;_settings.FpsEnabled=value;Save();Status="FPS 开关下次启动生效";NotifyAll();}}
     public bool MfgSelected {get=>_settings.MfgSelected;set{if(!CanEditSettings)return;_settings.MfgSelected=value;Save();NotifyAll();}}
+    public int ResourceTierIndex
+    {
+        get => _settings.ResourceTier switch { "uhd" => 1, "hd" => 2, "sd" => 3, _ => 0 };
+        set
+        {
+            if (Busy || value is < 0 or > 3) return;
+            _settings.ResourceTier = value switch { 1 => "uhd", 2 => "hd", 3 => "sd", _ => "auto" };
+            Save(); Notify(nameof(ResourceTierIndex)); Status = "包体档位已保存，下次启动游戏生效";
+        }
+    }
     public int TargetFps
     {
         get=>_settings.TargetFps;
@@ -173,6 +183,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         await RefreshRollbackAvailabilityAsync();
         if(_closing||generation!=_refreshGeneration||(passive&&Busy))return;
         var snapshot=_settings.Clone();
+
         string reShade,deployState;
         try
         {
@@ -294,6 +305,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     {
         if(Busy||_closing)return;_starting=true;Busy=true;
         bool startedThisAttempt=false;
+        string? resourceTier = null;
         var snapshot=_settings.Clone();
         try
         {
@@ -302,6 +314,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
                 Preflight=async token=>
                 {
                     GameProcesses.ValidateExe(snapshot);
+                    resourceTier = snapshot.ResourceTier switch { "uhd" => "-krqlv=uhd", "hd" => "-krqlv=hd", "sd" => "-krqlv=sd", _ => OfficialLaunchOptions.ReadResourceTier(snapshot.GameRoot) };
                     if(snapshot.TargetFps is <30 or >420)throw new InvalidDataException("目标FPS无效。");
                     var receipt=AppPaths.LoadReceipt(snapshot);
                     if(receipt?.Status is "PartialFailure" or "Installing" or "PartialClean")throw new IOException("部署维护尚未完成，请在设置处理后再开始。");
@@ -326,6 +339,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
                 {
                     token.ThrowIfCancellationRequested();
                     var startInfo=new ProcessStartInfo(exe){UseShellExecute=true,WorkingDirectory=Path.GetDirectoryName(exe)!};
+                    if(resourceTier is not null){startInfo.ArgumentList.Add(resourceTier);Log("包体启动参数："+resourceTier);}
                     if(snapshot.MfgSelected){startInfo.ArgumentList.Add("-dx12");Log("多帧生成启动参数：-dx12；实际D3D12加载以游戏日志为准。");}
                     var process=LauncherScheduling.StartProcess(startInfo)??throw new IOException("系统未返回游戏进程。");
                     _game=process;startedThisAttempt=true;IsGameRunning=true;_deferredUpdate.GameStarted();GameStarted?.Invoke();

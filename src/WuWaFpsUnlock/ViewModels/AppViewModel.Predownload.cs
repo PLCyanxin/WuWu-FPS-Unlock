@@ -22,7 +22,7 @@ public sealed partial class AppViewModel
             // Metadata I/O must not block the WPF dispatcher or reserve the game-start lock.
             var result = await Task.Run(() => service.CheckAsync(root, exe, _lifetime.Token));
             if (_closing || root != GameRoot || exe != GameExe) return;
-            if (result.State != PredownloadState.Available)
+            if (result.State is not (PredownloadState.Available or PredownloadState.UpdateRequired))
             {
                 Log(result.State switch
                 {
@@ -32,11 +32,16 @@ public sealed partial class AppViewModel
                 });
                 return;
             }
-            if (PredownloadReminders.IsIgnored(_settings, root, result.Version!)) return;
+            bool needsUpdate = result.State == PredownloadState.UpdateRequired;
+            string reminderVersion = needsUpdate ? result.Version + "|released" : result.Version!;
+            string notice = needsUpdate
+                ? $"鸣潮 {result.Version} 已开放，请在官方启动器中完成后续下载与更新。"
+                : $"鸣潮 {result.Version} 预下载已开放，请在官方启动器中下载。";
+            if (PredownloadReminders.IsIgnored(_settings, root, reminderVersion)) return;
             // A late network response must not interrupt a game launch or deployment.
-            if (Busy || IsGameRunning) { Log($"鸣潮 {result.Version} 预下载已开放，请在方便时打开官方启动器下载。"); return; }
+            if (Busy || IsGameRunning) { Log(notice); return; }
             try { GameProcesses.RequireStopped(root); }
-            catch { Log($"鸣潮 {result.Version} 预下载已开放；当前无法确认游戏已退出，未自动打开官方启动器。"); return; }
+            catch { Log(notice + " 当前无法确认游戏已退出，未自动打开官方启动器。"); return; }
             if (result.LauncherPath is not { } launcher || !File.Exists(launcher)) return;
             SafePaths.EnsureNoLinks(Path.GetPathRoot(launcher)!, launcher);
             Busy = true;
@@ -47,9 +52,9 @@ public sealed partial class AppViewModel
                     UseShellExecute = true,
                     WorkingDirectory = Path.GetDirectoryName(launcher)!
                 });
-                Status = $"鸣潮 {result.Version} 预下载已开放，请在官方启动器中下载。";
+                Status = notice;
                 Log(Status);
-                ShowPredownloadNotice(result.Version!, root);
+                ShowPredownloadNotice(result.Version!, root, reminderVersion, needsUpdate);
             }
             finally { Busy = false; }
         }
@@ -60,11 +65,11 @@ public sealed partial class AppViewModel
         }
     }
 
-    private void ShowPredownloadNotice(string version, string preferenceKey)
+    private void ShowPredownloadNotice(string version, string preferenceKey, string reminderVersion, bool needsUpdate)
     {
         var dialog = new Window
         {
-            Title = "鸣潮预下载", Owner = Application.Current.MainWindow,
+            Title = needsUpdate ? "鸣潮版本更新" : "鸣潮预下载", Owner = Application.Current.MainWindow,
             Width = Math.Min(460, SystemParameters.WorkArea.Width - 32),
             SizeToContent = SizeToContent.Height, ResizeMode = ResizeMode.NoResize,
             WindowStartupLocation = WindowStartupLocation.CenterOwner, ShowInTaskbar = false
@@ -72,10 +77,10 @@ public sealed partial class AppViewModel
         var content = new StackPanel { Margin = new Thickness(20) };
         content.Children.Add(new TextBlock
         {
-            Text = $"鸣潮 {version} 大版本预下载已开放。\n已打开官方启动器，请在其中完成预下载。\n\n本工具不会下载或安装游戏更新。",
+            Text = needsUpdate ? $"鸣潮 {version} 已开放。预下载完成不代表版本更新已完成。\n已打开官方启动器，请在其中完成后续补充下载与安装，再启动游戏。\n\n本工具不会下载或安装游戏更新。" : $"鸣潮 {version} 大版本预下载已开放。\n已打开官方启动器，请在其中完成预下载。\n\n本工具不会下载或安装游戏更新。",
             TextWrapping = TextWrapping.Wrap
         });
-        var skip = new CheckBox { Content = "不再提醒此预下载版本", Margin = new Thickness(0, 18, 0, 14) };
+        var skip = new CheckBox { Content = needsUpdate ? "不再提醒此版本的后续更新" : "不再提醒此预下载版本", Margin = new Thickness(0, 18, 0, 14) };
         bool restoring = false;
         void SaveChoice()
         {
@@ -84,7 +89,7 @@ public sealed partial class AppViewModel
             {
                 PersistUpdatePreference(settings =>
                 {
-                    PredownloadReminders.SetIgnored(settings, preferenceKey, version, skip.IsChecked == true);
+                    PredownloadReminders.SetIgnored(settings, preferenceKey, reminderVersion, skip.IsChecked == true);
                 });
             }
             catch (Exception error)

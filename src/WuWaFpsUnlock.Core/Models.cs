@@ -9,6 +9,7 @@ public sealed class UserSettings
     [JsonExtensionData] public Dictionary<string, JsonElement>? ExtensionData { get; set; }
     public string GameRoot { get; set; } = "";
     public string GameExe { get; set; } = "";
+    public string ResourceTier { get; set; } = "auto";
     public int TargetFps { get; set; } = 240;
     public bool FpsEnabled { get; set; } = true;
     public bool MfgSelected { get; set; }

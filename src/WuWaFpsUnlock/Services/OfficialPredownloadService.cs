@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace WuWaFpsUnlock.Services;
 
-public enum PredownloadState { Unknown, NotAvailable, AlreadyDownloaded, Available }
+public enum PredownloadState { Unknown, NotAvailable, AlreadyDownloaded, Available, UpdateRequired }
 public sealed record PredownloadResult(PredownloadState State, string? Version = null, string? LauncherPath = null, string Detail = "");
 
 /// <summary>Read-only, anonymous official predownload metadata check. Never starts a process.</summary>
@@ -105,12 +105,29 @@ public sealed class OfficialPredownloadService : IDisposable
 
     private static async Task<PredownloadResult> Evaluate(JsonElement server, Version installed, string root, string launcher, string appId, CancellationToken token)
     {
+        if (!server.TryGetProperty("default", out var normal) || !normal.TryGetProperty("config", out var current) ||
+            !TryVersion(Text(current, "version"), out var currentVersion)) return Unknown("Official current version is unknown.");
+        // A completed predownload is not an installed update. Detect this transition even
+        // after the server removes its predownload entry or disables predownload.
+        if (installed < currentVersion)
+        {
+            var releasedVersion = Text(current, "version")!;
+            var previousDownload = Path.Combine(root, "launcherDownload", releasedVersion, "launcherDownloadConfig.json");
+            if (File.Exists(previousDownload))
+            {
+                using var previous = Parse(await ReadLocal(previousDownload, token));
+                var data = previous.RootElement;
+                if (Text(data, "version") == releasedVersion && Text(data, "appId") == appId &&
+                    data.TryGetProperty("isPreDownload", out var wasPre) && wasPre.ValueKind == JsonValueKind.True)
+                    return new(PredownloadState.UpdateRequired, releasedVersion, launcher,
+                        "Previously predownloaded version is released but not installed; official launcher must complete the update.");
+            }
+            return new(PredownloadState.NotAvailable, Detail: "No matching predownload record for released update.");
+        }
         if (!server.TryGetProperty("predownloadSwitch", out var flag) || !flag.TryGetInt32(out var enabled))
             return Unknown("Official predownload switch is unknown.");
         if (enabled == 0) return new(PredownloadState.NotAvailable, Detail: "Official predownload is disabled.");
         if (enabled != 1) return Unknown("Unsupported official predownload switch.");
-        if (!server.TryGetProperty("default", out var normal) || !normal.TryGetProperty("config", out var current) ||
-            !TryVersion(Text(current, "version"), out var currentVersion)) return Unknown("Official current version is unknown.");
         if (!server.TryGetProperty("predownload", out var pre) || pre.ValueKind == JsonValueKind.Null)
             return new(PredownloadState.NotAvailable);
         if (!pre.TryGetProperty("config", out var preConfig) || !TryVersion(Text(preConfig, "version"), out var preVersion))
