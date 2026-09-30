@@ -8,11 +8,11 @@
 > [!IMPORTANT]
 > **本工具仅适用于 NVIDIA GeForce RTX 40 系列显卡，且仅支持通过鸣潮官方启动器安装的游戏版本。未来不计划扩大显卡或游戏渠道的支持范围，其他系列显卡及其他启动器或渠道版本不在支持范围内。**
 
-**Windows x64 · 当前功能说明对应 v1.2.2**
+**Windows x64 · 当前功能说明对应 v1.2.3RC**
 
 [下载正式版本](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/latest) · [下载 v1.2.2](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/tag/v1.2.2) · [全部版本与更新日志](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases)
 
-v1.2.2 为正式 Release，可通过启动器检查更新，也可手动下载。旧版本可能不包含本文的全部功能。
+**重要更新，推荐所有用户更新至 [v1.2.3RC](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/tag/v1.2.3RC)。** 本版适配包体档位启动参数，修复缺少参数时无法启动游戏的问题。当前为 Pre-release，需手动下载；自动更新仍只提供正式 Release。旧版本可能不包含本文的全部功能。
 
 ## 主要功能
 

@@ -51,6 +51,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Deferred update tests failed' }
           dotnet run --project tests/Startup.RefreshTests -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Startup refresh tests failed' }
+          dotnet run --project tests/Official.LaunchOptionsTests -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Official launch option tests failed' }
           dotnet run --project tests/Official.PredownloadTests -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Official predownload tests failed' }
           dotnet run --project tests/PeInspector.PerformanceTests -c Release
