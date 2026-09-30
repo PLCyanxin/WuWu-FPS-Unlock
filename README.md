@@ -10,7 +10,7 @@
 
 **Windows x64 · 当前功能说明对应 v1.2.3RC**
 
-[下载正式版本](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/latest) · [下载 v1.2.2](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/tag/v1.2.2) · [全部版本与更新日志](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases)
+[下载 v1.2.3RC](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/tag/v1.2.3RC) · [全部版本与更新日志](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases)
 
 **重要更新，推荐所有用户更新至 [v1.2.3RC](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/tag/v1.2.3RC)。** 本版适配包体档位启动参数，修复缺少参数时无法启动游戏的问题。当前为 Pre-release，需手动下载；自动更新仍只提供正式 Release。旧版本可能不包含本文的全部功能。
 

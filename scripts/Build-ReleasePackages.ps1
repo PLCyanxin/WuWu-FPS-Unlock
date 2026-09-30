@@ -3,9 +3,9 @@ $ErrorActionPreference='Stop'
 $repo=Split-Path $PSScriptRoot -Parent
 if($Version -notmatch '^\d+\.\d+\.\d+(?:RC\d*)?$'){throw 'Invalid release version'}
 if(!$BaselineZip){
-    gh release download v1.1RC --repo $env:GITHUB_REPOSITORY --pattern WuWaFPSUnlock-1.1RC-win-x64.zip --dir baseline
+    gh release download v1.2.3RC --repo $env:GITHUB_REPOSITORY --pattern WuWaFPSUnlock-1.2.3RC-win-x64.zip --dir baseline
     if($LASTEXITCODE -ne 0){throw 'Component package download failed'}
-    $BaselineZip='baseline/WuWaFPSUnlock-1.1RC-win-x64.zip'
+    $BaselineZip='baseline/WuWaFPSUnlock-1.2.3RC-win-x64.zip'
 }
 Expand-Archive -LiteralPath $BaselineZip -DestinationPath baseline/extracted
 New-Item package -ItemType Directory | Out-Null
