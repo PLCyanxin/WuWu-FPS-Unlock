@@ -314,7 +314,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
                 Preflight=async token=>
                 {
                     GameProcesses.ValidateExe(snapshot);
-                    resourceTier = snapshot.ResourceTier switch { "uhd" => "-krqlv=uhd", "hd" => "-krqlv=hd", "sd" => "-krqlv=sd", _ => OfficialLaunchOptions.ReadResourceTier(snapshot.GameRoot) };
+                    resourceTier = snapshot.ResourceTier switch { "uhd" => "-krqlv=uhd", "hd" => "-krqlv=hd", "sd" => "-krqlv=sd", _ => OfficialLaunchOptions.ReadResourceTier(snapshot.GameRoot, Log) };
                     if(snapshot.TargetFps is <30 or >420)throw new InvalidDataException("目标FPS无效。");
                     var receipt=AppPaths.LoadReceipt(snapshot);
                     if(receipt?.Status is "PartialFailure" or "Installing" or "PartialClean")throw new IOException("部署维护尚未完成，请在设置处理后再开始。");
