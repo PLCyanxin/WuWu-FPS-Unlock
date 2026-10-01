@@ -46,6 +46,15 @@ internal static class SettingsLayoutTests
                     "environment and maintenance card bottom edges align");
                 check(Math.Abs(left.ActualHeight - 474) <= 1.1 && Math.Abs(right.ActualHeight - 474) <= 1.1,
                     "settings columns preserve total height 474");
+                check(Math.Abs(environment.ActualHeight-284)<=1.1,"environment card keeps its existing outer height");
+                var rows=(Grid)window.FindName("EnvironmentRows");
+                check(rows.RowDefinitions.Count==4,"environment has four rows");
+                foreach(string name in new[]{"MenuShortcutEditor","MenuKeyButton","ResetMenuKeyButton"})
+                    Inside((FrameworkElement)window.FindName(name),environment,check,name);
+                check(vm.MenuKeyText=="Home","default menu key is Home");
+                check(vm.SetMenuShortcut(new MenuShortcut(112,true,false,true))&&vm.MenuKeyText=="Ctrl + Alt + F1","custom combination is saved and displayed");
+                ((Button)window.FindName("ResetMenuKeyButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                check(vm.MenuKeyText=="Home","reset button restores Home");
                 foreach (var card in new[] { mfg, maintenance })
                 {
                     Inside(card, right, check, "right settings card");

@@ -34,3 +34,4 @@ foreach($entry in @(@('external/reshade',$source.dependencyCommits.reshade),@('e
 & tools/FpsCore/Build.ps1 -OutputDirectory "$OutputDirectory/fps"
 & tools/DynamicController/Build.ps1 -DependencyDirectory $DependencyDirectory -OutputDirectory "$OutputDirectory/dynamicmax"
 & tools/DynamicController/Test-MenuDocking.ps1 -DependencyDirectory $DependencyDirectory -OutputDirectory "$OutputDirectory/menu-docking"
+& tools/MfgUiIntegration/Test-FrameModes.ps1 -OutputDirectory "$OutputDirectory/frame-modes"

@@ -113,6 +113,14 @@ int wmain(int argc,wchar_t** argv){
  }
  // Exercise the real wrapper through the inert Detours validator above.
  live::fixed_enabled=true;
+ live::generation_off=true;
+ for(unsigned mode:{0u,1u,2u,3u}) {
+  Snapshot f(3,mode);unsigned total=mode==0?1:4;std::memcpy(f.bytes+8,&total,4);unsigned before=validateCalls;
+  Check(!InvokeValidate(f)&&validateCalls==before+1&&live::UiFrameStatus()==1,"unified Off covers every validated generation mode and reports Off");
+  unsigned actual=99,generated=99;std::memcpy(&actual,f.bytes+0x20,4);std::memcpy(&generated,f.bytes,4);std::memcpy(&total,f.bytes+8,4);
+  Check(actual==0&&generated==0&&total==1&&f.cap()==3,"unified Off leaves saved bound intact and submits mode0/count0/total1");
+ }
+ live::generation_off=false;
  for(unsigned mode:{1u,2u,3u}) {
   Snapshot f(3,mode);unsigned total=3;std::memcpy(f.bytes+8,&total,4);const Snapshot beforeFrame=f;
   rejectFrame=false;unsigned before=validateCalls;
@@ -131,7 +139,7 @@ int wmain(int argc,wchar_t** argv){
  Check(!InvokeValidate(late)&&live::UiFrameStatus()==0,"choice changed during rejected call remains unobserved");
  changeChoiceDuringValidation=false;rejectFrame=false;
  Snapshot badFixed(3,4);Snapshot badBefore=badFixed;
- Check(!live::StackFixedOff(&badFixed,false)&&std::memcmp(&badFixed,&badBefore,sizeof badFixed)==0,"unknown ordinary mode fails before mutation");
+ Check(!live::StackFixedOff(&badFixed,false,true)&&std::memcmp(&badFixed,&badBefore,sizeof badFixed)==0,"unknown mode fails before unified Off mutation");
  auto fixedHeap=new Snapshot(3,1);Check(!live::StackFixedOff(fixedHeap,false),"shared validator rejects nonstack snapshot");delete fixedHeap;
  live::fixed_enabled=true;addon=true;
  // Both hooks attach in one transaction; second failure aborts the first.

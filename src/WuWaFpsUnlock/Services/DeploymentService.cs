@@ -2,7 +2,7 @@ using WuWaFpsUnlock.Core;
 namespace WuWaFpsUnlock.Services;
 public sealed class DeploymentService(Action<string> log)
 {
-    private static FileStream AcquireMaintenanceLock(UserSettings s)
+    internal static FileStream AcquireMaintenanceLock(UserSettings s)
     {
         MaterialSafety.RequireOutsideGame(s.GameRoot,AppPaths.Base);
         if(RollbackBackupCatalog.FindInterrupted(AppPaths.Base) is string interrupted)throw new IOException("请先关闭启动器并运行备份中的恢复.cmd："+interrupted);
@@ -23,7 +23,7 @@ public sealed class DeploymentService(Action<string> log)
     public string ApprovalFingerprint { get; private set; } = "";
     public void UseApprovedFingerprint(string fingerprint) => ApprovalFingerprint = fingerprint;
     private static string Fingerprint(object value) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(value, JsonFiles.Options)));
-    private static async Task<string> PlanFingerprint(UserSettings s, List<PlannedFile> plan, ReShadeInfo info, MfgDeploymentConfiguration configuration, CancellationToken token) => Fingerprint(new { GameRoot=Path.GetFullPath(s.GameRoot), GameExe=Path.GetFullPath(s.GameExe), ManifestHash=await SafePaths.HashAsync(s.PackageManifest,token), Plan=plan, ReShade=info, MfgConfiguration=configuration, IniHash=File.Exists(info.Ini)?await SafePaths.HashAsync(info.Ini,token):null, ProxyHash=info.Proxy is not null && File.Exists(info.Proxy)?await SafePaths.HashAsync(info.Proxy,token):null });
+    private static async Task<string> PlanFingerprint(UserSettings s, List<PlannedFile> plan, ReShadeInfo info, MfgDeploymentConfiguration configuration, CancellationToken token) => Fingerprint(new { GameRoot=Path.GetFullPath(s.GameRoot), GameExe=Path.GetFullPath(s.GameExe), ManifestHash=await SafePaths.HashAsync(s.PackageManifest,token), Plan=plan, ReShade=info, MfgConfiguration=configuration, MenuShortcut=s.MenuShortcut, IniHash=File.Exists(info.Ini)?await SafePaths.HashAsync(info.Ini,token):null, ProxyHash=info.Proxy is not null && File.Exists(info.Proxy)?await SafePaths.HashAsync(info.Proxy,token):null });
     public async Task<string> PreviewAsync(UserSettings s,CancellationToken token=default)
     {
         string exe=GameProcesses.ValidateExe(s);GameProcesses.RequireStopped(s.GameRoot);
@@ -37,6 +37,7 @@ public sealed class DeploymentService(Action<string> log)
         var configuration=MfgDeploymentConfiguration.Create(s,manifest,EnvironmentProbe.ReadBasic(log),IniDocument.Load(before.Ini));
         ApprovalFingerprint=await PlanFingerprint(s,plan,before,configuration,token);
         var lines=new List<string>{"游戏根："+s.GameRoot,"原装 Shipping："+exe,"ReShade："+before.Description,"ReShade 配置："+before.Ini};
+        if(s.MenuShortcut is { } shortcut) { _=shortcut.ToIniValue(); lines.Add("菜单按键："+shortcut.DisplayName); }
         lines.Add(configuration.PreviewText);
         lines.AddRange(plan.Select(f=>$"{f.Source} → {f.Target}"));
         foreach(var f in manifest.Files.Where(f=>f.Kind==PayloadKind.Vendor))
@@ -130,6 +131,8 @@ public sealed class DeploymentService(Action<string> log)
             proxyEntry.InstalledHash=await SafePaths.HashAsync(receipt.ProxyPath,token);proxyEntry.Completed=true;
             var ini=IniDocument.Load(ready.Ini);
             configuration.ApplyOwned(ini,receipt,manifest.MfgConfig);
+            // This is a user preference, not an addon-owned setting to erase on cleanup.
+            s.MenuShortcut?.Apply(ini);
             ini.ApplyManagedAddonLoading(receipt);
             AppPaths.SaveReceipt(receipt);
             token.ThrowIfCancellationRequested();GameProcesses.RequireStopped(s.GameRoot);

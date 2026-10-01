@@ -31,6 +31,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     private readonly Dispatcher _dispatcher=Application.Current.Dispatcher;
     private readonly DispatcherTimer _monitor=new(){Interval=TimeSpan.FromSeconds(1)};
     private string _lastValidExe="";
+    private MenuShortcut? _observedMenuShortcut=MenuShortcut.Home;
 
     private bool _findingGame;
     private bool _refreshing;
@@ -69,7 +70,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         InitializeUpdates();
         _monitor.Tick+=Monitor;
         RememberValidSelection();
-        Log("鸣潮 FPS Unlock 1.2.3 启动。");
+        Log($"鸣潮 FPS Unlock {CurrentUpdateVersion} 启动。");
     }
     public bool Busy {get=>_busy;private set{if(_busy==value)return;_busy=value;LauncherScheduling.SetBusy(value);NotifyAll();}}
     public bool IsGameRunning {get=>_running;private set{if(_running==value)return;_running=value;if(value)_monitor.Start();else _monitor.Stop();NotifyAll();}}
@@ -118,10 +119,20 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     private void RememberValidSelection(){if(GameDiscoveryService.TryValidateSelection(_settings.GameRoot,_settings.GameExe,out var current,out _))_lastValidExe=current!.ShippingExePath;}
     public string Status{get=>_status;private set{_status=value;Notify();}}
     public string Logs=>_logs;
+    public string VersionLabel=>"v"+CurrentUpdateVersion;
     public string Gpu=>_hardware.Gpu;
     public string Driver=>_hardware.DriverText;
     public string Os=>_hardware.Os;
     public string Hags=>_hardware.Hags;
+    public string MenuKeyText=>(_settings.MenuShortcut??_observedMenuShortcut)?.DisplayName??"未识别";
+    public bool SetMenuShortcut(MenuShortcut shortcut)
+    {
+        if(!CanEditSettings||!shortcut.IsValid)return false;
+        _settings.MenuShortcut=shortcut;
+        bool saved=Save();
+        if(saved)Status="菜单按键已保存，下次启动游戏生效。";
+        Notify(nameof(MenuKeyText));return saved;
+    }
     public string DynamicStatus=>_hardware.DynamicText.Replace("；游戏内能力待确认","");
     public string DynamicBackground=>_hardware.IsAdaGeForce&&_hardware.Driver>=59541?"#E2F7EC":"#FFF3DF";
     public string DynamicForeground=>_hardware.IsAdaGeForce&&_hardware.Driver>=59541?"#058853":"#956B1F";
@@ -201,6 +212,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         var snapshot=_settings.Clone();
 
         string reShade,deployState;
+        MenuShortcut? observedShortcut=MenuShortcut.Home;
         try
         {
             if(!string.IsNullOrWhiteSpace(snapshot.GameRoot)&&!string.IsNullOrWhiteSpace(snapshot.GameExe))
@@ -208,10 +220,15 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
                 var result=await Task.Run(()=>
                 {
                     var info=new ReShadeService(Log).Inspect(snapshot);
-                    return (info,receipt:AppPaths.LoadReceipt(snapshot));
+                    MenuShortcut? shortcut=null;
+                    if(info.State!="Conflict")
+                        try{shortcut=MenuShortcut.Read(IniDocument.Load(info.Ini));}
+                        catch(Exception e){Log("菜单按键读取未完成："+e.Message);}
+                    return (info,receipt:AppPaths.LoadReceipt(snapshot),shortcut);
                 });
                 reShade=result.info.Description;
                 var receipt=result.receipt;
+                observedShortcut=result.shortcut;
                 deployState=receipt is null?"未部署":receipt.Status=="PartialFailure"?"上次部署未完成":receipt.Status=="Cleaned"?"已清除本工具插件":receipt.Status=="CleanedWithSkips"?"清除结束 · 部分已变化项目保留":"已有部署记录";
             }
             else{reShade="未设置游戏路径";deployState="请先选择路径";}
@@ -221,6 +238,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         if(_closing||generation!=_refreshGeneration||(passive&&Busy)||
            snapshot.GameRoot!=GameRoot||snapshot.GameExe!=GameExe)return;
         _reShade=reShade;_deployState=deployState;
+        _observedMenuShortcut=observedShortcut;
         _packageState=File.Exists(_settings.PackageManifest)?"文件包："+Path.GetFileName(Path.GetDirectoryName(_settings.PackageManifest)):"启动器部署清单缺失，请完整解压完整版启动器。";
         NotifyAll();
     }
@@ -350,6 +368,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
                     if(RollbackBackupCatalog.FindInterrupted(AppPaths.Base) is string interrupted)
                         throw new IOException("检测到上次更新中断。请关闭启动器，运行备份目录中的恢复.cmd后重试："+interrupted);
                     GameProcesses.ValidateExe(snapshot);
+                    if(snapshot.MenuShortcut is { } shortcut)_=shortcut.ToIniValue();
                     resourceTier = snapshot.ResourceTier switch { "uhd" => "-krqlv=uhd", "hd" => "-krqlv=hd", "sd" => "-krqlv=sd", _ => throw new InvalidDataException("请在主页选择包体档位，并在官方启动器完成对应资源下载。") };
                     var tierInfo = (await Task.Run(() => ResourceTierCatalog.Read(snapshot.GameRoot), token)).First(x => x.Tier == snapshot.ResourceTier);
                     if(tierInfo.Status == TierDownloadStatus.Missing)throw new IOException("所选“"+tierInfo.Name+"”包体尚未下载完成，请先在官方启动器下载该档位。");
@@ -378,16 +397,17 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
                     return Task.FromResult(true);
                 },
                 ReleaseOldSession=async _=>{await ReleaseFpsSessionAsync();_game?.Dispose();_game=null;_sessionReady=false;_gameExitPending=false;IsGameRunning=false;},
-                Start=(exe,token)=>
+                Start=async (exe,token)=>
                 {
                     token.ThrowIfCancellationRequested();
+                    await MenuShortcutService.ApplyBeforeLaunchAsync(snapshot,Log,token);
                     var startInfo=new ProcessStartInfo(exe){UseShellExecute=true,WorkingDirectory=Path.GetDirectoryName(exe)!};
                     if(resourceTier is not null){startInfo.ArgumentList.Add(resourceTier);Log("包体启动参数："+resourceTier);}
                     if(snapshot.MfgSelected){startInfo.ArgumentList.Add("-dx12");Log("多帧生成启动参数：-dx12；实际D3D12加载以游戏日志为准。");}
                     var process=LauncherScheduling.StartProcess(startInfo)??throw new IOException("系统未返回游戏进程。");
                     _game=process;startedThisAttempt=true;_sessionReady=false;IsGameRunning=true;GameStarted?.Invoke();
                     Log($"仅启动所选Shipping一次：{exe}；PID={process.Id}；FPS={(snapshot.FpsEnabled?"ON":"OFF")}；目标={snapshot.TargetFps}");
-                    return Task.FromResult(process);
+                    return process;
                 },
                 AttachFps=async (process,token)=>
                 {

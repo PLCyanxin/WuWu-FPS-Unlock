@@ -1,6 +1,6 @@
 // Applied only by an explicit choice, including reselecting the current mode.
 void ApplyWuWaFrameMode(int mode) {
-  if(mode<0||mode>2)return;
+  if(mode<0||mode>3)return;
       const int current=static_cast<int>(mfgunlock::framecount::g_force_multiplier.load());
       if(current>=2&&current<=6)wuwa_last_fixed=current;
       const int next_force=mode==1?wuwa_last_fixed:0;

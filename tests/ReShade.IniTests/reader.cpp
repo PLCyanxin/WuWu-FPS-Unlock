@@ -14,6 +14,8 @@ int wmain(int argc,wchar_t** argv) {
   std::string path,keep;int enabled=-1,lower=-1;
   ini.get("ADDON","AddonPath",path);ini.get("USER","Keep",keep);
   ini.get("RenoDX.MFGUnlock","Enabled",enabled);ini.get("renodx.mfgunlock","Enabled",lower);
+  unsigned int shortcut[4]={};ini.get("INPUT","KeyOverlay",shortcut);
+  if(shortcut[0]!=(stage==L"original"?36u:112u)||shortcut[1]!=(stage==L"original"?0u:1u)||shortcut[2]!=0u||shortcut[3]!=(stage==L"original"?0u:1u))return 1;
   if(actual!=expected||path!="addons,shared"||keep!="a,b"||lower!=7||enabled!=(stage==L"deployed"?1:0))return 1;
   std::cout<<"PASS actual upstream INI parse\n";return 0;
 }

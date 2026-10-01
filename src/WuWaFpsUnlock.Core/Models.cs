@@ -13,6 +13,7 @@ public sealed class UserSettings
     public int TargetFps { get; set; } = 240;
     public bool FpsEnabled { get; set; } = true;
     public bool MfgSelected { get; set; }
+    public MenuShortcut? MenuShortcut { get; set; }
     private int _dynamicMaxMultiplier = 4;
     [JsonConverter(typeof(DynamicMultiplierLimitJsonConverter))]
     public int DynamicMaxMultiplier

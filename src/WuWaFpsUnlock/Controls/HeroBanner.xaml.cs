@@ -12,7 +12,7 @@ public partial class HeroBanner : UserControl
         new(Color.FromArgb(255,40,53,81),0), new(Color.FromArgb(244,40,53,81),.39), new(Color.FromArgb(0,40,53,81),.68)
     },new Point(0,0),new Point(1,0)));
     private static Brush Freeze(Brush brush) { brush.Freeze(); return brush; }
-    public HeroBanner() { InitializeComponent(); SizeChanged += (_,_) => InvalidateVisual(); }
+    public HeroBanner() { InitializeComponent(); VersionLabel.Text="v"+ViewModels.AppViewModel.CurrentUpdateVersion; SizeChanged += (_,_) => InvalidateVisual(); }
     private static BitmapSource LoadCover()
     {
         var raw = new BitmapImage(new Uri("pack://application:,,,/WuWaFpsUnlock;component/Assets/Cover.original.png"));

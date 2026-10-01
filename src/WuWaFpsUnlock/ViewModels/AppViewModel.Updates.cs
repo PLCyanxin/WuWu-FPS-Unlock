@@ -106,7 +106,7 @@ public sealed partial class AppViewModel
         _startupUpdateChecked = true;
         if (AutoCheckUpdates) await CheckForUpdatesAsync(false);
     }
-    private static string CurrentUpdateVersion => typeof(AppViewModel).Assembly
+    public static string CurrentUpdateVersion => typeof(AppViewModel).Assembly
         .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0]
         ?? typeof(AppViewModel).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
 

@@ -21,6 +21,8 @@ jobs:
         run: dotnet run --project tests/WuWaFpsUnlock.Tests -c Release
       - name: Cleanup preflight and filesystem regression
         run: dotnet run --project tests/Deployment.CleanupTests -c Release
+      - name: Menu shortcut configuration and guarded writes
+        run: dotnet run --project tests/MenuShortcut.Tests -c Release
       - name: Official resource metadata and background startup recovery
         shell: pwsh
         run: |

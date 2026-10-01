@@ -22,6 +22,7 @@ using ValidateFn=bool(*)(void*,void*,void*,void*);
 constexpr unsigned kValidateEntry=0x4bbc0,kValidateReturn=0x476f4;
 inline ValidateFn original_validate=nullptr;
 inline std::atomic_bool fixed_enabled{true};
+inline std::atomic_bool generation_off{false};
 // Unified game-default mode observes accepted frames without imposing a limit.
 inline std::atomic_bool observation_enabled{false};
 inline NativeFn original=nullptr;
@@ -121,12 +122,12 @@ __declspec(noinline) inline void Wrapped(void* context,void* snapshot) {
   observed_frames.fetch_add(1,std::memory_order_release);
  }
 }
-// The shared native validator runs after frame counts are finalized. Ordinary
-// Off changes only mode 1/2. Dynamic retains its earlier, once-sampled selector.
-inline bool FixedOffPolicy(void* snapshot,bool allowGeneration) {
+// The shared native validator runs after frame counts are finalized. Unified
+// Off covers modes 1/2/3; the legacy fixed-only path remains compatible.
+inline bool FixedOffPolicy(void* snapshot,bool allowGeneration,bool allModes=false) {
  unsigned mode=0;std::memcpy(&mode,static_cast<char*>(snapshot)+0x20,4);
  if(mode>3)return false;
- if(!allowGeneration&&(mode==1||mode==2)) {
+ if(!allowGeneration&&(mode==1||mode==2||(allModes&&mode==3))) {
   const unsigned zero=0,one=1;
   std::memcpy(static_cast<char*>(snapshot)+0x20,&zero,4);
   std::memcpy(static_cast<char*>(snapshot),&zero,4);
@@ -135,19 +136,20 @@ inline bool FixedOffPolicy(void* snapshot,bool allowGeneration) {
  }
  return true;
 }
-inline bool StackFixedOff(void* snapshot,bool allowGeneration) {
+inline bool StackFixedOff(void* snapshot,bool allowGeneration,bool allModes=false) {
  ULONG_PTR low=0,high=0;GetCurrentThreadStackLimits(&low,&high);
  auto p=reinterpret_cast<ULONG_PTR>(snapshot);
  if(p<low||p>high||high-p<0x58||!Writable(snapshot,0x58))return false;
- __try{return FixedOffPolicy(snapshot,allowGeneration);}__except(EXCEPTION_EXECUTE_HANDLER){return false;}
+ __try{return FixedOffPolicy(snapshot,allowGeneration,allModes);}__except(EXCEPTION_EXECUTE_HANDLER){return false;}
 }
 __declspec(noinline) inline bool WrappedValidate(void* context,void* snapshot,void* third,void* fourth) {
  const void* caller=_ReturnAddress();
  const unsigned revision=ui_dynamic_snapshot==snapshot?ui_dynamic_revision:ui_revision.load();
  std::array<unsigned char,0x58> observed{};bool captured=false;
  if(enabled.load(std::memory_order_acquire)) {
-  const bool allowGeneration=fixed_enabled.load(std::memory_order_relaxed);
-  if(reinterpret_cast<ULONG_PTR>(caller)!=reinterpret_cast<ULONG_PTR>(owner)+kValidateReturn||!StackFixedOff(snapshot,allowGeneration)) {
+  const bool off=generation_off.load(std::memory_order_relaxed);
+  const bool allowGeneration=fixed_enabled.load(std::memory_order_relaxed)&&!off;
+  if(reinterpret_cast<ULONG_PTR>(caller)!=reinterpret_cast<ULONG_PTR>(owner)+kValidateReturn||!StackFixedOff(snapshot,allowGeneration,off)) {
    enabled.store(false,std::memory_order_release);invalid.store(true);ui_frame.store(0);
   } else {
    // Preserve the input snapshot without retaining the caller's stack pointer.

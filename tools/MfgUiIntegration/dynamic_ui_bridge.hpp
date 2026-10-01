@@ -54,6 +54,13 @@ inline const char* CompanionFrameStatus() {
 // Main and companion exchange a small mode value, never private runtime pointers.
 inline int wuwa_frame_mode = 0;
 inline int wuwa_last_fixed = 4;
+inline bool CanApplyCompanionFrameOff() {
+ HMODULE companion=nullptr;
+ if(!GetModuleHandleExW(0,L"wuwa-dynamicmax.addon64",&companion))return false;
+ using Check=bool(*)();
+ const auto check=reinterpret_cast<Check>(GetProcAddress(companion,"CanApplyWuWaFrameOffV1"));
+ const bool result=check&&check();FreeLibrary(companion);return result;
+}
 inline void ConfigureCompanionFrameMode(int mode, bool activate) {
  HMODULE companion=nullptr;
  if(!GetModuleHandleExW(0,L"wuwa-dynamicmax.addon64",&companion))return;

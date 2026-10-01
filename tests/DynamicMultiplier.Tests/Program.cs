@@ -143,6 +143,35 @@ await Test("repeated Dynamic/Fixed deployment preserves game-owned live cap " + 
     Check(final.Get("RenoDX.MFGUnlock", "DynamicMaxMultiplier") is null);
     Check(final.Get("RenoDX.MFGUnlock", "DynamicTargetFPS") == "165" && final.Get("GENERAL", "PresetPath") == "user.ini");
 }));
+foreach(int mode in new[]{0,1,2,3})
+await Test("redeployment preserves saved unified mode "+mode,()=>Sync(()=>
+{
+    var ini=IniDocument.Load(NewPath("ReShade.ini"));var receipt=new DeploymentReceipt();
+    ini.Set("RenoDX.MFGUnlock","WuWaFrameGenerationModeV1",mode.ToString());
+    ini.Set("RenoDX.MFGUnlock","WuWaLastFixedMultiplier","6");
+    ini.Set("WuWa.DynamicMax","DynamicFrameGenerationChoiceV2","5");
+    var configuration=MfgDeploymentConfiguration.Create(new(),new(),Hardware(59541),ini);
+    configuration.ApplyOwned(ini,receipt);
+    Check(configuration.Mode==mode&&ini.Get("RenoDX.MFGUnlock","WuWaFrameGenerationModeV1")==mode.ToString());
+    Check(ini.Get("RenoDX.MFGUnlock","ForceMultiplier")== (mode==1?"6":"0"));
+    Check(ini.Get("RenoDX.MFGUnlock","DynamicMFG")== (mode==2?"1":"0"));
+    Check(ini.Get("WuWa.DynamicMax","DynamicFrameGenerationChoiceV2")=="5");
+    ini.RemoveOwnedEdits(receipt,_=>{});
+    Check(ini.Get("RenoDX.MFGUnlock","WuWaFrameGenerationModeV1")==mode.ToString());
+    Check(ini.Get("RenoDX.MFGUnlock","WuWaLastFixedMultiplier")=="6");
+}));
+foreach(int mode in new[]{1,2})
+await Test("old per-mode Off migrates without losing saved multipliers "+mode,()=>Sync(()=>
+{
+    var ini=IniDocument.Load(NewPath("ReShade.ini"));var receipt=new DeploymentReceipt();
+    ini.Set("RenoDX.MFGUnlock","WuWaFrameGenerationModeV1",mode.ToString());
+    ini.Set("RenoDX.MFGUnlock","WuWaLastFixedMultiplier","6");
+    ini.Set("WuWa.DynamicMax",mode==1?"FixedFrameGenerationEnabled":"DynamicFrameGenerationChoiceV2","0");
+    var configuration=MfgDeploymentConfiguration.Create(new(),new(),Hardware(59541),ini);
+    Check(configuration.Mode==3&&configuration.PreviewText.Contains("关闭"));
+    configuration.ApplyOwned(ini,receipt);
+    Check(ini.Get("RenoDX.MFGUnlock","WuWaFrameGenerationModeV1")=="3"&&ini.Get("RenoDX.MFGUnlock","WuWaLastFixedMultiplier")=="6");
+}));
 await Test("new deployment leaves missing live cap for addon default and preserves later game selection", () => Sync(() =>
 {
     string path = NewPath("ReShade.ini"); var receipt = new DeploymentReceipt();

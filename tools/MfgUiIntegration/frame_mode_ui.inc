@@ -3,10 +3,10 @@
     ImGui::TextUnformatted("帧生成模式");
     ImGui::TableNextColumn(); ImGui::SetNextItemWidth(-1.0f);
     bool mode_changed=false;
-    if(ImGui::BeginCombo("##wuwa_fg_mode",mode==2?"Dynamic":mode==1?"固定倍率":"游戏默认")) {
-      const char* modes[]={"游戏默认","固定倍率","Dynamic"};
-      for(int candidate : {2,1,0}) {
-        const bool blocked=candidate==2&&(dynamic_game_blocked||dynamic_hard_unavailable);
+    if(ImGui::BeginCombo("##wuwa_fg_mode",mode==3?"关闭":mode==2?"Dynamic":mode==1?"固定倍率":"游戏默认")) {
+      const char* modes[]={"游戏默认","固定倍率","Dynamic","关闭"};
+      for(int candidate : {2,1,0,3}) {
+        const bool blocked=(candidate==2&&(dynamic_game_blocked||dynamic_hard_unavailable))||(candidate==3&&!CanApplyCompanionFrameOff());
         ImGui::BeginDisabled(blocked);
         if(ImGui::Selectable(modes[candidate],mode==candidate)){mode=candidate;mode_changed=true;}
         ImGui::EndDisabled();

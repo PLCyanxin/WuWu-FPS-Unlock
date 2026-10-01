@@ -34,6 +34,16 @@ ConfigText ReadConfig(const char* section, const char* key) {
 std::atomic_int frame_mode{-1};
 std::atomic_bool mode_startup_checked{false};
 void ConfigureFrameMode(int mode,bool activate);
+void LoadFrameMode() {
+ auto stored=ReadConfig("RenoDX.MFGUnlock","WuWaFrameGenerationModeV1");
+ if(!stored.present||stored.count!=1||stored.first.size()!=1||stored.first[0]<'0'||stored.first[0]>'3')return;
+ int mode=stored.first[0]-'0';
+ if((mode==1&&!live::fixed_enabled.load())||(mode==2&&live::requested.load()==0)) {
+  mode=3;
+  reshade::set_config_value(nullptr,"RenoDX.MFGUnlock","WuWaFrameGenerationModeV1",mode);
+ }
+ ConfigureFrameMode(mode,false);
+}
 void LoadConfig() {
  auto config = ReadConfig(kSection, live::kConfigKey);
  if (!config.present) {
@@ -48,11 +58,9 @@ void LoadConfig() {
  live::fixed_enabled.store(!(fixed.present && fixed.count==1 && fixed.first=="0"));
  auto enabled = ReadConfig(kSection, "Enabled");
  user_enabled.store(!enabled.present || (enabled.count == 1 && enabled.first == "1"));
- auto mode=ReadConfig("RenoDX.MFGUnlock","WuWaFrameGenerationModeV1");
  frame_mode.store(-1);mode_startup_checked.store(false);
- if(mode.present&&mode.count==1&&(mode.first=="0"||mode.first=="1"||mode.first=="2"))
-  ConfigureFrameMode(mode.first[0]-'0',false);
-
+ live::generation_off.store(false);
+ LoadFrameMode();
 }
 std::atomic<const char*> logged_status{nullptr};
 std::atomic<int> diagnostic_request{-2};
@@ -79,9 +87,7 @@ void LogStatus() {
 void OnPresent(reshade::api::command_queue*, reshade::api::swapchain*, const reshade::api::rect*,
  const reshade::api::rect*, uint32_t, const reshade::api::rect*) {
  if(!mode_startup_checked.exchange(true)&&frame_mode.load()==-1) {
-  auto mode=ReadConfig("RenoDX.MFGUnlock","WuWaFrameGenerationModeV1");
-  if(mode.present&&mode.count==1&&(mode.first=="0"||mode.first=="1"||mode.first=="2"))
-   ConfigureFrameMode(mode.first[0]-'0',false);
+  LoadFrameMode();
  }
  live::AutoInstall(user_enabled, native_mode_guard);
  LogStatus();
@@ -127,19 +133,10 @@ bool SaveFixedChoice(int selected,int* multiplier) {
  return true;
 }
 bool FixedChoiceCombo(int& selected,bool includeGame) {
- static constexpr const char* labels[]={"关闭","跟随游戏设置","2x","3x","4x","5x","6x"};
- const int current=includeGame?selected:(selected?selected+1:0);
- bool changed=false;
- if(ImGui::BeginCombo("##frame_multiplier",labels[current])) {
-  for(int i=0;i<7;++i) {
-   if(!includeGame&&i==1)continue;
-   ImGui::BeginDisabled(i==0&&!CanApplyFixedOff());
-   if(ImGui::Selectable(labels[i],i==current)){selected=includeGame?i:(i?i-1:0);changed=true;}
-   ImGui::EndDisabled();
-  }
-  ImGui::EndCombo();
- }
- return changed;
+ static constexpr const char* labels[]={"跟随游戏设置","2x","3x","4x","5x","6x"};
+ int current=includeGame?std::clamp(selected-1,0,5):std::clamp(selected-1,0,4);
+ if(!ImGui::Combo("##frame_multiplier",&current,labels+(includeGame?0:1),includeGame?6:5))return false;
+ selected=current+1;return true;
 }
 bool DrawFixedMultiplier(int* multiplier) {
  if(!multiplier)return false;
@@ -149,14 +146,15 @@ bool DrawFixedMultiplier(int* multiplier) {
  RetryForUserChoice();
  return changed;
 }
-// Mode selection enables the selected path; passive synchronization preserves Off.
+// Global Off does not erase either path's saved multiplier.
 void ConfigureFrameMode(int mode,bool activate) {
- if(mode<0||mode>2||(!activate&&frame_mode.load()==mode))return;
+ if(mode<0||mode>3||(!activate&&frame_mode.load()==mode))return;
  live::UiChoiceChanged();
  frame_mode.store(mode);
+ live::generation_off.store(mode==3);
  live::observation_enabled.store(true);
  user_enabled.store(mode==2);
- if(mode==0||(activate&&mode==1))live::fixed_enabled.store(true);
+ live::fixed_enabled.store(true); // Legacy per-mode Off has migrated to mode 3.
  if(mode==2&&activate&&live::requested.load()==0) {
   const auto last=ReadConfig(kSection,"LastEnabledDynamicChoice");
   const int restored=live::ParseConfig(last.count,last.first);
@@ -170,9 +168,9 @@ void ConfigureFrameMode(int mode,bool activate) {
 }
 bool DrawFixedDerived(int* multiplier) {
  if(!multiplier)return false;
- int selected=live::fixed_enabled.load()?((*multiplier>=2&&*multiplier<=6)?*multiplier-1:3):0;
+ int selected=(*multiplier>=2&&*multiplier<=6)?*multiplier-1:3;
  if(!FixedChoiceCombo(selected,false))return false;
- const bool changed=SaveFixedChoice(selected==0?0:selected+1,multiplier);
+ const bool changed=SaveFixedChoice(selected+1,multiplier);
  RetryForUserChoice();return changed;
 }
 void DrawControls(bool table,bool mainDynamic=true,bool derivedOnly=false) {
@@ -195,13 +193,13 @@ void DrawControls(bool table,bool mainDynamic=true,bool derivedOnly=false) {
   if(derivedOnly&&table){ImGui::TableNextRow();ImGui::TableNextColumn();ImGui::TextUnformatted("倍率控制");ImGui::TableNextColumn();}
   if(ImGui::Button("重试")){live::TryInstall(user_enabled,native_mode_guard);LogStatus();}
  }
- int request = live::requested.load(), selected = request == live::kNativeBound ? 0 : (request == 0 ? 1 : request);
+ int request = live::requested.load(), selected = request == live::kNativeBound ? 0 : (request >= 2 ? request-1 : 3);
  if (table) { ImGui::TableNextRow(); ImGui::TableNextColumn(); }
  ImGui::TextUnformatted("Dynamic 最大倍率");
  if (table) { ImGui::TableNextColumn(); ImGui::SetNextItemWidth(-1.0f); }
  ImGui::BeginDisabled(!enabled);
- if (ImGui::Combo("##dynamic_max", &selected, "跟随原生上限\0" "关闭\0最高 2x\0最高 3x\0最高 4x\0最高 5x\0最高 6x\0")) {
-  SaveRequest(selected == 0 ? live::kNativeBound : (selected == 1 ? 0 : selected));
+ if (ImGui::Combo("##dynamic_max", &selected, "跟随原生上限\0最高 2x\0最高 3x\0最高 4x\0最高 5x\0最高 6x\0")) {
+  SaveRequest(selected == 0 ? live::kNativeBound : selected+1);
  }
  ImGui::EndDisabled();
  ImGui::PopID();
@@ -259,6 +257,7 @@ void OnDestroyRuntime(reshade::api::effect_runtime*) { wuwa::native_cursor::Stop
 }
 extern "C" __declspec(dllexport) unsigned GetWuWaNativeFrameStatusV1() { return live::enabled.load()&&!live::invalid.load()?live::UiFrameStatus():0; }
 extern "C" __declspec(dllexport) void ConfigureWuWaFrameModeV1(int mode,bool activate) { ConfigureFrameMode(mode,activate); }
+extern "C" __declspec(dllexport) bool CanApplyWuWaFrameOffV1() { return CanApplyFixedOff(); }
 extern "C" __declspec(dllexport) void DrawWuWaDynamicMaximumInTableV3(reshade::api::effect_runtime*) { DrawControls(true,true,true); }
 extern "C" __declspec(dllexport) bool DrawWuWaFixedMultiplierV2(int* multiplier) { return DrawFixedDerived(multiplier); }
 extern "C" __declspec(dllexport) void DrawWuWaDynamicMaximumInTableV2(reshade::api::effect_runtime*,bool mainDynamic) { DrawControls(true,mainDynamic); }
