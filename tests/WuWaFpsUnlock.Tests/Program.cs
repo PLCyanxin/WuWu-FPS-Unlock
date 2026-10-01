@@ -147,6 +147,7 @@ await GameFileBaselineTests.RunAsync(Test);
 await DualAddonTests.RunAsync(Test);
 await NoticeTests.RunAsync(Test);
 await GameDiscoveryTests.RunAsync(Test);
+await PackageManifestLocationTests.RunAsync(Test);
 
 
 Console.WriteLine($"RESULT: {passed} passed, {failed} failed. No Windows/game integration was exercised.");

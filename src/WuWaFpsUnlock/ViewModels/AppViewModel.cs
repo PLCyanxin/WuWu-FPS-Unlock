@@ -49,8 +49,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         _logFile=Path.Combine(AppPaths.Data,"logs",DateTime.Now.ToString("yyyyMMdd-HHmmss",CultureInfo.InvariantCulture)+".log");
         try{_settings=File.Exists(AppPaths.Settings)?JsonFiles.Read<UserSettings>(AppPaths.Settings):new();}
         catch(Exception e){_settings=new();Log("设置文件无法读取，保留原文件且载入空设置："+e.Message);}
-        if(string.IsNullOrWhiteSpace(_settings.PackageManifest) && File.Exists(Path.Combine(AppPaths.Base,"payload","manifest.json")))
-            _settings.PackageManifest=Path.Combine(AppPaths.Base,"payload","manifest.json");
+        _settings.PackageManifest=PackageManifestLocation.Resolve(_settings.PackageManifest,AppPaths.Base);
         if(_settings.TargetFps is <30 or >420)_settings.TargetFps=240;
         _fpsInput=_settings.TargetFps.ToString(CultureInfo.InvariantCulture);
         OpenSettingsCommand=new(()=>SettingsRequested?.Invoke(),()=>!Busy);
@@ -67,7 +66,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         InitializeUpdates();
         _monitor.Tick+=Monitor;
         RememberValidSelection();
-        Log("鸣潮 FPS Unlock 1.2.3RC 启动。");
+        Log("鸣潮 FPS Unlock 1.2.3 启动。");
     }
     public bool Busy {get=>_busy;private set{if(_busy==value)return;_busy=value;LauncherScheduling.SetBusy(value);NotifyAll();}}
     public bool IsGameRunning {get=>_running;private set{if(_running==value)return;_running=value;if(value)_monitor.Start();else _monitor.Stop();NotifyAll();}}
@@ -78,11 +77,11 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     public bool MfgSelected {get=>_settings.MfgSelected;set{if(!CanEditSettings)return;_settings.MfgSelected=value;Save();NotifyAll();}}
     public int ResourceTierIndex
     {
-        get => _settings.ResourceTier switch { "uhd" => 1, "hd" => 2, "sd" => 3, _ => 0 };
+        get => _settings.ResourceTier switch { "uhd" => 0, "hd" => 1, "sd" => 2, _ => -1 };
         set
         {
-            if (Busy || value is < 0 or > 3) return;
-            _settings.ResourceTier = value switch { 1 => "uhd", 2 => "hd", 3 => "sd", _ => "auto" };
+            if (Busy || value is < 0 or > 2) return;
+            _settings.ResourceTier = value switch { 0 => "uhd", 1 => "hd", _ => "sd" };
             Save(); Notify(nameof(ResourceTierIndex)); Status = "包体档位已保存，下次启动游戏生效";
         }
     }
@@ -106,8 +105,13 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
             NotifyAll();
         }
     }
-    public string GameRoot{get=>_settings.GameRoot;set{RememberValidSelection();_settings.GameRoot=value;Save();Notify();}}
-    public string GameExe{get=>_settings.GameExe;set{RememberValidSelection();_settings.GameExe=value;Save();Notify();}}
+    public string GameRoot{get=>_settings.GameRoot;set{RememberValidSelection();if(!ApplyGameEntry(value)){_settings.GameRoot=value;_settings.GameExe="";}Save();NotifyAll();_ = RefreshResourceTiersAsync();}}
+    public string GameExe{get=>_settings.GameExe;set{RememberValidSelection();if(!ApplyGameEntry(value))_settings.GameExe=value;Save();NotifyAll();_ = RefreshResourceTiersAsync();}}
+    private bool ApplyGameEntry(string entry)
+    {
+        if(!GameDiscoveryService.TryNormalizeEntry(entry,out var candidate,out _))return false;
+        _settings.GameRoot=candidate!.GameRoot;_settings.GameExe=candidate.ShippingExePath;return true;
+    }
     private void RememberValidSelection(){if(GameDiscoveryService.TryValidateSelection(_settings.GameRoot,_settings.GameExe,out var current,out _))_lastValidExe=current!.ShippingExePath;}
     public string Status{get=>_status;private set{_status=value;Notify();}}
     public string Logs=>_logs;
@@ -229,6 +233,8 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     {
         if(!MfgSelected){Status=FpsEnabled?"FPS 解锁无需部署，点击开始游戏即可。":"未选择多帧生成，无需部署。";Log(Status);return;}
         GameProcesses.ValidateExe(_settings);
+        var materialPath=PackageManifestLocation.Resolve(_settings.PackageManifest,AppPaths.Base);
+        if(materialPath!=_settings.PackageManifest){_settings.PackageManifest=materialPath;Save();Log("已使用当前便携包中的材料清单："+materialPath);}
         if(!File.Exists(_settings.PackageManifest))
         {
             var choose=new OpenFileDialog{Title="选择用户材料 manifest.json",Filter="部署清单 (manifest.json)|manifest.json",CheckFileExists=true};
@@ -315,7 +321,9 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
                 Preflight=async token=>
                 {
                     GameProcesses.ValidateExe(snapshot);
-                    resourceTier = snapshot.ResourceTier switch { "uhd" => "-krqlv=uhd", "hd" => "-krqlv=hd", "sd" => "-krqlv=sd", _ => OfficialLaunchOptions.ReadResourceTier(snapshot.GameRoot, Log) };
+                    resourceTier = snapshot.ResourceTier switch { "uhd" => "-krqlv=uhd", "hd" => "-krqlv=hd", "sd" => "-krqlv=sd", _ => throw new InvalidDataException("请在主页选择包体档位，并在官方启动器完成对应资源下载。") };
+                    var tierInfo = (await Task.Run(() => ResourceTierCatalog.Read(snapshot.GameRoot), token)).First(x => x.Tier == snapshot.ResourceTier);
+                    if(tierInfo.Status == TierDownloadStatus.Missing)throw new IOException("所选“"+tierInfo.Name+"”包体尚未下载完成，请先在官方启动器下载该档位。");
                     if(snapshot.TargetFps is <30 or >420)throw new InvalidDataException("目标FPS无效。");
                     var receipt=AppPaths.LoadReceipt(snapshot);
                     if(receipt?.Status is "PartialFailure" or "Installing" or "PartialClean")throw new IOException("部署维护尚未完成，请在设置处理后再开始。");

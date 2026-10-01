@@ -119,6 +119,48 @@ public static class GameDiscoveryService
         if (capped || depthSkipped > 0) diagnostics.Add($"搜索达到范围限制，结果可能不完整：最多{options.MaxDirectories}目录、{options.MaxDepth}层、{options.MaxSeconds}秒、{options.MaxPendingDirectories}待查目录；可手动指定游戏目录。");
         return new(found.Values.OrderBy(c => c.GameRoot, StringComparer.OrdinalIgnoreCase).ToArray(), diagnostics);
     }
+    /// <summary>Normalizes a user-selected entry using only known layouts, never a recursive search.</summary>
+    public static bool TryNormalizeEntry(string? entry, out GameDiscoveryCandidate? candidate, out string reason)
+    {
+        candidate = null;
+        reason = "请选择鸣潮官方安装目录、游戏目录或原装 Shipping。";
+        try
+        {
+            if (string.IsNullOrWhiteSpace(entry) || !Path.IsPathFullyQualified(entry)) return false;
+            var path = Path.TrimEndingDirectorySeparator(Path.GetFullPath(entry));
+            AssertPlainAncestors(path);
+            if (File.Exists(path))
+            {
+                var name = Path.GetFileName(path);
+                if (!name.Equals("Client-Win64-Shipping.exe", StringComparison.OrdinalIgnoreCase) &&
+                    !name.Equals("Wuthering Waves.exe", StringComparison.OrdinalIgnoreCase))
+                { reason = "所选文件不是鸣潮原装入口或 Shipping，请重新选择。"; return false; }
+                var directory = Path.GetDirectoryName(path)!;
+                if (name.Equals("Wuthering Waves.exe", StringComparison.OrdinalIgnoreCase))
+                    return TryResolveGameRoot(directory, out candidate, out reason);
+                var root = Path.GetFullPath(Path.Combine(directory, "..", "..", ".."));
+                return TryValidateSelection(root, path, out candidate, out reason);
+            }
+            if (!Directory.Exists(path)) return false;
+            var roots = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { path, Path.Combine(path, "Wuthering Waves Game") };
+            // Only ascend a canonical Client/Binaries/Win64 suffix. An unrelated folder cannot select a sibling game.
+            foreach (var suffix in new[] { "Client", Path.Combine("Client", "Binaries"), Path.Combine("Client", "Binaries", "Win64") })
+                if (path.EndsWith(Path.DirectorySeparatorChar + suffix, StringComparison.OrdinalIgnoreCase))
+                {
+                    var root = path[..^(suffix.Length + 1)];
+                    if (Path.IsPathFullyQualified(root)) roots.Add(root);
+                }
+            var matches = new List<GameDiscoveryCandidate>();
+            foreach (var root in roots)
+                if (TryResolveGameRoot(root, out var match, out _)) matches.Add(match!);
+            if (matches.Count == 1) { candidate = matches[0]; reason = "已定位原装 Shipping。"; return true; }
+            reason = matches.Count > 1 ? "所选目录包含多个有效游戏位置，请直接选择需要使用的游戏目录或 Shipping。" : "所选目录中没有完整的鸣潮游戏，请选择游戏目录或原装 Shipping。";
+            return false;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or System.Security.SecurityException)
+        { reason = "所选鸣潮路径无法验证：" + ex.Message; return false; }
+    }
+
     /// <summary>Checks the exact selected pair without discovering or substituting another executable.</summary>
     public static bool TryValidateSelection(string? selectedRoot, string? selectedExe,
         out GameDiscoveryCandidate? candidate, out string reason)

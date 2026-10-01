@@ -37,8 +37,9 @@ public static class OfficialLaunchOptions
                 var config = Path.Combine(cache, "Extend_command_cache.json");
                 try
                 {
-                    var argument = ReadSelection(config, Path.Combine(cache, "Extend_command_preferences.json"));
-                    matched.Add((argument, config));
+                    var uiState = Path.Combine(cache, "platform_ui_state.bin");
+                    var argument = File.Exists(uiState) ? ReadNativeBundle(uiState) : ReadSelection(config, Path.Combine(cache, "Extend_command_preferences.json"));
+                    matched.Add((argument, File.Exists(uiState) ? uiState : config));
                 }
                 catch (Exception e) when (IsMetadataError(e))
                 {
@@ -111,6 +112,24 @@ public static class OfficialLaunchOptions
             selected = command;
         }
         return selected ?? throw new InvalidDataException("No enabled resource tier argument.");
+    }
+
+    private static string ReadNativeBundle(string path)
+    {
+        var bytes = Convert.FromBase64String(Encoding.UTF8.GetString(ReadBytes(path)).TrimStart('\uFEFF').Trim());
+        for (int i = 0; i < bytes.Length; i++) bytes[i] ^= 0x63;
+        using var state = Parse(bytes);
+        var data = state.RootElement;
+        string? bundle = null;
+        if (data.TryGetProperty("activeGameScope", out var active) &&
+            active.TryGetProperty("gameId", out var id) && id.GetString() == "G152" &&
+            active.TryGetProperty("gameIdentity", out var identity) && identity.GetString() == "Aki")
+            bundle = active.GetProperty("bundleName").GetString();
+        else if (data.TryGetProperty("recentGames", out var recent) && recent.TryGetProperty("Aki", out var game) &&
+            game.TryGetProperty("gameId", out var gameId) && gameId.GetString() == "G152")
+            bundle = game.GetProperty("bundleName").GetString();
+        bundle = bundle?.ToLowerInvariant();
+        return bundle is "uhd" or "hd" or "sd" ? "-krqlv=" + bundle : throw new InvalidDataException("No official bundle selected.");
     }
 
     private static string Normalize(string path) => Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));

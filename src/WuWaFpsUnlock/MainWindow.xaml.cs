@@ -17,9 +17,11 @@ public partial class MainWindow:Window
         vm.GameExited+=OnGameExited;
         vm.UpdateExitRequested+=ExitForUpdate;
         Width=Math.Min(Width,SystemParameters.WorkArea.Width-36);Height=Math.Min(Height,SystemParameters.WorkArea.Height-36);
-        Closing+=OnClosing;Closed+=async(_,_)=>{_tray?.Dispose();_trayIcon?.Dispose();await vm.CloseAsync();};
-        Loaded+=async(_,_)=>{var predownload=vm.CheckOfficialPredownloadOnStartupAsync();try{await vm.RefreshAsync();}catch(Exception e){vm.ReportError(e);}await predownload;if(StartupCompleted is { } completed){StartupCompleted=null;completed();} else await vm.CheckForUpdatesOnStartupAsync();};
+        Closing+=OnClosing;Closed+=async(_,_)=>{_tray?.Dispose();_trayIcon?.Dispose();vm.ObserveResourceTiers(false);await vm.CloseAsync();};
+        Loaded+=async(_,_)=>{await vm.RefreshResourceTiersAsync();var predownload=vm.CheckOfficialPredownloadOnStartupAsync();try{await vm.RefreshAsync();}catch(Exception e){vm.ReportError(e);}await predownload;if(StartupCompleted is { } completed){StartupCompleted=null;completed();} else await vm.CheckForUpdatesOnStartupAsync();};
     }
+    private void ResourceTier_Opened(object sender,EventArgs e)=>_vm.ObserveResourceTiers(true);
+    private void ResourceTier_Closed(object sender,EventArgs e)=>_vm.ObserveResourceTiers(false);
     private void OpenSettings()
     {
         if(_settings is not null){_settings.Show();if(_settings.WindowState==WindowState.Minimized)_settings.WindowState=WindowState.Normal;_settings.Activate();return;}
@@ -46,7 +48,7 @@ public partial class MainWindow:Window
             {
                 using var stream=Application.GetResourceStream(new Uri("pack://application:,,,/WuWaFpsUnlock;component/Assets/App.ico")).Stream;
                 _trayIcon=new System.Drawing.Icon(stream);
-                _tray=new System.Windows.Forms.NotifyIcon{Icon=_trayIcon,Text="鸣潮 FPS Unlock v1.2.3RC"};
+                _tray=new System.Windows.Forms.NotifyIcon{Icon=_trayIcon,Text="鸣潮 FPS Unlock v1.2.3"};
                 _tray.DoubleClick+=(_,_)=>Dispatcher.Invoke(RestoreFromTray);
                 var menu=new System.Windows.Forms.ContextMenuStrip();
                 menu.Items.Add("显示启动器",null,(_,_)=>Dispatcher.Invoke(RestoreFromTray));

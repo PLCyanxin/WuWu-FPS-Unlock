@@ -35,5 +35,25 @@ File.Delete(config);Reject("matching broken config cannot fall through",first,se
 Config(first);File.WriteAllText(Path.Combine(first,"kr_game_cache","kr_game_temp.bin"),"broken");Reject("invalid association",first);
 Bind(first,root+"-other");Reject("stale moved installation binding",first);
 var settings=new WuWaFpsUnlock.Core.UserSettings{ResourceTier="uhd"};if(settings.Clone().ResourceTier!="uhd")throw new Exception("Persistence failed");count++;
+Bind(first,root);Config(first);
+void Native(string json){var bytes=System.Text.Encoding.UTF8.GetBytes(json);for(int i=0;i<bytes.Length;i++)bytes[i]^=99;File.WriteAllText(Path.Combine(first,"kr_game_cache","platform_ui_state.bin"),Convert.ToBase64String(bytes));}
+Native("{\"activeGameScope\":{\"gameIdentity\":\"Aki\",\"gameId\":\"G152\",\"bundleName\":\"UHD\"}}");
+Check("-krqlv=uhd","native bundle takes precedence over stale hd cache",first);
+Native("{\"activeGameScope\":{\"gameIdentity\":\"Other\",\"gameId\":\"G100\"},\"recentGames\":{\"Aki\":{\"gameId\":\"G152\",\"bundleName\":\"SD\"}}}");
+Check("-krqlv=sd","recent WuWa scope when another game is active",first);
+Native("{\"activeGameScope\":{\"gameIdentity\":\"Aki\",\"gameId\":\"G152\",\"bundleName\":\"INVALID\"}}");Reject("invalid native bundle cannot use stale extension",first);
+Directory.CreateDirectory(root);Directory.CreateDirectory(Path.Combine(root,"launcherDownloadConfig"));
+void Verify(bool ok,string name){if(!ok)throw new Exception(name);count++;Console.WriteLine("PASS "+name);}
+Verify(ResourceTierCatalog.Read(root).All(x=>x.Status==TierDownloadStatus.Unknown),"legacy metadata not guessed installed");
+File.WriteAllText(Path.Combine(root,"launcherDownloadConfig.json"),"{\"bundles\":{\"HD\":{\"version\":\"3.7.0\",\"state\":\"\",\"resourcePacks\":[\"common\",\"hd\"]}}}");
+foreach(var pack in new[]{"common","hd"})File.WriteAllText(Path.Combine(root,"launcherDownloadConfig",pack+".json"),JsonSerializer.Serialize(new{packName=pack,version="3.7.0"}));
+var catalog=ResourceTierCatalog.Read(root);
+Verify(catalog[1].Status==TierDownloadStatus.Installed&&catalog[0].Status==TierDownloadStatus.Missing&&catalog[2].Status==TierDownloadStatus.Missing,"only installed bundle green despite UI selecting uhd");
+Verify(ResourceTierCatalog.Read(root,t=>t=="sd")[2].Status==TierDownloadStatus.Downloading,"observed tier writes indicate active download");
+File.Delete(Path.Combine(root,"launcherDownloadConfig","common.json"));
+Verify(ResourceTierCatalog.Read(root)[1].Status==TierDownloadStatus.Missing,"missing required pack removes green");
+File.WriteAllText(Path.Combine(root,"launcherDownloadConfig.json"),"{bad");Verify(ResourceTierCatalog.Read(root).All(x=>x.Status==TierDownloadStatus.Unknown),"partial official writes do not claim installed");
+Verify(ResourceTierCatalog.TierFromResourcePath(@"C:\game\launcherDownload\UHD\a.tmp")=="uhd","specific download resource path");
+Verify(ResourceTierCatalog.TierFromResourcePath(@"C:\game\launcherDownload\common\a.tmp") is null,"shared download not attributed to all tiers");
 Console.WriteLine($"{count} launch option tests passed; no game started or registry modified.");
 Directory.Delete(fixture,true);

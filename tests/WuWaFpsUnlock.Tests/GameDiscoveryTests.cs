@@ -20,6 +20,37 @@ public static class GameDiscoveryTests
         {
             var a = MakeGame("游戏A"); var b = MakeGame("游戏B");
             string Shipping(string game) => Path.Combine(game,"Client","Binaries","Win64","Client-Win64-Shipping.exe");
+            await test("manual entry normalizes official parent and canonical subfolders", () => Run(() =>
+            {
+                var game = MakeGame(Path.Combine("official", "Wuthering Waves Game"));
+                foreach(var entry in new[] { Path.GetDirectoryName(game)!, game, Path.Combine(game,"Client"), Path.Combine(game,"Client","Binaries"), Path.GetDirectoryName(Shipping(game))!, Shipping(game), Path.Combine(game,"Wuthering Waves.exe") })
+                {
+                    Check(GameDiscoveryService.TryNormalizeEntry(entry,out var selected,out _));
+                    Check(selected!.GameRoot==game && selected.ShippingExePath==Shipping(game));
+                    Check(GameDiscoveryService.TryValidateSelection(selected.GameRoot,selected.ShippingExePath,out _,out _));
+                }
+            }));
+            await test("manual entry rejects unrelated executable and sibling folder", () => Run(() =>
+            {
+                var wrong=Path.Combine(a,"other.exe");File.Copy(Shipping(a),wrong);
+                var unrelated=Path.Combine(a,"Screenshots");Directory.CreateDirectory(unrelated);
+                Check(!GameDiscoveryService.TryNormalizeEntry(wrong,out _,out _));
+                Check(!GameDiscoveryService.TryNormalizeEntry(unrelated,out _,out _));
+                Check(!GameDiscoveryService.TryNormalizeEntry("Client",out _,out _));
+            }));
+            await test("manual entry rejects ambiguous exact layouts", () => Run(() =>
+            {
+                var parent=MakeGame("ambiguous");MakeGame(Path.Combine("ambiguous","Wuthering Waves Game"));
+                Check(!GameDiscoveryService.TryNormalizeEntry(parent,out _,out var reason)&&reason.Contains("多个"));
+                Check(GameDiscoveryService.TryNormalizeEntry(Shipping(parent),out var exact,out _)&&exact!.GameRoot==parent);
+            }));
+            await test("manual entry rechecks missing Shipping and wrong PE", () => Run(() =>
+            {
+                var missing=MakeGame("manual-missing");File.Delete(Shipping(missing));
+                Check(!GameDiscoveryService.TryNormalizeEntry(missing,out _,out _));
+                var invalid=MakeGame("manual-invalid",0x14c);
+                Check(!GameDiscoveryService.TryNormalizeEntry(invalid,out _,out _));
+            }));
             await test("discovery exact selected pair can be reused without searching", () => Run(() =>
             {
                 Check(GameDiscoveryService.TryValidateSelection(a,Shipping(a),out var current,out var reason));
