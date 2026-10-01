@@ -1,6 +1,15 @@
 using System.Text;
 using WuWaFpsUnlock.Core;
 
+// Source checkouts omit redistribution materials. Validate the assembled package
+// separately, after its pinned release baseline has supplied those files.
+if(args is ["--validate-materials",var packageDirectory])
+{
+    string manifest=Path.GetFullPath(Path.Combine(packageDirectory,"manifest.json"));
+    PackageManifestLocation.RequireSources(PackageReader.Load(manifest),manifest);
+    Console.WriteLine("Complete package deployment materials passed structural validation.");
+    return 0;
+}
 
 // Real filesystem and self-built child-process tests; never starts a game or unlocker.
 string root=Path.GetFullPath(Path.Combine("artifacts","tests","test-work",Guid.NewGuid().ToString("N")));

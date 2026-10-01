@@ -58,10 +58,11 @@ public static class AuditRegressionTests
                 try{MaterialSafety.RequireDifferentFiles(source,target);throw new Exception("accepted identical hardlink");}catch(InvalidDataException){}
                 Check(File.Exists(source)&&File.Exists(target));return Task.CompletedTask;
             });
-            await test("current packaged DLLs and addon pass structural validation without fixed old hashes",()=>
+            await test("repository native DLLs and addons pass structural validation without fixed old hashes",()=>
             {
-                string manifest=Path.GetFullPath("payload/manifest.json");PackageManifestLocation.RequireSources(PackageReader.Load(manifest),manifest);
-                MaterialSafety.RequireX64Dll(Path.GetFullPath("release-assets/dynamicmax/wuwa-dynamicmax.addon64"));return Task.CompletedTask;
+                foreach(string path in new[]{"components/ww_plugin_base.dll","release-assets/mfg/renodx-mfgunlock.addon64","release-assets/dynamicmax/wuwa-dynamicmax.addon64"})
+                    MaterialSafety.RequireX64Dll(Path.GetFullPath(path));
+                return Task.CompletedTask;
             });
             await test("atomic checksummed state survives torn legacy metadata",()=>
             {

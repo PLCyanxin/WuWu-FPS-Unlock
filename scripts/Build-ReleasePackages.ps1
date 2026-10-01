@@ -46,6 +46,8 @@ foreach($field in $expectedPolicy.PSObject.Properties.Name | Where-Object {$_ -n
 }
 $fullName="WuWaFPSUnlock-$Version-win-x64.zip"
 $updateName="WuWaFPSUnlock-$Version-update.zip"
+dotnet run --project (Join-Path $repo 'tests/WuWaFpsUnlock.Tests') -c Release -- --validate-materials $payloadRoot
+if($LASTEXITCODE -ne 0){throw 'Complete package deployment material validation failed'}
 Compress-Archive package/* $fullName
 New-Item update/update-payload/components/fps,update/update-payload/payload/files/addon -ItemType Directory -Force | Out-Null
 Copy-Item build/WuWaFpsUnlock.exe update/update-payload
