@@ -35,6 +35,19 @@ function Worker([string]$Exe,[string[]]$Arguments,[int]$Expected=0){
     $process.Dispose()
 }
 function Check([bool]$ok,[string]$message){if(!$ok){throw $message};Write-Output "PASS $message"}
+function CompletionCount(){
+    if(!(Test-Path -LiteralPath "$root/completion-fixture.txt")){return 0}
+    return @(Get-Content -LiteralPath "$root/completion-fixture.txt").Count
+}
+function WaitForCompletionCount([int]$expected){
+    for($i=0;$i -lt 200;$i++){
+        $actual=CompletionCount
+        if($actual -eq $expected){return}
+        if($actual -gt $expected){throw "Unexpected completion handoff count: $actual, expected $expected"}
+        Start-Sleep -Milliseconds 50
+    }
+    throw "Completion handoff timed out: observed $(CompletionCount), expected $expected"
+}
 function StartLauncher(){
     $psi=[Diagnostics.ProcessStartInfo]::new("$root/WuWaFpsUnlock.exe");$psi.UseShellExecute=$false;$psi.CreateNoWindow=$true
     return [Diagnostics.Process]::Start($psi)
@@ -43,8 +56,8 @@ $child=StartLauncher
 Worker "$package/更新.exe" @('--wait-for-exit',"$($child.Id)","$root/WuWaFpsUnlock.exe")
 Check ($child.HasExited) 'CLI update waited for real inert launcher natural exit';$child.Dispose()
 Check ((Get-FileHash "$root/WuWaFpsUnlock.exe").Hash -ne $oldHash) 'production update CLI replaced launcher'
-for($i=0;$i -lt 100 -and !(Test-Path "$root/completion-fixture.txt");$i++){Start-Sleep -Milliseconds 50}
-Check ((Get-Content "$root/completion-fixture.txt").Count -eq 1) 'successful update launches completion handoff once'
+WaitForCompletionCount 1
+Check ((CompletionCount) -eq 1) 'successful update launches completion handoff once'
 $first=@(Get-ChildItem $root -Directory -Filter 'update-backup-*')[0]
 Check ((Get-Content "$($first.FullName)/snapshot.json" -Raw|ConvertFrom-Json).Complete) 'first update creates complete backup'
 Check (!(Test-Path "$($first.FullName)/original")) 'CLI update stores old bytes once in complete snapshot'
@@ -53,6 +66,7 @@ Copy-Item "$fixture/third/WuWaFpsUnlock.exe" "$payload/WuWaFpsUnlock.exe" -Force
 Remove-Item -LiteralPath "$package/回退.cmd"
 & "$repo/scripts/New-UpdateManifest.ps1" -PackageDirectory $package -Version '3.0.0'
 Worker "$package/更新.exe" @()
+WaitForCompletionCount 2
 $backups=@(Get-ChildItem $root -Directory -Filter 'update-backup-*')
 Check ($backups.Count -eq 1 -and $backups[0].FullName -ne $first.FullName) 'second successful CLI update removes prior backup'
 $backup=$backups[0].FullName
@@ -71,13 +85,13 @@ Check ((Get-FileHash "$root/data/settings.json").Hash -eq $dataHash) 'update and
 Check ((Test-Path "$backup/rollback.completed") -and !(Get-Content "$backup/snapshot.json" -Raw|ConvertFrom-Json).Complete) 'consumption blocks both new and legacy rollback consumers'
 Worker "$fixture/worker/WuWaUpdaterFixture.exe" @('--rollback',$backup) 1
 Write-Output 'PASS repeated rollback CLI refused'
-$completionBefore=Get-Content "$root/completion-fixture.txt" -Raw
+$completionBefore=CompletionCount
 $beforeRejected=(Get-FileHash "$root/WuWaFpsUnlock.exe").Hash
 $script:ProbeFailAt=2
 Worker "$package/更新.exe" @() 1
 $script:ProbeFailAt=0
 Check ((Get-FileHash "$root/WuWaFpsUnlock.exe").Hash -eq $beforeRejected) 'game appearing before first replacement prevents installation'
-Check ((Get-Content "$root/completion-fixture.txt" -Raw) -eq $completionBefore) 'game guard refusal never sends success handoff'
+Check ((CompletionCount) -eq $completionBefore) 'game guard refusal never sends success handoff'
 foreach($killAt in @(1,3,5)){
     $beforeCrash=(Get-FileHash "$root/WuWaFpsUnlock.exe").Hash
     $componentBefore=(Get-FileHash "$root/components/fps/ww_plugin_base.dll").Hash
@@ -91,13 +105,13 @@ foreach($killAt in @(1,3,5)){
     Worker "$fixture/worker/WuWaUpdaterFixture.exe" @('--recover',$interrupted.FullName)
     Check ((Get-FileHash "$root/WuWaFpsUnlock.exe").Hash -eq $beforeCrash -and (Get-FileHash "$root/components/fps/ww_plugin_base.dll").Hash -eq $componentBefore) "OS-level interruption after commit $killAt restores exact prior bytes"
 }
-$completionCountBefore=@(Get-Content "$root/completion-fixture.txt").Count
+$completionCountBefore=CompletionCount
 $script:KillMetadata=1
 Worker "$package/更新.exe" @() 78
 $script:KillMetadata=0
 Worker "$package/更新.exe" @()
-for($i=0;$i -lt 100 -and @(Get-Content "$root/completion-fixture.txt").Count -le $completionCountBefore;$i++){Start-Sleep -Milliseconds 50}
-Check (@(Get-Content "$root/completion-fixture.txt").Count -eq $completionCountBefore+1) 'torn legacy completion metadata recovers through atomic state and successful retry'
+WaitForCompletionCount ($completionCountBefore+1)
+Check ((CompletionCount) -eq $completionCountBefore+1) 'torn legacy completion metadata recovers through atomic state and successful retry'
 $recoveredBackup=@(Get-ChildItem $root -Directory -Filter 'update-backup-*')
 Check ($recoveredBackup.Count -eq 1 -and (Get-FileHash "$($recoveredBackup[0].FullName)/snapshot/WuWaFpsUnlock.exe").Hash -eq $beforeRejected) 'completion recovery preserves original pre-update backup instead of backing up already-updated version'
 $beforeMetadataFailure=(Get-FileHash "$root/components/fps/ww_plugin_base.dll").Hash
@@ -109,10 +123,11 @@ Worker "$package/更新.exe" @() 1
 $script:FailMetadata=0
 Check ((Get-FileHash "$root/components/fps/ww_plugin_base.dll").Hash -eq (Get-FileHash "$payload/components/fps/ww_plugin_base.dll").Hash) 'exception after durable completion never restores old files under completed metadata'
 Worker "$package/更新.exe" @()
+WaitForCompletionCount ($completionCountBefore+2)
 $completedBackup=@(Get-ChildItem $root -Directory -Filter 'update-backup-*')
 Check ($completedBackup.Count -eq 1 -and (Get-FileHash "$($completedBackup[0].FullName)/snapshot/components/fps/ww_plugin_base.dll").Hash -eq $beforeMetadataFailure) 'retry repairs completion mirrors and retains actual pre-update component snapshot'
-$completionBefore=Get-Content "$root/completion-fixture.txt" -Raw
+$completionBefore=CompletionCount
 Add-Content "$payload/components/fps/ww_plugin_base.dll" 'corrupt fixture bytes'
 Worker "$package/更新.exe" @() 1
-Check ((Get-Content "$root/completion-fixture.txt" -Raw) -eq $completionBefore) 'failed update never launches success handoff'
+Check ((CompletionCount) -eq $completionBefore) 'failed update never launches success handoff'
 Write-Output "RESULT: production CLI integration passed; fixture location $fixture; desktop shortcut and game probe adapters replaced."
