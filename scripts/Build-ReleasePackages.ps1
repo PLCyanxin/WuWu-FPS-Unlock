@@ -26,6 +26,16 @@ foreach($item in Get-ChildItem package -Force){
     if($item.Name -notin $allowedRoot){throw "Unexpected full-package item (possible local user data): $($item.Name)"}
 }
 if(Test-Path package/data){throw 'Full package must not include user configuration, deployment records or logs'}
+# A complete release must contain deployment sources; an update-only layout is insufficient.
+$payloadRoot=(Resolve-Path -LiteralPath 'package/payload').Path
+$materialManifest=Get-Content -LiteralPath (Join-Path $payloadRoot 'manifest.json') -Raw | ConvertFrom-Json
+$materialSources=@($materialManifest.files | ForEach-Object { $_.source }) + @($materialManifest.reShade.localSetupPath)
+foreach($relative in $materialSources){
+    if([string]::IsNullOrWhiteSpace($relative)){throw 'Empty deployment material path'}
+    $material=[IO.Path]::GetFullPath((Join-Path $payloadRoot $relative))
+    if(!$material.StartsWith($payloadRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw "Deployment source escapes package: $relative"}
+    if(!(Test-Path -LiteralPath $material -PathType Leaf) -or (Get-Item -LiteralPath $material).Length -eq 0){throw "Missing deployment source in full package: $relative"}
+}
 $fullName="WuWaFPSUnlock-$Version-win-x64.zip"
 $updateName="WuWaFPSUnlock-$Version-update.zip"
 Compress-Archive package/* $fullName

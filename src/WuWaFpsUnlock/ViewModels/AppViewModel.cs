@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -210,7 +210,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         if(_closing||generation!=_refreshGeneration||(passive&&Busy)||
            snapshot.GameRoot!=GameRoot||snapshot.GameExe!=GameExe)return;
         _reShade=reShade;_deployState=deployState;
-        _packageState=File.Exists(_settings.PackageManifest)?"文件包："+Path.GetFileName(Path.GetDirectoryName(_settings.PackageManifest)):"尚未导入 MFG 文件包；点击开始部署时选择清单。";
+        _packageState=File.Exists(_settings.PackageManifest)?"文件包："+Path.GetFileName(Path.GetDirectoryName(_settings.PackageManifest)):"启动器部署清单缺失，请完整解压完整版启动器。";
         NotifyAll();
     }
     private async Task RefreshHagsAsync(HardwareInfo basic,int generation)
@@ -237,16 +237,18 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         if(materialPath!=_settings.PackageManifest){_settings.PackageManifest=materialPath;Save();Log("已使用当前便携包中的材料清单："+materialPath);}
         if(!File.Exists(_settings.PackageManifest))
         {
-            var choose=new OpenFileDialog{Title="选择用户材料 manifest.json",Filter="部署清单 (manifest.json)|manifest.json",CheckFileExists=true};
-            if(choose.ShowDialog()!=true)return;
-            PackageReader.Load(choose.FileName);_settings.PackageManifest=choose.FileName;Save();
+            Status="启动器部署文件缺失，请完整解压完整版启动器。";
+            var message=PackageManifestLocation.RecoveryMessage(_settings.PackageManifest);
+            Log(message);MessageBox.Show(message,"部署文件缺失",MessageBoxButton.OK,MessageBoxImage.Warning);
+            return;
         }
         Busy=true;Status="正在校验材料并搜索同名目标…";
         try
         {
             var snapshot=_settings.Clone();var service=new DeploymentService(Log);
-            string preview=await service.PreviewAsync(snapshot);
             var manifest=PackageReader.Load(snapshot.PackageManifest);
+            PackageManifestLocation.RequireSources(manifest,snapshot.PackageManifest);
+            string preview=await service.PreviewAsync(snapshot);
             var existing=new ReShadeService(Log).Inspect(snapshot,manifest.ReShade);
             bool upgrade=existing.State=="UpgradeRequired";
             if(existing.State!="Reusable")
