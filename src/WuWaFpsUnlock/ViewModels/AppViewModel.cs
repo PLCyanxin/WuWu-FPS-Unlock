@@ -429,7 +429,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     }
     public async Task CloseAsync()
     {
-        _closing=true;_monitor.Stop();_lifetime.Cancel();CancelUpdateWork();
+        _closing=true;StopResourceTierObservation();_monitor.Stop();_lifetime.Cancel();CancelUpdateWork();
         await ReleaseFpsSessionAsync();
         _game?.Dispose();_game=null;
     }
