@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.RegularExpressions;
 using WuWaFpsUnlock.Core;
 
@@ -8,7 +8,7 @@ public enum TierDownloadStatus { Unknown, Missing, Downloading, Installed }
 public sealed record ResourceTierInfo(string Tier, TierDownloadStatus Status)
 {
     public string Name => Tier switch { "uhd" => "极致", "hd" => "高清", _ => "流畅" };
-    public string StatusText => Status switch { TierDownloadStatus.Installed => "已下载", TierDownloadStatus.Downloading => "正在下载", TierDownloadStatus.Missing => "未下载", _ => "未捕获" };
+    public string StatusText => Status switch { TierDownloadStatus.Installed => "已下载", TierDownloadStatus.Downloading => "下载中", TierDownloadStatus.Missing => "未下载", _ => "未捕获" };
     public string Color => Status switch { TierDownloadStatus.Installed => "#20A66A", TierDownloadStatus.Downloading => "#E2AD28", TierDownloadStatus.Missing => "#DF6464", _ => "#8994A6" };
 }
 

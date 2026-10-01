@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -25,8 +25,12 @@ class Program
     Check(combo.Items.Count==3,"three bundle choices; no automatic option");Check(vm.ResourceTierIndex==1,"old explicit hd stays selected");
     vm.ResourceTierIndex=2;Check(((UserSettings)typeof(AppViewModel).GetField("_settings",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(vm)!).ResourceTier=="sd","choice maps to explicit sd argument");
     vm.ObserveResourceTiers(true);Directory.CreateDirectory(Path.Combine(root,"launcherDownload","uhd"));
-    File.WriteAllText(Path.Combine(root,"launcherDownload","uhd","resource.tmp"),"fixture");await Task.Delay(500);await vm.RefreshResourceTiersAsync();
-    Check(vm.UhdTier.Status==TierDownloadStatus.Downloading,"native filesystem activity produces yellow state");
+    File.WriteAllText(Path.Combine(root,"launcherDownload","uhd","resource.tmp"),"fixture");
+    for(int i=0;i<15&&vm.UhdTier.Status!=TierDownloadStatus.Downloading;i++)await Task.Delay(50);
+    Check(vm.UhdTier.Status==TierDownloadStatus.Downloading,"filesystem activity updates yellow state without waiting for periodic refresh");
+    int unchanged=0;vm.PropertyChanged+=(_,e)=>{if(e.PropertyName==nameof(vm.UhdTier))unchanged++;};
+    for(int i=0;i<10;i++)File.AppendAllText(Path.Combine(root,"launcherDownload","uhd","resource.tmp"),"x");
+    await Task.Delay(200);await vm.RefreshResourceTiersAsync();Check(unchanged==0,"unchanged activity avoids repeated UI notifications");
     vm.ObserveResourceTiers(false);await vm.RefreshResourceTiersAsync();Check(vm.UhdTier.Status==TierDownloadStatus.Unknown,"closing menu releases observer and activity");
     window.Close();Console.WriteLine($"{checks} passed; no windows shown, no game or official launcher started");
    }catch(Exception e){Console.Error.WriteLine(e);result=1;}finally{vm.ObserveResourceTiers(false);await vm.CloseAsync();Directory.Delete(root,true);app.Shutdown();}

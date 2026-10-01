@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Windows.Threading;
 using WuWaFpsUnlock.Services;
 
@@ -9,20 +9,53 @@ public sealed partial class AppViewModel
     public ResourceTierInfo HdTier { get; private set; } = new("hd", TierDownloadStatus.Unknown);
     public ResourceTierInfo SdTier { get; private set; } = new("sd", TierDownloadStatus.Unknown);
     private FileSystemWatcher? _tierWatcher;
-    private readonly ConcurrentDictionary<string, DateTime> _tierWrites = new();
+    private readonly ConcurrentDictionary<string, (int Generation, DateTime At)> _tierWrites = new();
     private DispatcherTimer? _tierTimer;
-    private bool _readingTiers;
+    private bool _readingTiers, _tiersRefreshPending;
+    private int _tierObserverGeneration, _tierActivityQueued, _tierMetadataDirty, _tierVisibleActivity;
+    private void ApplyResourceTierInfo(ResourceTierInfo[] result)
+    {
+        var now=DateTime.UtcNow;
+        // A disk read can finish after a newer write event; preserve the newer observed activity.
+        for(int i=0;i<result.Length;i++)
+            if(_tierWrites.TryGetValue(result[i].Tier,out var write)&&write.Generation==_tierObserverGeneration&&now-write.At<TimeSpan.FromSeconds(8))
+                result[i]=result[i] with{Status=TierDownloadStatus.Downloading};
+        if(UhdTier!=result[0]){UhdTier=result[0];Notify(nameof(UhdTier));}
+        if(HdTier!=result[1]){HdTier=result[1];Notify(nameof(HdTier));}
+        if(SdTier!=result[2]){SdTier=result[2];Notify(nameof(SdTier));}
+        Volatile.Write(ref _tierVisibleActivity,
+            (UhdTier.Status==TierDownloadStatus.Downloading?1:0)|
+            (HdTier.Status==TierDownloadStatus.Downloading?2:0)|
+            (SdTier.Status==TierDownloadStatus.Downloading?4:0));
+    }
+    private void QueueTierActivity(int generation,string root)
+    {
+        if(Interlocked.Exchange(ref _tierActivityQueued,1)!=0)return;
+        _dispatcher.BeginInvoke(new Action(()=>
+        {
+            if(generation!=_tierObserverGeneration||_closing||_tierWatcher is null||root!=GameRoot)return;
+            Interlocked.Exchange(ref _tierActivityQueued,0);
+            var now=DateTime.UtcNow;
+            var current=new[]{UhdTier,HdTier,SdTier};
+            for(int i=0;i<current.Length;i++)
+                if(_tierWrites.TryGetValue(current[i].Tier,out var time)&&time.Generation==generation&&now-time.At<TimeSpan.FromSeconds(8))
+                    current[i]=current[i] with{Status=TierDownloadStatus.Downloading};
+            ApplyResourceTierInfo(current);
+            if(Interlocked.Exchange(ref _tierMetadataDirty,0)!=0)_=RefreshResourceTiersAsync();
+        }),DispatcherPriority.Background);
+    }
     public async Task RefreshResourceTiersAsync()
     {
-        if (_readingTiers || _closing) return;
+        if (_closing) return;
+        if (_readingTiers) { _tiersRefreshPending=true; return; }
         _readingTiers = true;
         var root = GameRoot;
         try
         {
             var result = await Task.Run(() => ResourceTierCatalog.Read(root, tier =>
-                _tierWrites.TryGetValue(tier, out var time) && DateTime.UtcNow - time < TimeSpan.FromSeconds(8)));
+                _tierWrites.TryGetValue(tier, out var time) && time.Generation==Volatile.Read(ref _tierObserverGeneration) && DateTime.UtcNow - time.At < TimeSpan.FromSeconds(8)));
             if (_closing || root != GameRoot) return;
-            UhdTier = result[0]; HdTier = result[1]; SdTier = result[2];
+            ApplyResourceTierInfo(result);
             if (ResourceTierIndex < 0 && Directory.Exists(root))
             {
                 string? tier = null;
@@ -37,13 +70,20 @@ public sealed partial class AppViewModel
                 if (ResourceTierIndex < 0 && tier is "uhd" or "hd" or "sd")
                 { _settings.ResourceTier = tier; Save(); Notify(nameof(ResourceTierIndex)); }
             }
-            Notify(nameof(UhdTier)); Notify(nameof(HdTier)); Notify(nameof(SdTier));
+
         }
-        finally { _readingTiers = false; }
+        finally
+        {
+            _readingTiers=false;
+            if(_tiersRefreshPending&&!_closing){_tiersRefreshPending=false;_=RefreshResourceTiersAsync();}
+        }
     }
     public void ObserveResourceTiers(bool observe)
     {
+        int generation=++_tierObserverGeneration;
         _tierWatcher?.Dispose(); _tierWatcher = null;
+        Interlocked.Exchange(ref _tierActivityQueued,0);Interlocked.Exchange(ref _tierMetadataDirty,0);
+        Volatile.Write(ref _tierVisibleActivity,0);
         _tierTimer?.Stop(); _tierWrites.Clear();
         if (!observe || !Directory.Exists(GameRoot)) return;
         try
@@ -54,16 +94,25 @@ public sealed partial class AppViewModel
             FileSystemEventHandler changed = (_, e) =>
             {
                 var relative = Path.GetRelativePath(watchedRoot, e.FullPath);
-                if (!relative.StartsWith("launcherDownload" + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) &&
-                    !e.FullPath.EndsWith(".pak", StringComparison.OrdinalIgnoreCase)) return;
-                if (e.FullPath.EndsWith(".json", StringComparison.OrdinalIgnoreCase)) return;
-                var tier = ResourceTierCatalog.TierFromResourcePath(relative);
-                if (tier is not null) _tierWrites[tier] = DateTime.UtcNow;
+                if(generation!=Volatile.Read(ref _tierObserverGeneration))return;
+                bool metadata=relative.Equals("launcherDownloadConfig.json",StringComparison.OrdinalIgnoreCase)||
+                    relative.Equals(Path.Combine("launcherDownload","launcherDownloadConfig.json"),StringComparison.OrdinalIgnoreCase)||
+                    relative.StartsWith("launcherDownloadConfig"+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase);
+                if(metadata){Interlocked.Exchange(ref _tierMetadataDirty,1);QueueTierActivity(generation,watchedRoot);return;}
+                if(e.ChangeType==WatcherChangeTypes.Deleted||e.FullPath.EndsWith(".json",StringComparison.OrdinalIgnoreCase))return;
+                if(!relative.StartsWith("launcherDownload"+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase)&&
+                    !e.FullPath.EndsWith(".pak",StringComparison.OrdinalIgnoreCase))return;
+                var tier=ResourceTierCatalog.TierFromResourcePath(relative);
+                if(tier is null)return;
+                _tierWrites[tier]=(generation,DateTime.UtcNow);
+                int bit=tier=="uhd"?1:tier=="hd"?2:4;
+                if((Volatile.Read(ref _tierVisibleActivity)&bit)==0)QueueTierActivity(generation,watchedRoot);
             };
             _tierWatcher.Changed += changed; _tierWatcher.Created += changed;
+            _tierWatcher.Renamed += (_,e)=>changed(null!,e);_tierWatcher.Deleted += changed;
             _tierWatcher.Error += (_, _) => _tierWrites.Clear();
             _tierWatcher.EnableRaisingEvents = true;
-            _tierTimer ??= new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+            _tierTimer ??= new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
             if (!_tierTimerAttached) { _tierTimer.Tick += async (_, _) => await RefreshResourceTiersAsync(); _tierTimerAttached = true; }
             _tierTimer.Start();
         }
