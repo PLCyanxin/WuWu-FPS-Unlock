@@ -1,6 +1,6 @@
 {
   "dynamicMinimumDriver": 59541,
-  "packageId": "wuwa-fps-unlock-1.2.2RC",
+  "packageId": "wuwa-fps-unlock-1.2.3",
   "files": [
     {
       "anchor": "GameRoot",
@@ -149,10 +149,10 @@
     {
       "anchor": "AddonDir",
       "target": "renodx-mfgunlock.addon64",
-      "sha256": "270340b41f24a090f4821fef8dbf38d658739f610f46bb8039ebd2b5994e43b5",
+      "sha256": "9d06251b036243e720f0ac2b7d7bb5942b32d6aea2077799d2c5ed3f8e8858db",
       "source": "files/addon/renodx-mfgunlock.addon64",
       "kind": "Addon",
-      "size": 970752
+      "size": 1238016
     }
   ],
   "fixedMinimumDriver": null,
@@ -167,5 +167,5 @@
   },
   "preferDynamic": true,
   "mfgConfig": {},
-  "addonVersion": "1.1.5"
+  "addonVersion": "1.3.0"
 }

@@ -1,18 +1,19 @@
 {
   "file": "renodx-mfgunlock.addon64",
-  "addonVersion": "1.1.5",
-  "length": 972288,
-  "sha256": "8312504c73f1c929d90a0c2acc6ff8985651ccb08f8d8afd8166ebd2c8ea3aab",
-  "fileVersion": "1.1.5.1",
+  "addonVersion": "1.3.0",
+  "length": 1238016,
+  "sha256": "9d06251b036243e720f0ac2b7d7bb5942b32d6aea2077799d2c5ed3f8e8858db",
+  "fileVersion": "1.3.0.1",
   "upstream": {
-    "tag": "1.1.5",
+    "tag": "1.3.0",
     "assetDigestVerified": true,
-    "commit": "4406e4fadf4423afb500d8d9a08d5ace9a148d19",
-    "release": "https://github.com/mavismmg/MFGAdaUnlock-RenoDx/releases/tag/1.1.5",
+    "commit": "c96c7c471bb07b04fc8c4c059175a8b6398212cf",
+    "release": "https://github.com/mavismmg/MFGAdaUnlock-RenoDx/releases/tag/1.3.0",
     "license": "MIT",
     "repository": "https://github.com/mavismmg/MFGAdaUnlock-RenoDx",
-    "assetSha256": "0d04d858a62d3d19e7e3d478c0b8c46fe3ac43ec9fd11e4abb15617bd291d71a"
+    "assetSha256": "7d742480613c58dc0eb698bf5dc76f2b32a6b4c607b2face5b87940494b9b229"
   },
-  "modification": "Chinese display layer and versioned UI bridge beside NVIDIA Dynamic MFG. Runtime maximum control remains in the independent companion. All 13 original CUDA payloads and their table metadata are preserved byte-for-byte.",
-  "buildScript": "tools/MfgUiIntegration/Build.ps1"
+  "modification": "Chinese display layer and versioned UI bridge beside NVIDIA Dynamic MFG. Independent companion retains live maximum, separate fixed/Dynamic Off, persistence, status telemetry and cursor ownership. All 17 upstream CUDA payloads and complete table metadata are preserved byte-for-byte.",
+  "buildScript": "tools/MfgUiIntegration/Build.ps1",
+  "kernelRecoveryScript": "tools/MfgUiIntegration/recover_130_tables.py"
 }

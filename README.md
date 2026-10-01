@@ -93,7 +93,7 @@ Client\Binaries\Win64\Client-Win64-Shipping.exe
 
 ## 游戏内多帧生成设置
 
-进入游戏后，按 **Home** 打开 ReShade，选择 **MFG Unlock**。随包插件基于上游 MFG Unlock 1.1.5，完成菜单汉化。
+进入游戏后，按 **Home** 打开 ReShade，选择 **MFG Unlock**。随包插件基于上游 MFG Unlock 1.3.0，完成菜单汉化。
 
 ### 固定帧生成（Fixed）与 Dynamic
 

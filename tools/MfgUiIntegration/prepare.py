@@ -5,7 +5,7 @@ p=argparse.ArgumentParser();p.add_argument('--source',type=Path,required=True);p
 here=Path(__file__).resolve().parent
 raw=(a.source/'addon.cpp').read_bytes()
 expected=json.loads((here/'ui-scope.json').read_text(encoding='utf-8-sig'))['referenceFileSha256']
-if hashlib.sha256(raw).hexdigest()!=expected: raise SystemExit('Upstream UI source differs from pinned 1.1.5; review the integration before building')
+if hashlib.sha256(raw).hexdigest()!=expected: raise SystemExit('Upstream UI source differs from pinned upstream version; review the integration before building')
 if a.output.exists(): raise SystemExit('Use a fresh output source directory')
 shutil.copytree(a.source,a.output)
 for name in ('blackwell_cubins.generated.hpp','thin_geometry_cubins.generated.hpp'):

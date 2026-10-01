@@ -1,23 +1,64 @@
 {
   "sourceFile": "src/addons/mfgunlock/addon.cpp",
-  "upstreamTag": "1.1.5",
-  "upstreamCommit": "4406e4fadf4423afb500d8d9a08d5ace9a148d19",
-  "referenceFileSha256": "a5e781a2c3d1bf1ab2a30ff26401e22f7a44281b1246be8d72cc225c2fb7e529",
+  "upstreamTag": "1.3.0",
+  "upstreamCommit": "c96c7c471bb07b04fc8c4c059175a8b6398212cf",
+  "referenceFileSha256": "a6a83177364312b32599e9e6ba756e4a24b50220d03b380c65b7953f77eec990",
   "uiFunctions": [
-    { "name": "OnRegisterOverlay", "startAnchor": "void OnRegisterOverlay(reshade::api::effect_runtime* runtime)", "nextAnchor": "void LoadConfig()", "lineHint": 4193 },
-    { "name": "DrawAdvancedQualityControls", "startAnchor": "void DrawAdvancedQualityControls(bool adaptive_quality_managed)", "nextAnchor": "void DrawLatencyGuardControl()", "lineHint": 3101 },
-    { "name": "DrawLatencyGuardControl", "startAnchor": "void DrawLatencyGuardControl()", "nextAnchor": "const char* MarkerHealthText(", "lineHint": 3225 }
+    {
+      "name": "OnRegisterOverlay",
+      "startAnchor": "void OnRegisterOverlay(reshade::api::effect_runtime* runtime)",
+      "nextAnchor": "void LoadConfig()",
+      "lineHint": 4193
+    },
+    {
+      "name": "DrawAdvancedQualityControls",
+      "startAnchor": "void DrawAdvancedQualityControls(bool adaptive_quality_managed)",
+      "nextAnchor": "void DrawLatencyGuardControl()",
+      "lineHint": 3101
+    },
+    {
+      "name": "DrawLatencyGuardControl",
+      "startAnchor": "void DrawLatencyGuardControl()",
+      "nextAnchor": "const char* MarkerHealthText(",
+      "lineHint": 3225
+    }
   ],
   "displayOnlyHelperResults": [
-    "RenderApiName", "InputFormatApiName", "InputNativeApiName", "InputColorSpaceName", "InputBooleanName", "InputDlssgModeName", "InputLifecycleName", "FormatMemoryBytes", "VramReadinessText", "PackedVersionString", "NgxPresetText", "NgxPerformanceModeText", "ReconstructionPresetText", "FrameGenerationPresetText", "DynamicMultiplierText", "MarkerHealthText", "TimingValidationText", "LatencyBottleneckText"
+    "RenderApiName",
+    "InputFormatApiName",
+    "InputNativeApiName",
+    "InputColorSpaceName",
+    "InputBooleanName",
+    "InputDlssgModeName",
+    "InputLifecycleName",
+    "FormatMemoryBytes",
+    "VramReadinessText",
+    "PackedVersionString",
+    "NgxPresetText",
+    "NgxPerformanceModeText",
+    "ReconstructionPresetText",
+    "FrameGenerationPresetText",
+    "DynamicMultiplierText",
+    "MarkerHealthText",
+    "TimingValidationText",
+    "LatencyBottleneckText"
   ],
-  "excludedFunctions": ["DrawLegacyOverlay", "DrawInputDiagnosticsPanel", "LoadConfig"],
+  "excludedFunctions": [
+    "DrawLegacyOverlay",
+    "DrawInputDiagnosticsPanel",
+    "LoadConfig"
+  ],
   "excludedReportSpan": {
     "function": "OnRegisterOverlay",
     "startAnchor": "std::string intermediate_report = \"Disabled\";",
     "endBeforeAnchor": "if (ImGui::Button(\"Copy diagnostics\"))"
   },
-  "neverTranslateCallArguments": ["reshade::get_config_value", "reshade::set_config_value", "reshade::log::message", "ImGui::SetClipboardText"],
+  "neverTranslateCallArguments": [
+    "reshade::get_config_value",
+    "reshade::set_config_value",
+    "reshade::log::message",
+    "ImGui::SetClipboardText"
+  ],
   "dynamicInsertion": {
     "function": "OnRegisterOverlay",
     "tableId": "##frame_generation_settings",
