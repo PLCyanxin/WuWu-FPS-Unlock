@@ -13,7 +13,8 @@ try
     }
     Read("original");var ini=IniDocument.Load(path);var receipt=new DeploymentReceipt();
     ini.ApplyManagedAddonLoading(receipt);ini.ApplyOwned("RenoDX.MFGUnlock","Enabled","1",receipt);new MenuShortcut(112,true,false,true).Apply(ini);ini.Save(path);Read("deployed");
+    ini=IniDocument.Load(path);MenuShortcut.None.Apply(ini);ini.Save(path);Read("cleared");
     ini=IniDocument.Load(path);ini.RemoveOwnedEdits(receipt,_=>{});ini.Save(path);Read("cleaned");
-    Console.WriteLine("RESULT: 3 production INI stages verified by actual upstream ReShade 6.8.0 parser; no runtime DLL/game loaded.");
+    Console.WriteLine("RESULT: 4 production INI stages verified by actual upstream ReShade 6.8.0 parser; no runtime DLL/game loaded.");
 }
 finally{Directory.Delete(root,true);}

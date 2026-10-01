@@ -30,10 +30,10 @@ public partial class SettingsWindow:Window
         MenuKeyButton.GetBindingExpression(Button.ContentProperty)?.UpdateTarget();
     }
     private void MenuKey_LostKeyboardFocus(object sender,KeyboardFocusChangedEventArgs e)=>EndMenuKeyCapture();
-    private void ResetMenuKey_Click(object sender,RoutedEventArgs e)
+    private void ClearMenuKey_Click(object sender,RoutedEventArgs e)
     {
         EndMenuKeyCapture();
-        if(DataContext is AppViewModel vm)vm.SetMenuShortcut(MenuShortcut.Home);
+        if(DataContext is AppViewModel vm)vm.SetMenuShortcut(MenuShortcut.None);
     }
     private void MenuKey_PreviewKeyDown(object sender,KeyEventArgs e)
     {

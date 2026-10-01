@@ -49,12 +49,15 @@ internal static class SettingsLayoutTests
                 check(Math.Abs(environment.ActualHeight-284)<=1.1,"environment card keeps its existing outer height");
                 var rows=(Grid)window.FindName("EnvironmentRows");
                 check(rows.RowDefinitions.Count==4,"environment has four rows");
-                foreach(string name in new[]{"MenuShortcutEditor","MenuKeyButton","ResetMenuKeyButton"})
+                foreach(string name in new[]{"MenuShortcutEditor","MenuKeyButton","ClearMenuKeyButton","GpuDriverText"})
                     Inside((FrameworkElement)window.FindName(name),environment,check,name);
                 check(vm.MenuKeyText=="Home","default menu key is Home");
                 check(vm.SetMenuShortcut(new MenuShortcut(112,true,false,true))&&vm.MenuKeyText=="Ctrl + Alt + F1","custom combination is saved and displayed");
-                ((Button)window.FindName("ResetMenuKeyButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                check(vm.MenuKeyText=="Home","reset button restores Home");
+                var clearButton=(Button)window.FindName("ClearMenuKeyButton");
+                clearButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                check(vm.MenuKeyText=="未设置"&&JsonFiles.Read<UserSettings>(AppPaths.Settings).MenuShortcut==MenuShortcut.None,"clear button clears and saves the binding");
+                check(vm.SetMenuShortcut(MenuShortcut.Home)&&vm.MenuKeyText=="Home","Home can be assigned again after clear");
+                check(((TextBlock)window.FindName("GpuDriverText")).Text=="NVIDIA GeForce RTX 4090 \\ 595.41","GPU and driver share one text run separated by backslash");
                 foreach (var card in new[] { mfg, maintenance })
                 {
                     Inside(card, right, check, "right settings card");

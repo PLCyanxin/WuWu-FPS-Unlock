@@ -12,7 +12,9 @@ try
     Check(MenuShortcut.Read(IniDocument.Load(path))==MenuShortcut.Home,"absent key uses native Home default");
     var selected=new MenuShortcut(112,true,false,true);
     Check(selected.ToIniValue()=="112,1,0,1"&&selected.DisplayName=="Ctrl + Alt + F1","native modifier order and displayed combination agree");
-    foreach(int key in new[]{0,1,16,17,18,91,92,255})Check(!new MenuShortcut(key).IsValid,"invalid key rejected "+key);
+    foreach(int key in new[]{1,16,17,18,91,92,255})Check(!new MenuShortcut(key).IsValid,"invalid key rejected "+key);
+    Check(MenuShortcut.None.IsValid&&MenuShortcut.None.ToIniValue()=="0,0,0,0"&&MenuShortcut.None.DisplayName=="未设置","clear uses ReShade's disabled binding instead of unspecified preference");
+    Check(!new MenuShortcut(0,Control:true).IsValid,"cleared binding cannot contain modifiers");
     Check(!new MenuShortcut(115,Alt:true).IsValid&&!new MenuShortcut(46,Control:true,Alt:true).IsValid,"system shortcuts cannot be bound");
     File.WriteAllText(path,"; keep\n[INPUT]\nKeyOverlay=36,0,0,0\nKeyEffects=118,0,0,0\n[USER]\nKeep=abc\n");
     byte[] original=File.ReadAllBytes(path);
@@ -27,6 +29,11 @@ try
     int writes=Fixture.Writes;byte[] applied=File.ReadAllBytes(path);
     await MenuShortcutService.ApplyBeforeLaunchAsync(settings,_=>{},default);
     Check(Fixture.Writes==writes&&File.ReadAllBytes(path).SequenceEqual(applied),"unchanged shortcut has no additional config write");
+    settings.MenuShortcut=MenuShortcut.None;
+    JsonFiles.Save(Path.Combine(root,"settings.json"),settings);
+    Check(JsonFiles.Read<UserSettings>(Path.Combine(root,"settings.json")).MenuShortcut==MenuShortcut.None,"clear persists through saved launcher settings");
+    await MenuShortcutService.ApplyBeforeLaunchAsync(settings,_=>{},default);
+    Check(MenuShortcut.Read(IniDocument.Load(path))==MenuShortcut.None&&IniDocument.Load(path).Get("INPUT","KeyEffects")=="118,0,0,0","clear disables only the menu key and keeps other keys");
     settings.MenuShortcut=MenuShortcut.Home;
     await MenuShortcutService.ApplyBeforeLaunchAsync(settings,_=>{},default);
     Check(MenuShortcut.Read(IniDocument.Load(path))==MenuShortcut.Home,"default restoration takes effect in actual INI");

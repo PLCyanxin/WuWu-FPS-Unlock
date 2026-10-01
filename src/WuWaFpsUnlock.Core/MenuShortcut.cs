@@ -6,8 +6,9 @@ namespace WuWaFpsUnlock.Core;
 public sealed record MenuShortcut(int Key, bool Control = false, bool Shift = false, bool Alt = false)
 {
     public static MenuShortcut Home { get; } = new(0x24);
-    public bool IsValid => IsKeyboardKey(Key) && !(Alt && Key is 9 or 27 or 32 or 0x73)
-        && !(Control && Key == 27) && !(Control && Alt && Key == 46);
+    public static MenuShortcut None { get; } = new(0);
+    public bool IsValid => Key == 0 ? !Control && !Shift && !Alt : IsKeyboardKey(Key)
+        && !(Alt && Key is 9 or 27 or 32 or 0x73) && !(Control && Key == 27) && !(Control && Alt && Key == 46);
     private static bool IsKeyboardKey(int key) => key is 8 or 9 or 12 or 13 or 19 or 20 or 27
         or >= 32 and <= 40 or 45 or 46 or >= 48 and <= 57 or >= 65 and <= 90
         or >= 96 and <= 135 or 144 or 145 or >= 186 and <= 192 or >= 219 and <= 222 or 226;

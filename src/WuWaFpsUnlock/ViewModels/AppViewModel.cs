@@ -122,6 +122,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     public string VersionLabel=>"v"+CurrentUpdateVersion;
     public string Gpu=>_hardware.Gpu;
     public string Driver=>_hardware.DriverText;
+    public string GpuWithDriver=>Gpu+" \\ "+Driver;
     public string Os=>_hardware.Os;
     public string Hags=>_hardware.Hags;
     public string MenuKeyText=>(_settings.MenuShortcut??_observedMenuShortcut)?.DisplayName??"未识别";
@@ -130,7 +131,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         if(!CanEditSettings||!shortcut.IsValid)return false;
         _settings.MenuShortcut=shortcut;
         bool saved=Save();
-        if(saved)Status="菜单按键已保存，下次启动游戏生效。";
+        if(saved)Status=shortcut.Key==0?"菜单按键已清空，下次启动游戏生效。":"菜单按键已保存，下次启动游戏生效。";
         Notify(nameof(MenuKeyText));return saved;
     }
     public string DynamicStatus=>_hardware.DynamicText.Replace("；游戏内能力待确认","");
