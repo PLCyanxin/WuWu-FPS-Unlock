@@ -7,7 +7,9 @@ Check(LauncherSchedulingPolicy.Select(hybrid,[],7).SequenceEqual(new uint[]{12})
 Check(LauncherSchedulingPolicy.Select([new(1,0,0,0,0)],[],1).Length==0,"homogeneous topology untouched");
 Check(LauncherSchedulingPolicy.Select([hybrid[0],hybrid[2] with{Group=1}],[],15).Length==0,"multiple groups conservatively unchanged");
 Check(LauncherSchedulingPolicy.Select([hybrid[0],hybrid[2] with{Flags=2}],[],15).Length==0,"other process reservation excluded");
-Check(LauncherSchedulingPolicy.Select([hybrid[0],hybrid[2] with{Flags=1}],[],15).Length==0,"parked efficiency core excluded");
+Check(LauncherSchedulingPolicy.Select([hybrid[0],hybrid[2] with{Flags=1}],[],15).SequenceEqual(new uint[]{12}),"parked efficiency core remains identifiable");
+Check(LauncherSchedulingPolicy.Select([hybrid[0],hybrid[2] with{Flags=3}],[],15).Length==0,"parked core reserved by another process still excluded");
+var parkedApi=new Fake(hybrid.Select(c=>c with{Flags=1}).ToArray());var parkedPolicy=new LauncherSchedulingPolicy(parkedApi);parkedPolicy.Initialize();parkedPolicy.SetBackground(true);Check(parkedApi.Mask==12,"all parked topology still applies E core policy");parkedPolicy.SetBackground(false);Check(parkedApi.Mask==15,"parked topology foreground restores original mask");
 var api=new Fake(hybrid);var policy=new LauncherSchedulingPolicy(api);policy.Initialize();policy.SetBackground(true);Check(api.Mask==12&&api.Current.SequenceEqual(new uint[]{12,13}),"background selects efficient sets");
 policy.SetBusy(true);Check(api.Mask==15&&api.Current.Length==0,"busy restores unrestricted original");policy.SetBusy(false);Check(api.Mask==12&&api.Current.Length==2,"idle background reapplies");
 policy.CreateChild(()=>{policy.SetBackground(true);Check(api.Mask==15&&api.Current.Length==0,"child creation runs with restored policy");return 1;});Check(api.Mask==12&&api.Current.Length==2,"parent background restored after child create");
@@ -36,6 +38,22 @@ if(args.Contains("--read-topology")){
  Console.WriteLine("READONLY original="+string.Join(',',defaults)+" affinity="+affinity.ToString("X"));
  foreach(var cpu in topology)Console.WriteLine($"CPU id={cpu.Id} group={cpu.Group} logical={cpu.Logical} efficiency={cpu.Efficiency} flags={cpu.Flags}");
  Console.WriteLine("READONLY selected="+string.Join(',',LauncherSchedulingPolicy.Select(topology,defaults,affinity)));
+}
+if(args.Contains("--exercise-current-process")){
+ var native=new WindowsLauncherSchedulingApi();var originalMask=native.ReadAffinity();var originalSets=native.ReadDefaults();
+ var selected=LauncherSchedulingPolicy.Select(native.ReadTopology(),originalSets,originalMask);
+ Check(selected.Length>0,"native process has identifiable E cores including parked cores");
+ var current=new LauncherSchedulingPolicy(native);current.Initialize();
+ try{
+  current.SetBackground(true);
+  Check(native.ReadDefaults().Order().SequenceEqual(selected.Order()),"native background CPU sets readback");
+  Check(native.ReadAffinity()!=originalMask,"native background E core affinity applied");
+  current.SetBusy(true);Check(native.ReadAffinity()==originalMask,"native busy restores original affinity");
+  current.SetBusy(false);Check(native.ReadDefaults().Order().SequenceEqual(selected.Order()),"native background idle reapplies E cores");
+  current.CreateChild(()=>{Check(native.ReadAffinity()==originalMask,"native child creation restores original affinity");return 0;});
+ }finally{current.SetBackground(false);}
+ Check(native.ReadAffinity()==originalMask&&native.ReadDefaults().Order().SequenceEqual(originalSets.Order()),"native foreground restores both original policies");
+ Console.WriteLine("NATIVE VERIFIED: only this disposable test process was changed; original policy restored.");
 }
 sealed class Fake(SchedulingCpu[] cpus):ILauncherSchedulingApi{
  public uint[] Current=[];public bool Intel=true;public bool IsIntel()=>Intel;public ulong Mask=15;public bool FailRestore,FailRead,IgnoreWrites,FailBackgroundDefaults,FailMaskRestore;public int Writes;

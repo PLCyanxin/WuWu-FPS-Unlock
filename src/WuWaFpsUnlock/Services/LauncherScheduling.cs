@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 namespace WuWaFpsUnlock.Services;
@@ -27,7 +27,9 @@ public sealed class LauncherSchedulingPolicy(ILauncherSchedulingApi api)
     {
         if(cpus.Length==0||cpus.Select(c=>c.Group).Distinct().Count()!=1||cpus[0].Group!=0||cpus.Select(c=>c.Efficiency).Distinct().Count()<2)return [];
         byte lowest=cpus.Min(c=>c.Efficiency);
-        return cpus.Where(c=>c.Efficiency==lowest&&(c.Flags&1)==0&&((c.Flags&2)==0||(c.Flags&4)!=0)&&(c.Flags&8)==0&&
+        // Parked is a transient power-management state, not a missing/disabled core.
+        // A hard affinity request allows Windows to schedule it when work is available.
+        return cpus.Where(c=>c.Efficiency==lowest&&((c.Flags&2)==0||(c.Flags&4)!=0)&&(c.Flags&8)==0&&
             c.Logical<64&&(affinity&(1UL<<c.Logical))!=0&&(original.Length==0||original.Contains(c.Id))).Select(c=>c.Id).Distinct().ToArray();
     }
     public void Initialize()
@@ -45,7 +47,7 @@ public sealed class LauncherSchedulingPolicy(ILauncherSchedulingApi api)
                 _initialized=true;
                 Status=topology.Any(c=>c.Group!=0)?"多处理器组暂不支持；沿用系统调度":
                     _efficient.Length==0?"未确认可用混合节能核心，或原亲和范围无 E 核；沿用系统调度":
-                    "已确认 Intel E 类核心；后台硬亲和掩码 0x"+_efficientMask.ToString("X");
+                    "已识别 Intel E 核逻辑处理器 "+string.Join("、",topology.Where(c=>_efficient.Contains(c.Id)).Select(c=>c.Logical))+"；后台亲和掩码 0x"+_efficientMask.ToString("X");
             }
             catch(Exception e){Status="CPU Sets 检测失败；沿用系统调度："+e.Message;}
         }
