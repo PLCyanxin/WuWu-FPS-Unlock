@@ -31,6 +31,9 @@ ConfigText ReadConfig(const char* section, const char* key) {
  }
  return result;
 }
+std::atomic_int frame_mode{-1};
+std::atomic_bool mode_startup_checked{false};
+void ConfigureFrameMode(int mode,bool activate);
 void LoadConfig() {
  auto config = ReadConfig(kSection, live::kConfigKey);
  if (!config.present) {
@@ -45,6 +48,11 @@ void LoadConfig() {
  live::fixed_enabled.store(!(fixed.present && fixed.count==1 && fixed.first=="0"));
  auto enabled = ReadConfig(kSection, "Enabled");
  user_enabled.store(!enabled.present || (enabled.count == 1 && enabled.first == "1"));
+ auto mode=ReadConfig("RenoDX.MFGUnlock","WuWaFrameGenerationModeV1");
+ frame_mode.store(-1);mode_startup_checked.store(false);
+ if(mode.present&&mode.count==1&&(mode.first=="0"||mode.first=="1"||mode.first=="2"))
+  ConfigureFrameMode(mode.first[0]-'0',false);
+
 }
 std::atomic<const char*> logged_status{nullptr};
 std::atomic<int> diagnostic_request{-2};
@@ -70,13 +78,18 @@ void LogStatus() {
 }
 void OnPresent(reshade::api::command_queue*, reshade::api::swapchain*, const reshade::api::rect*,
  const reshade::api::rect*, uint32_t, const reshade::api::rect*) {
+ if(!mode_startup_checked.exchange(true)&&frame_mode.load()==-1) {
+  auto mode=ReadConfig("RenoDX.MFGUnlock","WuWaFrameGenerationModeV1");
+  if(mode.present&&mode.count==1&&(mode.first=="0"||mode.first=="1"||mode.first=="2"))
+   ConfigureFrameMode(mode.first[0]-'0',false);
+ }
  live::AutoInstall(user_enabled, native_mode_guard);
  LogStatus();
  LogFrameObservation();
 }
 // Explicit user actions may retry a bounded startup miss; never clear a guard failure.
 void RetryForUserChoice(bool (*install)(const std::atomic_bool&,const std::atomic_bool&)=live::TryInstall) {
- if(!live::installed.load()&&!live::invalid.load()&&(user_enabled.load()||!live::fixed_enabled.load())) {
+ if(!live::installed.load()&&!live::invalid.load()&&(user_enabled.load()||!live::fixed_enabled.load()||live::observation_enabled.load())) {
   install(user_enabled,native_mode_guard);
   LogStatus();
  }
@@ -90,6 +103,7 @@ void SaveRequest(int request) {
  diagnostic_request.store(request);
  reshade::log::message(reshade::log::level::info,"Dynamic 选择已保存，等待后续原生 Dynamic 帧读取；游戏暂停提交或当前不是 Dynamic 模式时不会立即改变输出。");
  reshade::set_config_value(nullptr, kSection, live::kConfigKey, request);
+ if(request!=0)reshade::set_config_value(nullptr,kSection,"LastEnabledDynamicChoice",request);
  RetryForUserChoice();
 }
 // -1 is the separate Off selection; 0 retains upstream game-decides semantics.
@@ -113,9 +127,36 @@ bool DrawFixedMultiplier(int* multiplier) {
  RetryForUserChoice();
  return changed;
 }
-void DrawControls(bool table,bool mainDynamic=true) {
+// Mode selection enables the selected path; passive synchronization preserves Off.
+void ConfigureFrameMode(int mode,bool activate) {
+ if(mode<0||mode>2||(!activate&&frame_mode.load()==mode))return;
+ live::UiChoiceChanged();
+ frame_mode.store(mode);
+ live::observation_enabled.store(true);
+ user_enabled.store(mode==2);
+ if(mode==0||(activate&&mode==1))live::fixed_enabled.store(true);
+ if(mode==2&&activate&&live::requested.load()==0) {
+  const auto last=ReadConfig(kSection,"LastEnabledDynamicChoice");
+  const int restored=live::ParseConfig(last.count,last.first);
+  live::requested.store(restored==0?live::kDefaultRequest:restored);
+  reshade::set_config_value(nullptr,kSection,live::kConfigKey,live::requested.load());
+ }
+ live::UiChoiceCommitted();
+ reshade::set_config_value(nullptr,kSection,"Enabled",mode==2?1:0);
+ reshade::set_config_value(nullptr,kSection,"FixedFrameGenerationEnabled",live::fixed_enabled.load()?1:0);
+ if(activate)RetryForUserChoice();
+}
+bool DrawFixedDerived(int* multiplier) {
+ if(!multiplier)return false;
+ int selected=live::fixed_enabled.load()?((*multiplier>=2&&*multiplier<=6)?*multiplier-1:3):0;
+ if(!ImGui::Combo("##frame_multiplier",&selected,"关闭\0" "2x\0" "3x\0" "4x\0" "5x\0" "6x\0"))return false;
+ const bool changed=SaveFixedChoice(selected==0?0:selected+1,multiplier);
+ RetryForUserChoice();return changed;
+}
+void DrawControls(bool table,bool mainDynamic=true,bool derivedOnly=false) {
  ImGui::BeginDisabled(!mainDynamic);
  ImGui::PushID(kSection);
+ if (!derivedOnly) {
  if (table) { ImGui::TableNextRow(); ImGui::TableNextColumn(); ImGui::TextUnformatted("启用 Dynamic 最大倍率限制"); ImGui::TableNextColumn(); }
  else ImGui::Separator();
  bool enabled = user_enabled.load();
@@ -126,7 +167,12 @@ void DrawControls(bool table,bool mainDynamic=true) {
   reshade::set_config_value(nullptr, kSection, "Enabled", enabled ? 1 : 0);
   if(enabled)RetryForUserChoice();
  }
- if (!live::installed.load() && ImGui::Button("重试")) { live::TryInstall(user_enabled, native_mode_guard); LogStatus(); }
+ }
+ bool enabled=user_enabled.load();
+ if (!live::installed.load()) {
+  if(derivedOnly&&table){ImGui::TableNextRow();ImGui::TableNextColumn();ImGui::TextUnformatted("倍率控制");ImGui::TableNextColumn();}
+  if(ImGui::Button("重试")){live::TryInstall(user_enabled,native_mode_guard);LogStatus();}
+ }
  int request = live::requested.load(), selected = request == live::kNativeBound ? 0 : (request == 0 ? 1 : request);
  if (table) { ImGui::TableNextRow(); ImGui::TableNextColumn(); }
  ImGui::TextUnformatted("Dynamic 最大倍率");
@@ -190,6 +236,9 @@ void OnOverlayCursor(reshade::api::effect_runtime* runtime) {
 void OnDestroyRuntime(reshade::api::effect_runtime*) { wuwa::native_cursor::Stop(); }
 }
 extern "C" __declspec(dllexport) unsigned GetWuWaNativeFrameStatusV1() { return live::enabled.load()&&!live::invalid.load()?live::UiFrameStatus():0; }
+extern "C" __declspec(dllexport) void ConfigureWuWaFrameModeV1(int mode,bool activate) { ConfigureFrameMode(mode,activate); }
+extern "C" __declspec(dllexport) void DrawWuWaDynamicMaximumInTableV3(reshade::api::effect_runtime*) { DrawControls(true,true,true); }
+extern "C" __declspec(dllexport) bool DrawWuWaFixedMultiplierV2(int* multiplier) { return DrawFixedDerived(multiplier); }
 extern "C" __declspec(dllexport) void DrawWuWaDynamicMaximumInTableV2(reshade::api::effect_runtime*,bool mainDynamic) { DrawControls(true,mainDynamic); }
 extern "C" __declspec(dllexport) bool DrawWuWaFixedMultiplierV1(int* multiplier) { return DrawFixedMultiplier(multiplier); }
 extern "C" __declspec(dllexport) void DrawWuWaDynamicMaximumInTableV1(reshade::api::effect_runtime*) { DrawControls(true); }

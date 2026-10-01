@@ -2,7 +2,7 @@
 
 当前源码基线为上游 `MFGAdaUnlock-RenoDx` **1.3.0**，提交 `c96c7c471bb07b04fc8c4c059175a8b6398212cf`。`ui-scope.json` 固定原始 `addon.cpp` 的 SHA-256；未知源码不能直接套用补丁。
 
-`zh-CN.json` 在显示层映射中文，保留配置键、内部控件 ID、诊断导出、日志和运行逻辑。控件采用原始标题作为稳定 ID，翻译不会改变旧配置。新增的画质配置、V3.2 稳定性、Reflex 和帧节奏选项同样经过汉化。技术名称和 API 名称保留原文。
+`zh-CN.json` 在显示层映射中文，保留原有配置键、诊断导出、日志和运行库实现。统一模式通过原有配置与通知接口更新，并使用独立的新配置键保存模式和隐藏的固定倍率。控件采用原始标题作为稳定 ID，翻译不会改变旧配置。新增的画质配置、V3.2 稳定性、Reflex 和帧节奏选项同样经过汉化。技术名称和 API 名称保留原文。
 
 ## 独立倍率控制
 
@@ -24,4 +24,8 @@ python tools/MfgUiIntegration/recover_130_tables.py --original <原始-addon> --
 
 ## 验证边界
 
-`Test-Translations.ps1` 检查中文映射、控件 ID、状态缓存、文本边界及映射结果。源码集成另行核对上游配置调用未改变，固定倍率和 Dynamic 桥接各插入一次，两处状态显示均连接到实际捕获接口。静态检查与构建通过不代表真实游戏、GPU 或界面已通过验收。
+`Test-Translations.ps1` 检查中文映射、控件 ID、状态缓存、文本边界及映射结果。源码集成核对现有配置键及通知路径有效，统一模式和派生倍率桥接各插入一次，两处状态显示均连接到实际捕获接口。静态检查与构建通过不代表真实游戏、GPU 或界面已通过验收。
+
+## 模式接口
+
+`frame_mode_load.inc` 迁移旧配置；`frame_mode_apply.inc` 仅处理明确的选择；`frame_mode_ui.inc` 绘制模式与对应派生设置。`tests/frame_mode_tests.cpp` 直接执行这些生产配置片段，验证模式切换、保存、旧数据迁移与无效值拒绝。模式选择调用 `ConfigureWuWaFrameModeV1`；派生菜单使用 Dynamic V3 与 Fixed V2 接口，旧接口保留供兼容回退。

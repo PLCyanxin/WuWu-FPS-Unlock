@@ -1,4 +1,4 @@
-"""Apply display-only integration to the pinned upstream source; never edit input."""
+"""Apply pinned UI/mode integration; never edit input source or kernel tables."""
 import argparse, hashlib, json, re, shutil
 from pathlib import Path
 p=argparse.ArgumentParser();p.add_argument('--source',type=Path,required=True);p.add_argument('--generated',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args()
@@ -29,12 +29,18 @@ functions=re.findall(r'(?:void|bool)\s+(\w+)\(', (here/'ui_zh.hpp').read_text(en
 for name in functions:text=text.replace('ImGui::'+name+'(', 'wuwa_ui::'+name+'(')
 anchor='namespace {'
 text=text.replace(anchor,'#include "ui_zh.hpp"\n#include "dynamic_ui_bridge.hpp"\n\n'+anchor,1)
-anchor='if (block_dynamic_enable) ImGui::EndDisabled();'
-if text.count(anchor)!=1:raise SystemExit('Dynamic insertion anchor is ambiguous')
-text=text.replace(anchor,anchor+'\n    DrawDynamicMaximumCompanion(runtime, dynamic_mfg);',1)
-anchor='if (wuwa_ui::Combo("##frame_multiplier", &force_choice,\n                     kMultiplierModes,\n                     static_cast<int>(std::size(kMultiplierModes)))) {\n      force = force_choice == 0 ? 0 : force_choice + 1;'
-if text.count(anchor)!=1:raise SystemExit('Active fixed multiplier insertion anchor is ambiguous')
-text=text.replace(anchor,'if (DrawFixedMultiplierCompanion(&force, dynamic_enabled && !dynamic_game_blocked)) {',1)
+# Replace the redundant master/fixed/Dynamic selectors with one persistent mode.
+start=text.index('    ImGui::TableNextRow();',text.index('if (ImGui::BeginTable("##frame_generation_settings"'))
+end=text.index('    if (dynamic_mfg) {',start)
+mode_ui=(here/'frame_mode_ui.inc').read_text(encoding='utf-8')
+text=text[:start]+mode_ui+text[end:]
+# Migrate existing values and apply the persisted mode before startup options.
+anchor='  if (reshade::get_config_value(nullptr, kConfigSection, "DynamicTargetFPS", value)) {'
+if text.count(anchor)!=1:raise SystemExit('Mode startup anchor is ambiguous')
+text=text.replace(anchor,(here/'frame_mode_load.inc').read_text(encoding='utf-8')+anchor,1)
+anchor='void OnRegisterOverlay(reshade::api::effect_runtime* runtime)'
+if text.count(anchor)!=1:raise SystemExit('Mode application anchor is ambiguous')
+text=text.replace(anchor,(here/'frame_mode_apply.inc').read_text(encoding='utf-8')+anchor,1)
 # Replace only visible status rows. Diagnostic exports retain their upstream fields.
 for label in ('MFG', 'Active FG multiplier'):
  anchor='StatusRow("'+label+'", multiplier_text.c_str(),'

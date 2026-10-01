@@ -22,6 +22,8 @@ using ValidateFn=bool(*)(void*,void*,void*,void*);
 constexpr unsigned kValidateEntry=0x4bbc0,kValidateReturn=0x476f4;
 inline ValidateFn original_validate=nullptr;
 inline std::atomic_bool fixed_enabled{true};
+// Unified game-default mode observes accepted frames without imposing a limit.
+inline std::atomic_bool observation_enabled{false};
 inline NativeFn original=nullptr;
 inline HMODULE owner=nullptr;
 inline const std::atomic_bool* addon_enabled=nullptr;
@@ -249,7 +251,7 @@ inline bool AttachStable(void** target,void* replacement,HMODULE module,std::vec
 }
 // Called from normal Present or manual overlay retry, outside DllMain. Never loads Streamline/NVAPI.
 inline bool TryInstall(const std::atomic_bool& addon,const std::atomic_bool& dynamic) {
- if((!addon.load()&&fixed_enabled.load())||!dynamic.load()){status="Enable addon and Dynamic first; native behavior unchanged";return false;}
+ if((!addon.load()&&fixed_enabled.load()&&!observation_enabled.load())||!dynamic.load()){status="Enable addon and Dynamic first; native behavior unchanged";return false;}
  if(installed.load())return !invalid.load();
  if(installing.test_and_set())return false;
  struct Reset{~Reset(){installing.clear();}} reset;
@@ -282,7 +284,7 @@ inline std::atomic<unsigned> auto_checks{0};
 inline std::atomic<ULONGLONG> next_auto_check{0};
 inline std::atomic_bool auto_finished{false};
 inline void AutoInstall(const std::atomic_bool& addon,const std::atomic_bool& dynamic) {
- if(installed.load()||auto_finished.load()||(!addon.load()&&fixed_enabled.load())||!dynamic.load())return;
+ if(installed.load()||auto_finished.load()||(!addon.load()&&fixed_enabled.load()&&!observation_enabled.load())||!dynamic.load())return;
  auto now=GetTickCount64(),due=next_auto_check.load();
  if(now<due||!next_auto_check.compare_exchange_strong(due,now+1000))return;
  if(GetModuleHandleW(L"sl.dlss_g.dll")){

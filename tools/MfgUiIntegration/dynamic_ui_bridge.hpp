@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// UI-only bridge. No access to upstream private state or frame-generation logic.
+// Versioned UI bridge; mode changes use the upstream public configuration controls.
 #pragma once
 extern "C" __declspec(dllexport) void WuWaDynamicMaximumUiBridgeV1() {}
 inline void DrawDynamicMaximumCompanion(reshade::api::effect_runtime* runtime,bool mainDynamic) {
@@ -49,4 +49,37 @@ inline const char* CompanionFrameStatus() {
  if(status==7)return "1x";
  static constexpr const char* labels[]={"","","2x","3x","4x","5x","6x"};
  return status<=6?labels[status]:"未捕获";
+}
+
+// Main and companion exchange a small mode value, never private runtime pointers.
+inline int wuwa_frame_mode = 0;
+inline int wuwa_last_fixed = 4;
+inline void ConfigureCompanionFrameMode(int mode, bool activate) {
+ HMODULE companion=nullptr;
+ if(!GetModuleHandleExW(0,L"wuwa-dynamicmax.addon64",&companion))return;
+ using Configure=void(*)(int,bool);
+ const auto configure=reinterpret_cast<Configure>(GetProcAddress(companion,"ConfigureWuWaFrameModeV1"));
+ if(configure)configure(mode,activate);
+ FreeLibrary(companion);
+}
+inline void DrawDynamicDerivedCompanion(reshade::api::effect_runtime* runtime) {
+ HMODULE companion=nullptr;
+ if(!GetModuleHandleExW(0,L"wuwa-dynamicmax.addon64",&companion))return;
+ using Draw=void(*)(reshade::api::effect_runtime*);
+ const auto draw=reinterpret_cast<Draw>(GetProcAddress(companion,"DrawWuWaDynamicMaximumInTableV3"));
+ if(draw)draw(runtime);
+ FreeLibrary(companion);
+}
+inline bool DrawFixedDerivedCompanion(int* multiplier) {
+ HMODULE companion=nullptr;
+ if(GetModuleHandleExW(0,L"wuwa-dynamicmax.addon64",&companion)) {
+  using Draw=bool(*)(int*);
+  const auto draw=reinterpret_cast<Draw>(GetProcAddress(companion,"DrawWuWaFixedMultiplierV2"));
+  if(draw){const bool result=draw(multiplier);FreeLibrary(companion);return result;}
+  FreeLibrary(companion);
+ }
+ int choice=(*multiplier>=2&&*multiplier<=6)?*multiplier-2:2;
+ const char* labels[]={"2x","3x","4x","5x","6x"};
+ if(!ImGui::Combo("##frame_multiplier",&choice,labels,5))return false;
+ *multiplier=choice+2;return true;
 }

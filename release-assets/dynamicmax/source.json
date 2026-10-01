@@ -1,8 +1,8 @@
 {
   "file": "wuwa-dynamicmax.addon64",
   "version": "1.0.0",
-  "length": 201216,
-  "sha256": "073d4841a35b3fac3d906dc2cc2cc30fc11bfe787dad5176af2a031059294a37",
+  "length": 202240,
+  "sha256": "236e841436b1baf6ac097e0292a822e7a1edadbc637b7a22895d2fd07e48f950",
   "source": "tools/DynamicController",
   "license": "MIT",
   "buildScript": "tools/DynamicController/Build.ps1",
@@ -14,11 +14,13 @@
   },
   "validation": {
     "scope": "Native isolated fixtures and reference runtime read as data only",
-    "configurationApiAssertions": 53,
+    "configurationApiAssertions": 65,
     "gameIntegration": "Not yet tested",
     "runtimeFixtureAssertions": 216,
     "nativeCursorIsolatedAssertions": 15,
     "nativeCursorOwnershipAssertions": 375,
-    "frameStatus": "Enabled-mode status published only after native validation acceptance; native Off false preserved. Isolated rejection and choice-race fixtures passed."
-  }
+    "frameStatus": "Enabled-mode status published only after native validation acceptance; native Off false preserved. Isolated rejection and choice-race fixtures passed.",
+    "unifiedModeAssertions": 15
+  },
+  "uiBridge": "ConfigureWuWaFrameModeV1; Dynamic derived V3 and Fixed derived V2; legacy exports retained"
 }
