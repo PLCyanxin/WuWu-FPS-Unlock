@@ -48,6 +48,14 @@ function WaitForCompletionCount([int]$expected){
     }
     throw "Completion handoff timed out: observed $(CompletionCount), expected $expected"
 }
+function CheckNoCompletionHandoff([int]$expected,[string]$message){
+    for($i=0;$i -lt 20;$i++){
+        $actual=CompletionCount
+        if($actual -ne $expected){throw "$message`: observed $actual completion handoffs, expected $expected"}
+        Start-Sleep -Milliseconds 50
+    }
+    Check ((CompletionCount) -eq $expected) $message
+}
 function StartLauncher(){
     $psi=[Diagnostics.ProcessStartInfo]::new("$root/WuWaFpsUnlock.exe");$psi.UseShellExecute=$false;$psi.CreateNoWindow=$true
     return [Diagnostics.Process]::Start($psi)
@@ -91,7 +99,7 @@ $script:ProbeFailAt=2
 Worker "$package/更新.exe" @() 1
 $script:ProbeFailAt=0
 Check ((Get-FileHash "$root/WuWaFpsUnlock.exe").Hash -eq $beforeRejected) 'game appearing before first replacement prevents installation'
-Check ((CompletionCount) -eq $completionBefore) 'game guard refusal never sends success handoff'
+CheckNoCompletionHandoff $completionBefore 'game guard refusal never sends success handoff'
 foreach($killAt in @(1,3,5)){
     $beforeCrash=(Get-FileHash "$root/WuWaFpsUnlock.exe").Hash
     $componentBefore=(Get-FileHash "$root/components/fps/ww_plugin_base.dll").Hash
@@ -129,5 +137,5 @@ Check ($completedBackup.Count -eq 1 -and (Get-FileHash "$($completedBackup[0].Fu
 $completionBefore=CompletionCount
 Add-Content "$payload/components/fps/ww_plugin_base.dll" 'corrupt fixture bytes'
 Worker "$package/更新.exe" @() 1
-Check ((CompletionCount) -eq $completionBefore) 'failed update never launches success handoff'
+CheckNoCompletionHandoff $completionBefore 'failed update never launches success handoff'
 Write-Output "RESULT: production CLI integration passed; fixture location $fixture; desktop shortcut and game probe adapters replaced."
