@@ -32,6 +32,18 @@ try
  await Test("pre-release with formal tag is excluded",async()=>Require(await Service([],list:JsonSerializer.Serialize(new[]{Release("v9.0.0",prerelease:true)})).CheckAsync("1.1.1") is null));
  await Test("current formal ignores older RC",async()=>Require(await Service([],list:JsonSerializer.Serialize(new[]{Release("v1.1.1RC")})).CheckAsync("1.1.1") is null));
  await Test("fake HTTP check and stage full pipeline under Chinese path",async()=>{var svc=Service(Package(Files()),list:JsonSerializer.Serialize(new[]{Release("v1.1.1")}));var found=await svc.CheckAsync("1.1.1RC");string exe=await svc.StageAsync(found!,root);Require(File.Exists(exe)&&Path.GetRelativePath(root,exe).StartsWith(".updates"));UpdatePackageProtocol.ValidateDirectory(Path.GetDirectoryName(exe)!,"1.1.1");File.WriteAllText(Path.Combine(Path.GetDirectoryName(exe)!,"回退.cmd"),"local-only");UpdatePackageProtocol.ValidateDirectory(Path.GetDirectoryName(exe)!,"1.1.1");});
+ await Test("completed stage cleanup preserves active updater and unknown files",async()=>{
+  string exe=await Service(Package(Files())).StageAsync(release,root),directory=Path.GetDirectoryName(exe)!;
+  UpdateStageMaintenance.MarkCompleted(root,directory);
+  using(var held=new FileStream(exe,FileMode.Open,FileAccess.Read,FileShare.Read)){UpdateStageMaintenance.PruneCompleted(root);Require(File.Exists(exe));}
+  File.WriteAllText(Path.Combine(directory,"user.txt"),"keep");UpdateStageMaintenance.PruneCompleted(root);Require(File.Exists(exe));
+  File.Delete(Path.Combine(directory,"user.txt"));UpdateStageMaintenance.PruneCompleted(root);Require(!Directory.Exists(directory));
+ });
+ await Test("unfinished stages and manually extracted update folders are never pruned",async()=>{
+  string exe=await Service(Package(Files())).StageAsync(release,root);UpdateStageMaintenance.PruneCompleted(root);Require(File.Exists(exe));
+  string manual=Path.Combine(root,"manual-update");Directory.CreateDirectory(manual);File.WriteAllText(Path.Combine(manual,"personal.txt"),"keep");
+  UpdateStageMaintenance.MarkCompleted(root,manual);UpdateStageMaintenance.PruneCompleted(root);Require(File.Exists(Path.Combine(manual,"personal.txt")));
+ });
  await Test("bad outer hash rejected",()=>Reject(()=>Service(Package(Files()),new string('0',64)+"  "+filename).StageAsync(release,root)));
  await Test("duplicate checksum rejected",()=>Reject(()=>Service(Package(Files()),$"{new string('0',64)}  {filename}\n{new string('0',64)}  {filename}").StageAsync(release,root)));
  await Test("old no-manifest package rejected",()=>Reject(()=>Service(Package(Files(),manifest:false)).StageAsync(release,root)));

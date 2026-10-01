@@ -29,6 +29,10 @@ int main(){try{
  bool stable=true;for(int i=0;i<10000;++i)stable&=Maintain(0,150,read,write,changed)&&!changed;Check(stable,"unchanged maintenance skips store");
  Check(writes==0,"10000 stable checks perform zero writes");
  stored=60;Check(Maintain(0,150,read,write,changed)&&changed&&writes==1,"game reset repaired on next check");Check(Maintain(0,240,read,write,changed)&&changed&&writes==2,"new target written on next check");
+ for(float bad:{0.0f,-1.0f,29.0f,421.0f,123456.75f,std::numeric_limits<float>::quiet_NaN(),std::numeric_limits<float>::infinity()}) {
+  stored=bad;const int before=writes;Check(!Maintain(0,160,read,write,changed)&&!changed&&writes==before,"changed address semantics stops maintenance without a write");
+ }
+ stored=60;Check(!Maintain(0,999,read,write,changed)&&!changed&&writes==2,"invalid target cannot be written");
  std::atomic<int> concurrent{150};std::thread producer([&]{for(int i=0;i<100000;++i)concurrent.store(i%2?30:420,std::memory_order_relaxed);});
  bool valid=true;for(int i=0;i<100000;++i){int n=concurrent.load(std::memory_order_relaxed);valid&=n==150||n==30||n==420;}producer.join();Check(valid,"concurrent atomic target publication");
  // Exact production receiver with a private fixture pipe, not the product pipe.

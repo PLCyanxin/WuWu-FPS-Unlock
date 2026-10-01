@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Windows.Threading;
 using WuWaFpsUnlock.Services;
 
@@ -61,7 +61,7 @@ public sealed partial class AppViewModel
             {
                 if(seed)SeedRecentTierWrites(root,generation);
                 return ResourceTierCatalog.Read(root, tier =>
-                    _tierWrites.TryGetValue(tier,out var time)&&time.Generation==generation&&DateTime.UtcNow-time.At<TimeSpan.FromSeconds(8));
+                    _tierWrites.TryGetValue(tier,out var time)&&time.Generation==generation&&DateTime.UtcNow-time.At<TimeSpan.FromSeconds(8),Log);
             });
             if (_closing || root != GameRoot) return;
             ApplyResourceTierInfo(result);

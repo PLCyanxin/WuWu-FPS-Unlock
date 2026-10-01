@@ -68,8 +68,8 @@ await Test("unknown driver and disabled preference preserve existing mode select
 }));
 await Test("preview omits retired startup cap and restart instructions", () => Sync(() =>
 {
-    Check(Configuration(4).PreviewText.Contains("Dynamic MFG：将启用"));
-    Check(Configuration(4, false).PreviewText.Contains("不启用（Fixed）"));
+    Check(Configuration(4).PreviewText.Contains("帧生成模式：Dynamic")&&Configuration(4).PreviewText.Contains("首次部署默认值"));
+    Check(Configuration(4, false).PreviewText.Contains("固定倍率（Fixed）3x"));
     Check(Configuration(4).PreviewText == Configuration(0).PreviewText);
     Check(!Configuration(4).PreviewText.Contains("最大倍率") && !Configuration(4).PreviewText.Contains("重启"));
 }));

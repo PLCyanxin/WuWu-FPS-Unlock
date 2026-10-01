@@ -10,7 +10,7 @@ namespace WuWaFpsUnlock.Services;
 // No database writes, FOV, UID changes, anti-cheat workarounds, or advanced plugin loading.
 public sealed class FpsSession : IAsyncDisposable
 {
-    public const string PluginHash="8027528f9ee6f5ee7a851f3d1499f848a0b219f4f9aa88f41dba4d7c707a1816";
+    public const string PluginHash="3b4eb2a4f9ef1a6b07a9c53aba81374290e1288daa6fbd4d4f5bee4feca92c80";
     private const string PipeName="55984705-F24C-45C2-B2B7-27F047B43A56";
     private readonly FpsControlChannel _channel=new();
     public Process? Game {get;private set;}

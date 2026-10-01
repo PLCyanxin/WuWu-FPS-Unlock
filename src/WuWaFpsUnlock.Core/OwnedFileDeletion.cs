@@ -9,7 +9,7 @@ namespace WuWaFpsUnlock.Core;
 // other writers and path replacement; no close-hash-open-delete race is possible.
 public static class OwnedFileDeletion
 {
-    public static async Task<bool> DeleteMatchingAsync(string path, string expectedHash, CancellationToken token = default)
+    public static async Task<bool> DeleteMatchingAsync(string path, string expectedHash, CancellationToken token = default, Action? requireStopped = null)
     {
         if (!OperatingSystem.IsWindows()) throw new PlatformNotSupportedException("Owned deletion is Windows-only.");
         using var handle = CreateFileW(path, 0x80010000, 1, IntPtr.Zero, 3, 0x00200000, IntPtr.Zero);
@@ -18,6 +18,7 @@ public static class OwnedFileDeletion
         var hash = Convert.ToHexString(await SHA256.HashDataAsync(stream, token));
         if (!hash.Equals(expectedHash, StringComparison.OrdinalIgnoreCase)) return false;
         token.ThrowIfCancellationRequested();
+        requireStopped?.Invoke();
         var disposition = new FileDispositionInfo { DeleteFile = 1 };
         if (!SetFileInformationByHandle(handle, 4, ref disposition, 1))
             throw new IOException("已校验文件但 Windows 拒绝清除：" + path, new Win32Exception(Marshal.GetLastWin32Error()));

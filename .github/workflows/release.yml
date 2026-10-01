@@ -31,8 +31,16 @@ jobs:
       - name: Build and test
         shell: pwsh
         run: |
+          ./scripts/Test-NativeProvenance.ps1
+          ./scripts/Test-NativeComponents.ps1
+          ./scripts/Test-ReShadeIni.ps1
+          ./scripts/Test-ReleasePayloadMerge.ps1
+          dotnet run --project tests/Activation.ListenerTests -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Activation listener tests failed' }
           dotnet run --project tests/WuWaFpsUnlock.Tests -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Core tests failed' }
+          dotnet run --project tests/Deployment.CleanupTests -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Cleanup preflight tests failed' }
           dotnet run --project tests/EmbeddedDynamicAddon.Tests -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Embedded companion tests failed' }
           dotnet run --project tests/DynamicMultiplier.Tests -c Release
@@ -49,12 +57,16 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Rollback backup tests failed' }
           dotnet run --project tests/Update.DeferredSessionTests -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Deferred update tests failed' }
+          dotnet run --project tests/Update.ExitObservationTests -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Session exit tests failed' }
           dotnet run --project tests/Startup.RefreshTests -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Startup refresh tests failed' }
           dotnet run --project tests/Official.LaunchOptionsTests -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Official launch option tests failed' }
           dotnet run --project tests/Official.PredownloadTests -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Official predownload tests failed' }
+          dotnet run --project tests/ResourceTier.UiTests -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Resource tier UI tests failed' }
           dotnet run --project tests/PeInspector.PerformanceTests -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Proxy inspection regression failed' }
           dotnet run --project tests/Rollback.ResourceTests -c Release -- src/WuWaFpsUnlock/obj/embedded-updater/Release/WuWaUpdater.exe

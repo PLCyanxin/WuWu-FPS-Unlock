@@ -1,21 +1,19 @@
-﻿param([Parameter(Mandatory)][string]$Version,[string]$BaselineZip)
+param([Parameter(Mandatory)][string]$Version,[string]$BaselineZip,[string]$BaselineSha256)
 $ErrorActionPreference='Stop'
 $repo=Split-Path $PSScriptRoot -Parent
 if($Version -notmatch '^\d+\.\d+\.\d+(?:RC\d*)?$'){throw 'Invalid release version'}
+$baseline=Get-Content -LiteralPath (Join-Path $PSScriptRoot 'release-baseline.json') -Raw | ConvertFrom-Json
 if(!$BaselineZip){
-    $baselineRepo=if($env:GITHUB_REPOSITORY){$env:GITHUB_REPOSITORY}else{'PLCyanxin/WuWu-FPS-Unlock'}
-    $latestJson=gh release view --repo $baselineRepo --json tagName,assets
-    if($LASTEXITCODE -ne 0){throw 'Cannot resolve the latest release component baseline'}
-    $latest=$latestJson | ConvertFrom-Json
-    $fullAssets=@($latest.assets | Where-Object { $_.name -match '^WuWaFPSUnlock-\d+\.\d+\.\d+(?:RC\d*)?-win-x64\.zip$' })
-    if($fullAssets.Count -ne 1){throw 'Latest release must provide exactly one complete component package'}
-    gh release download $latest.tagName --repo $baselineRepo --pattern $fullAssets[0].name --dir baseline
+    gh release download $baseline.tag --repo $baseline.repository --pattern $baseline.asset --dir baseline
     if($LASTEXITCODE -ne 0){throw 'Component package download failed'}
-    $BaselineZip=Join-Path baseline $fullAssets[0].name
+    $BaselineZip=Join-Path baseline $baseline.asset
 }
+if(!$BaselineSha256){$BaselineSha256=$baseline.sha256}
+if($BaselineSha256 -notmatch '^[A-Fa-f0-9]{64}$' -or (Get-FileHash -LiteralPath $BaselineZip).Hash -ne $BaselineSha256){throw 'Build baseline archive digest mismatch'}
 Expand-Archive -LiteralPath $BaselineZip -DestinationPath baseline/extracted
 New-Item package -ItemType Directory | Out-Null
 foreach($name in @('payload','components','licenses','App.ico')){Copy-Item "baseline/extracted/$name" package -Recurse}
+& "$PSScriptRoot/Merge-ReleasePayload.ps1" -CheckoutPayload (Join-Path $repo 'payload') -DestinationPayload package/payload
 Get-ChildItem build | Where-Object Extension -ne '.pdb' | Copy-Item -Destination package -Recurse -Force
 $addon=Join-Path $repo 'release-assets/mfg/renodx-mfgunlock.addon64'
 $sourceRecord=Join-Path $repo 'release-assets/mfg/source.json'
@@ -41,6 +39,10 @@ foreach($relative in $materialSources){
     $material=[IO.Path]::GetFullPath((Join-Path $payloadRoot $relative))
     if(!$material.StartsWith($payloadRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw "Deployment source escapes package: $relative"}
     if(!(Test-Path -LiteralPath $material -PathType Leaf) -or (Get-Item -LiteralPath $material).Length -eq 0){throw "Missing deployment source in full package: $relative"}
+}
+$expectedPolicy=Get-Content -LiteralPath (Join-Path $repo 'payload/manifest.json') -Raw | ConvertFrom-Json
+foreach($field in $expectedPolicy.PSObject.Properties.Name | Where-Object {$_ -notin @('packageId','files','addonVersion')}){
+    if((ConvertTo-Json -InputObject $materialManifest.$field -Depth 50 -Compress) -cne (ConvertTo-Json -InputObject $expectedPolicy.$field -Depth 50 -Compress)){throw "Packaged deployment policy differs from checkout: $field"}
 }
 $fullName="WuWaFPSUnlock-$Version-win-x64.zip"
 $updateName="WuWaFPSUnlock-$Version-update.zip"

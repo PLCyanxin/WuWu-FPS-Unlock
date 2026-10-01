@@ -8,11 +8,11 @@
 > [!IMPORTANT]
 > **本工具仅适用于 NVIDIA GeForce RTX 40 系列显卡，且仅支持通过鸣潮官方启动器安装的游戏版本。未来不计划扩大显卡或游戏渠道的支持范围，其他系列显卡及其他启动器或渠道版本不在支持范围内。**
 
-**Windows x64 · 当前版本 v1.2.3**
+**Windows x64 · 正式版 v1.2.3 · 准正式版 v1.2.4RC（Pre-release）**
 
-[下载 v1.2.3](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/tag/v1.2.3) · [全部版本与更新日志](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases)
+[下载正式版 v1.2.3](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/tag/v1.2.3) · [下载 v1.2.4RC](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/tag/v1.2.4RC) · [全部版本与更新日志](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases)
 
-**推荐所有用户使用 v1.2.3。** 本版为正式 Release，可通过启动器检查更新，也可手动下载。首次安装请选择完整包，已有完整安装可使用更新包；旧版本可能不包含本文的全部功能。
+v1.2.3 为正式 Release，可通过启动器检查更新。v1.2.4RC 改善部署、清除及更新恢复，标记为 Pre-release，请在发布页手动下载；维护者验证稳定后，会将其设置为 Release，供启动器检查和更新。首次安装请选择完整包，已有完整安装可使用更新包；旧版本可能不包含本文的全部功能。
 
 ## 主要功能
 
@@ -57,6 +57,8 @@ Client\Binaries\Win64\Client-Win64-Shipping.exe
 ```
 
 不要选择官方启动器、崩溃报告程序或本工具。如果提示游戏文件缺失，请先使用官方启动器修复文件，并启动一次游戏，再回来部署。
+
+如果官方更新移动或移除了旧运行库，完成官方修复后仍提示旧位置缺失，v1.2.4RC 可在提示中查看路径记录重建计划。核对新的文件位置后确认，再点击“开始部署”。重建只更新本工具的记录，不复制或删除游戏文件；未完成官方修复时，请先修复游戏。
 
 在主页“开始游戏”旁的 **包体档位** 菜单中，选择已通过官方启动器下载的档位。具体操作见下方“包体档位与下载状态”。
 

@@ -44,6 +44,12 @@ int main(){
  SaveRequest(6);Check(!live::fixed_enabled,"Dynamic choice never enables ordinary generation");
  config[{kSection,"FixedFrameGenerationEnabled"}]="1";LoadConfig();Check(live::fixed_enabled&&live::requested==6&&!user_enabled,"ordinary resume leaves Dynamic choice and toggle intact");
  int fixedMultiplier=3;const int dynamicChoice=live::requested;
+ live::installed=false;live::enabled=false;live::fixed_enabled=true;
+ auto offWrites=writes;
+ Check(!SaveFixedChoice(0,&fixedMultiplier)&&live::fixed_enabled&&writes==offWrites,"unavailable hook rejects Off without changing stored choice");
+ live::installed=true;live::enabled=true;live::invalid=true;
+ Check(!SaveFixedChoice(0,&fixedMultiplier)&&live::fixed_enabled&&writes==offWrites,"guard failure rejects Off without pretending success");
+ live::invalid=false;
  Check(!SaveFixedChoice(0,&fixedMultiplier)&&fixedMultiplier==3&&!live::fixed_enabled&&live::requested==dynamicChoice,"ordinary Off saves only independent flag and preserves both multiplier choices");
  LoadConfig();Check(!live::fixed_enabled,"ordinary Off survives companion load");
  Check(SaveFixedChoice(3,&fixedMultiplier)&&fixedMultiplier==3&&live::fixed_enabled&&live::requested==dynamicChoice,"ordinary resume preserves Dynamic choice");
@@ -82,6 +88,7 @@ int main(){
  Check(live::requested==0,"passive redraw preserves Dynamic Off");
  ConfigureFrameMode(2,true);
  Check(live::requested==6,"reselect Dynamic resumes last enabled6");
+ live::installed=true;live::enabled=true;live::invalid=false;
  int savedFixed=5;SaveFixedChoice(0,&savedFixed);ConfigureFrameMode(2,true);
  Check(!live::fixed_enabled,"select Dynamic never overwrites independent fixed Off");
  ConfigureFrameMode(1,false);

@@ -47,6 +47,7 @@ public sealed class GitHubUpdateService(HttpClient http)
         if(!UpdatePackageProtocol.IsVersion(release.Version)||release.Tag!=(release.Tag.StartsWith('v')?"v":"")+release.Version||release.PackageFileName!=$"WuWaFPSUnlock-{release.Version}-update.zip")throw new InvalidDataException("发布版本无效。");
         ValidateAsset(release.PackageUrl,release.Tag,release.PackageFileName);ValidateAsset(release.ChecksumsUrl,release.Tag,"SHA256SUMS.txt");
         string root=Path.GetFullPath(appRoot);UpdatePackageProtocol.RejectLink(root);
+        UpdateStageMaintenance.PruneCompleted(root);
         string cache=Path.Combine(root,".updates");Directory.CreateDirectory(cache);UpdatePackageProtocol.RejectLink(cache);
         string nonce=Guid.NewGuid().ToString("N"),directory=Path.Combine(cache,nonce),zipPath=Path.Combine(cache,nonce+".zip");
         Directory.CreateDirectory(directory);

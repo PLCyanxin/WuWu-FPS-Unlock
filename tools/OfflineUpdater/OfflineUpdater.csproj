@@ -13,5 +13,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\..\src\WuWaFpsUnlock.Core\UpdatePackageProtocol.cs" Link="Protocol\UpdatePackageProtocol.cs" />
+    <Compile Include="..\..\src\WuWaFpsUnlock.Core\DurableJson.cs" Link="Protocol\DurableJson.cs" />
+    <Compile Include="..\..\src\WuWaFpsUnlock.Core\UpdateStageMaintenance.cs" Link="Protocol\UpdateStageMaintenance.cs" />
   </ItemGroup>
 </Project>

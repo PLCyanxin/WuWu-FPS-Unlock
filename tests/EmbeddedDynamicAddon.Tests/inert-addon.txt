@@ -1,1 +1,0 @@
-This is inert test content, not an executable addon.

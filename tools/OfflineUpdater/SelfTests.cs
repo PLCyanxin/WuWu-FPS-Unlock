@@ -88,7 +88,7 @@ internal static partial class Program
         });
         Test("corrupt metadata and traversal rejected", () =>
         {
-            var f = Fixture(); File.AppendAllText(Scoped(f.Backup, "snapshot.json"), "corrupt");
+            var f = Fixture(); File.AppendAllText(Scoped(f.Backup, "snapshot.state.json"), "corrupt");
             Reject(() => ReadSnapshot(f.Backup)); Reject(() => Scoped(f.Root, "../outside.dll"));
             Reject(() => ValidateSnapshot(f.Backup, f.Snapshot with { Root = sandbox }));
         });
@@ -99,6 +99,7 @@ internal static partial class Program
             Check(File.ReadAllText(Scoped(f.Root, "WuWaFpsUnlock.exe")).StartsWith("inert new"));
         });
         UpdateStorageTests(Test);
+        AuditRecoveryTests(Test);
         GameGuardTests(Test);
         BackupLifecycleTests(Test);
         InventoryTests(Test);

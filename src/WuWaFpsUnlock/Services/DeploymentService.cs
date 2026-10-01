@@ -2,8 +2,18 @@ using WuWaFpsUnlock.Core;
 namespace WuWaFpsUnlock.Services;
 public sealed class DeploymentService(Action<string> log)
 {
+    private static FileStream AcquireMaintenanceLock(UserSettings s)
+    {
+        MaterialSafety.RequireOutsideGame(s.GameRoot,AppPaths.Base);
+        if(RollbackBackupCatalog.FindInterrupted(AppPaths.Base) is string interrupted)throw new IOException("请先关闭启动器并运行备份中的恢复.cmd："+interrupted);
+        string path=AppPaths.Baseline(s.GameExe)+".maintenance.lock";
+        SafePaths.EnsureNoLinks(AppPaths.Base,path);Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        return new FileStream(path,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None);
+    }
     private static async Task CheckBaselineAsync(UserSettings s,CancellationToken token)
     {
+        MaterialSafety.RequireOutsideGame(s.GameRoot, AppPaths.Base);
+        MaterialSafety.RequireOutsideGame(s.GameRoot, Path.GetDirectoryName(Path.GetFullPath(s.PackageManifest))!);
         var path=AppPaths.Baseline(s.GameExe);
         if(File.Exists(path))GameFileBaselineStore.RequirePresent(JsonFiles.Read<GameFileBaseline>(path),s.GameRoot,s.GameExe);
         var observed=await GameFileBaselineStore.CaptureAsync(s.GameRoot,s.GameExe,token);
@@ -20,10 +30,11 @@ public sealed class DeploymentService(Action<string> log)
         if(!s.MfgSelected)return "未选多帧生成，不写入游戏文件。";
         await CheckBaselineAsync(s,token);
         var manifest=PackageReader.Load(s.PackageManifest);var before=new ReShadeService(log).Inspect(s,manifest.ReShade);
+        PackageManifestLocation.RequireSources(manifest,s.PackageManifest);
         if(before.State=="Conflict")throw new IOException(before.Description);
         var plan=await PackageReader.PlanAsync(manifest,s.PackageManifest,s.GameRoot,Path.GetDirectoryName(exe)!,before.AddonDirectory,token);
         await EmbeddedDynamicAddon.AppendToPlanAsync(plan,s,before.AddonDirectory,token);
-        var configuration=MfgDeploymentConfiguration.Create(s,manifest,EnvironmentProbe.ReadBasic(log));
+        var configuration=MfgDeploymentConfiguration.Create(s,manifest,EnvironmentProbe.ReadBasic(log),IniDocument.Load(before.Ini));
         ApprovalFingerprint=await PlanFingerprint(s,plan,before,configuration,token);
         var lines=new List<string>{"游戏根："+s.GameRoot,"原装 Shipping："+exe,"ReShade："+before.Description,"ReShade 配置："+before.Ini};
         lines.Add(configuration.PreviewText);
@@ -33,21 +44,23 @@ public sealed class DeploymentService(Action<string> log)
         lines.Add("仅替换现存同名 DLL，不备份原文件；游戏内效果仍待验证。");
         return string.Join(Environment.NewLine,lines);
     }
-    private sealed record CleanPlan(DeploymentReceipt? Receipt, MaterialRemovalPlan? Materials);
+    private sealed record CleanPlan(DeploymentReceipt? Receipt, MaterialRemovalPlan? Materials, string? IniHash);
     private async Task<CleanPlan> PrepareCleanAsync(UserSettings s,CancellationToken token)
     {
         GameProcesses.ValidateExe(s);GameProcesses.RequireStopped(s.GameRoot);
+        MaterialSafety.RequireOutsideGame(s.GameRoot, AppPaths.Base);
         var receipt=AppPaths.LoadReceipt(s);
         if(receipt is not null && (!receipt.GameRoot.Equals(Path.GetFullPath(s.GameRoot),StringComparison.OrdinalIgnoreCase)||!receipt.GameExe.Equals(Path.GetFullPath(s.GameExe),StringComparison.OrdinalIgnoreCase)))throw new InvalidDataException("部署记录与当前所选游戏不一致；没有清除任何文件。");
+        if(receipt is not null)DeploymentFiles.ValidateCleanup(receipt);
         MaterialRemovalPlan? materials=null;
         if(File.Exists(s.PackageManifest))
         {
-            materials=await UserMaterialRemoval.PlanAsync(s.PackageManifest,s.GameRoot,token);
-            // Normal ownership remains a separate, narrower authority. Do not list a file twice.
-            materials=materials with { Candidates=materials.Candidates.Where(c=>receipt is null || !receipt.Files.Any(f=>f.Completed&&f.Path.Equals(c.Path,StringComparison.OrdinalIgnoreCase)&&f.InstalledHash.Equals(c.Sha256,StringComparison.OrdinalIgnoreCase)&&((f.Kind=="Vendor"&&f.ReplacedByTool)||(f.Kind=="Addon"&&f.CreatedByTool)))).ToList() };
+            var ownedPaths=receipt?.Files.Where(f=>f.Completed&&DeploymentFiles.CanClean(receipt,f)).Select(f=>f.Path).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            materials=await UserMaterialRemoval.PlanAsync(s.PackageManifest,s.GameRoot,token,ownedPaths);
         }
         else if(receipt is null)throw new InvalidOperationException("没有本工具部署记录，也没有可验证的用户材料清单；不能猜测清除对象。请先指定材料清单。");
-        return new(receipt,materials);
+        string? iniHash=receipt?.IniEdits.Count>0&&File.Exists(receipt.IniPath)?await SafePaths.HashAsync(receipt.IniPath,token):null;
+        return new(receipt,materials,iniHash);
     }
     private static string CleanFingerprint(UserSettings s,CleanPlan plan)=>Fingerprint(new{GameRoot=Path.GetFullPath(s.GameRoot),GameExe=Path.GetFullPath(s.GameExe),Plan=plan});
     public async Task<string> CleanPreviewAsync(UserSettings s,CancellationToken token=default)
@@ -72,18 +85,20 @@ public sealed class DeploymentService(Action<string> log)
     {
         string exe=GameProcesses.ValidateExe(s);GameProcesses.RequireStopped(s.GameRoot);
         if(!s.MfgSelected){log("没有选择多帧生成部署：未改动 ReShade、DLSS 和 Streamline。");return;}
+        using var maintenanceLock=AcquireMaintenanceLock(s);
         await CheckBaselineAsync(s,token);
         if(!File.Exists(s.PackageManifest))throw new FileNotFoundException("尚未提供完整的 MFG 文件包清单。");
         var manifest=PackageReader.Load(s.PackageManifest);var hardware=EnvironmentProbe.ReadBasic(log);
+        PackageManifestLocation.RequireSources(manifest,s.PackageManifest);
         if(!hardware.IsAdaGeForce)throw new InvalidOperationException("未确认 GeForce RTX 40 系显卡。仅阻止 MFG 部署，不影响普通 FPS 启动。");
         if(hardware.Driver is null)log("驱动状态未知，不能确认 Dynamic；不把未知报告为不支持。");
         if(manifest.FixedMinimumDriver is int minimum && (hardware.Driver is null || hardware.Driver<minimum))throw new InvalidOperationException("驱动不满足该文件包声明的 Fixed 条件。");
         if(hardware.HagsConfigured==false)throw new InvalidOperationException("HAGS 已配置关闭。请在 Windows 中处理并重启后再检查；工具不会擅自修改系统。");
-        var configuration=MfgDeploymentConfiguration.Create(s,manifest,hardware);
-        bool dynamic=configuration.DynamicEnabled;
-        log(dynamic?"Dynamic 驱动门槛通过；运行时支持仍待游戏内确认。":"不满足 Dynamic 门槛：只部署 Fixed 兼容配置，不拦截整个 MFG 功能。");
         var reshade=new ReShadeService(log);var before=reshade.Inspect(s,manifest.ReShade);
         if(before.State=="Conflict")throw new IOException(before.Description);
+        var configuration=MfgDeploymentConfiguration.Create(s,manifest,hardware,IniDocument.Load(before.Ini));
+        bool dynamic=configuration.DynamicEnabled;
+        log(configuration.PreviewText);
         // Fully validate payload and ALL paths before running an external installer.
         var plan=await PackageReader.PlanAsync(manifest,s.PackageManifest,s.GameRoot,Path.GetDirectoryName(exe)!,before.AddonDirectory,token);
         await EmbeddedDynamicAddon.AppendToPlanAsync(plan,s,before.AddonDirectory,token);
@@ -106,7 +121,7 @@ public sealed class DeploymentService(Action<string> log)
             var ready=await reshade.EnsureAsync(s,manifest.ReShade,receipt,upgradeApproved,token);
             if(!ready.AddonDirectory.Equals(before.AddonDirectory,StringComparison.OrdinalIgnoreCase))throw new IOException("ReShade 安装后 AddonPath 发生变化，停止以免写入错误位置。");
             GameProcesses.RequireStopped(s.GameRoot);
-            await DeploymentFiles.ApplyAsync(plan,receipt,()=>AppPaths.SaveReceipt(receipt),log,token);
+            await DeploymentFiles.ApplyAsync(plan,receipt,()=>AppPaths.SaveReceipt(receipt),log,token,()=>GameProcesses.RequireStopped(s.GameRoot));
             receipt.IniPath=ready.Ini;
             receipt.ProxyPath=ready.Proxy ?? throw new IOException("没有确认 ReShade 代理。");
             var proxyEntry=receipt.Files.FirstOrDefault(f=>f.Path.Equals(receipt.ProxyPath,StringComparison.OrdinalIgnoreCase));
@@ -116,7 +131,9 @@ public sealed class DeploymentService(Action<string> log)
             var ini=IniDocument.Load(ready.Ini);
             configuration.ApplyOwned(ini,receipt,manifest.MfgConfig);
             ini.ApplyManagedAddonLoading(receipt);
-            AppPaths.SaveReceipt(receipt);ini.Save(ready.Ini);
+            AppPaths.SaveReceipt(receipt);
+            token.ThrowIfCancellationRequested();GameProcesses.RequireStopped(s.GameRoot);
+            ini.Save(ready.Ini);
             receipt.PendingDeploymentChanges|=initialIniHash!=await SafePaths.HashAsync(ready.Ini,token);
             receipt.Status="Deployed";AppPaths.SaveReceipt(receipt);
             if(!await DeploymentFiles.IsIntactAsync(receipt,token))throw new IOException("最终文件或配置校验失败。");
@@ -133,20 +150,27 @@ public sealed class DeploymentService(Action<string> log)
     }
     public async Task CleanAsync(UserSettings s,CancellationToken token=default)
     {
+        GameProcesses.ValidateExe(s);
+        using var maintenanceLock=AcquireMaintenanceLock(s);
         var plan=await PrepareCleanAsync(s,token);
         if(string.IsNullOrEmpty(ApprovalFingerprint)||ApprovalFingerprint!=CleanFingerprint(s,plan))throw new IOException("清除材料、文件或记录与确认时不同，请重新预览并确认；没有扩大清除范围。");
         var receipt=plan.Receipt??new DeploymentReceipt{GameRoot=Path.GetFullPath(s.GameRoot),GameExe=Path.GetFullPath(s.GameExe)};
-        foreach(var f in receipt.Files.Where(f=>(f.Kind=="Addon"&&f.CreatedByTool)||(f.Kind=="Vendor"&&f.ReplacedByTool)||ReShadeOwnership.CanClean(receipt,f)))WriteProbe.Check(f.Path);
+        DeploymentFiles.ValidateCleanup(receipt);
+        foreach(var f in receipt.Files.Where(f=>f.Completed&&DeploymentFiles.CanClean(receipt,f)&&File.Exists(f.Path)))WriteProbe.Check(f.Path);
         if(plan.Materials is not null)foreach(var f in plan.Materials.Candidates)WriteProbe.Check(f.Path);
-        if(!string.IsNullOrWhiteSpace(receipt.IniPath))WriteProbe.Check(receipt.IniPath);
+        if(receipt.IniEdits.Count>0&&File.Exists(receipt.IniPath))WriteProbe.Check(receipt.IniPath);
+        DeploymentFiles.ValidateCleanup(receipt);
+        string? currentIniHash=receipt.IniEdits.Count>0&&File.Exists(receipt.IniPath)?await SafePaths.HashAsync(receipt.IniPath,token):null;
+        if(currentIniHash!=plan.IniHash)throw new IOException("清除前配置已改变，请重新预览并确认。");
+        GameProcesses.RequireStopped(s.GameRoot);
         ApprovalFingerprint="";
         // Persist operation status, never manufacture ownership over existing material files.
         receipt.Status="PartialClean";AppPaths.SaveReceipt(receipt);
         try
         {
             MaterialRemovalResult? materialResult=null;
-            if(plan.Materials is not null)materialResult=await UserMaterialRemoval.ExecuteAsync(plan.Materials,log,token);
-            await DeploymentFiles.CleanOwnedAddonsAsync(receipt,()=>AppPaths.SaveReceipt(receipt),log,token);
+            if(plan.Materials is not null)materialResult=await UserMaterialRemoval.ExecuteAsync(plan.Materials,log,token,()=>GameProcesses.RequireStopped(s.GameRoot));
+            await DeploymentFiles.CleanOwnedAddonsAsync(receipt,()=>AppPaths.SaveReceipt(receipt),log,token,()=>GameProcesses.RequireStopped(s.GameRoot));
             if(materialResult?.Failed>0)throw new IOException("部分既有用户材料移除失败；详情见逐文件日志，可重新预览后重试。");
             if(materialResult?.Preserved>0){receipt.Status="CleanedWithSkips";AppPaths.SaveReceipt(receipt);}
             DeploymentNoticeStore.MarkCleaned(receipt);AppPaths.SaveReceipt(receipt);

@@ -32,6 +32,15 @@ try {
  Directory.Delete(latest,true);latest=Make("update-backup-20260106-000000-a",relative:"../../outside.exe");
  Check(RollbackBackupCatalog.Find(root) is null,"path escape rejected");
  Directory.Delete(latest,true);
+ latest=Make("update-backup-20260107-000000-a");
+ DurableJson.Save(Path.Combine(latest,"snapshot.state.json"),JsonSerializer.Deserialize<JsonElement>(File.ReadAllBytes(Path.Combine(latest,"snapshot.json"))));
+ File.WriteAllText(Path.Combine(latest,"snapshot.sha256"),"torn legacy checksum");
+ Check(RollbackBackupCatalog.Find(root)?.Directory==latest,"atomic snapshot remains authoritative when legacy checksum is torn");
+ void Journal(string phase,string? owner=null)=>DurableJson.Save(Path.Combine(latest,"transaction.json"),new{Schema=1,Root=owner??root,Phase=phase,Intent="WuWaFpsUnlock.exe"});
+ foreach(string phase in new[]{"Applying","Recovering"}){Journal(phase);Check(RollbackBackupCatalog.FindInterrupted(root)==latest,"interrupted phase detected: "+phase);}
+ Journal("Recovered");Check(RollbackBackupCatalog.FindInterrupted(root) is null,"recovered journal no longer blocks launch");
+ Journal("Applying",Path.GetTempPath());bool wrongOwner=false;try{RollbackBackupCatalog.FindInterrupted(root);}catch(InvalidDataException){wrongOwner=true;}
+ Check(wrongOwner,"interrupted journal with wrong installation fails closed");Directory.Delete(latest,true);
  using var cts=new CancellationTokenSource();cts.Cancel();bool cancelled=false;try{RollbackBackupCatalog.Find(root,cts.Token);}catch(OperationCanceledException){cancelled=true;}
  Check(cancelled,"scan cancellable");
  Console.WriteLine($"{passed} passed");

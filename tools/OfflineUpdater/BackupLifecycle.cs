@@ -19,7 +19,6 @@ internal static partial class Program
     {
         string marker=Scoped(backup,RollbackCompleted),temp=Scoped(backup,"rollback-completed-"+Guid.NewGuid().ToString("N")+".tmp");
         string metadata=Scoped(backup,"snapshot.json"),checksum=Scoped(backup,"snapshot.sha256");
-        byte[] originalMetadata=File.ReadAllBytes(metadata),originalChecksum=File.ReadAllBytes(checksum);
         var snapshot=ReadSnapshot(backup);RequireUnusedBackup(backup,snapshot);
         bool metadataChanged=false;
         try
@@ -32,7 +31,7 @@ internal static partial class Program
         }
         catch
         {
-            if(metadataChanged){File.WriteAllBytes(metadata,originalMetadata);File.WriteAllBytes(checksum,originalChecksum);}
+            if(metadataChanged)WriteSnapshot(backup,snapshot);
             throw;
         }
         finally{try{if(File.Exists(temp))File.Delete(temp);}catch{}}
@@ -58,7 +57,8 @@ internal static partial class Program
                     continue;
                 }
                 var previous=ReadSnapshot(candidate);
-                if((!previous.Complete && !File.Exists(Scoped(candidate,RollbackCompleted))) || !Path.GetFullPath(previous.Root).Equals(Path.GetFullPath(root),StringComparison.OrdinalIgnoreCase))continue;
+                bool recovered=File.Exists(Scoped(candidate,"transaction.json"))&&WuWaFpsUnlock.Core.DurableJson.Read<UpdateJournal>(Scoped(candidate,"transaction.json")).Phase=="Recovered";
+                if((!previous.Complete && !File.Exists(Scoped(candidate,RollbackCompleted))&&!recovered) || !Path.GetFullPath(previous.Root).Equals(Path.GetFullPath(root),StringComparison.OrdinalIgnoreCase))continue;
                 DeleteVerifiedBackup(candidate,previous);
                 Console.WriteLine("已清理上一次更新备份："+candidate);
             }
@@ -69,7 +69,7 @@ internal static partial class Program
     {
         ValidateSnapshot(backup,snapshot);
         if(!snapshot.Files.Any(f=>f.Relative=="WuWaFpsUnlock.exe")||!snapshot.Updated.Any(f=>f.Relative=="WuWaFpsUnlock.exe"))throw new InvalidDataException("目录不含完整程序备份身份。");
-        var allowed=new HashSet<string>(StringComparer.OrdinalIgnoreCase){"snapshot.json","snapshot.sha256","files.txt","rollback.cmd","WuWaUpdater.exe",RollbackCompleted};
+        var allowed=new HashSet<string>(StringComparer.OrdinalIgnoreCase){"snapshot.json","snapshot.sha256","snapshot.state.json","transaction.json","files.txt","rollback.cmd","恢复.cmd","WuWaUpdater.exe",RollbackCompleted};
         foreach(var file in snapshot.Files)allowed.Add("snapshot/"+file.Relative);
         foreach(var file in snapshot.Updated){allowed.Add("original/"+file.Relative);allowed.Add("staged/"+file.Relative);}
         var allowedDirectories=new HashSet<string>(StringComparer.OrdinalIgnoreCase){"snapshot","original","staged"};

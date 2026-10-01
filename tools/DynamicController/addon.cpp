@@ -107,8 +107,15 @@ void SaveRequest(int request) {
  RetryForUserChoice();
 }
 // -1 is the separate Off selection; 0 retains upstream game-decides semantics.
+bool CanApplyFixedOff() {
+ return live::installed.load()&&live::enabled.load(std::memory_order_acquire)&&!live::invalid.load();
+}
 bool SaveFixedChoice(int selected,int* multiplier) {
  if(!multiplier||selected<0||selected>6)return false;
+ if(selected==0&&!CanApplyFixedOff()) {
+  reshade::log::message(reshade::log::level::warning,"当前运行库尚未通过逐帧控制兼容性检查，未保存固定帧生成关闭选项。");
+  return false;
+ }
  const bool on=selected!=0;
  live::UiChoiceChanged();
  live::fixed_enabled.store(on);
@@ -119,10 +126,25 @@ bool SaveFixedChoice(int selected,int* multiplier) {
  reshade::log::message(reshade::log::level::info,"普通倍率已保存；倍率值沿原插件等待游戏下一次启用的 SetOptions 调用，尚不能认定已生效。普通关闭/恢复由独立逐帧路径处理。");
  return true;
 }
+bool FixedChoiceCombo(int& selected,bool includeGame) {
+ static constexpr const char* labels[]={"关闭","跟随游戏设置","2x","3x","4x","5x","6x"};
+ const int current=includeGame?selected:(selected?selected+1:0);
+ bool changed=false;
+ if(ImGui::BeginCombo("##frame_multiplier",labels[current])) {
+  for(int i=0;i<7;++i) {
+   if(!includeGame&&i==1)continue;
+   ImGui::BeginDisabled(i==0&&!CanApplyFixedOff());
+   if(ImGui::Selectable(labels[i],i==current)){selected=includeGame?i:(i?i-1:0);changed=true;}
+   ImGui::EndDisabled();
+  }
+  ImGui::EndCombo();
+ }
+ return changed;
+}
 bool DrawFixedMultiplier(int* multiplier) {
  if(!multiplier)return false;
  int selected=live::fixed_enabled.load() ? (*multiplier==0?1:*multiplier) : 0;
- if(!ImGui::Combo("##frame_multiplier", &selected, "关闭\0跟随游戏设置\0" "2x\0" "3x\0" "4x\0" "5x\0" "6x\0"))return false;
+ if(!FixedChoiceCombo(selected,true))return false;
  const bool changed=SaveFixedChoice(selected,multiplier);
  RetryForUserChoice();
  return changed;
@@ -149,7 +171,7 @@ void ConfigureFrameMode(int mode,bool activate) {
 bool DrawFixedDerived(int* multiplier) {
  if(!multiplier)return false;
  int selected=live::fixed_enabled.load()?((*multiplier>=2&&*multiplier<=6)?*multiplier-1:3):0;
- if(!ImGui::Combo("##frame_multiplier",&selected,"关闭\0" "2x\0" "3x\0" "4x\0" "5x\0" "6x\0"))return false;
+ if(!FixedChoiceCombo(selected,false))return false;
  const bool changed=SaveFixedChoice(selected==0?0:selected+1,multiplier);
  RetryForUserChoice();return changed;
 }

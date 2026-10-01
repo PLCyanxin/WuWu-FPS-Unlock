@@ -8,6 +8,20 @@ public sealed record RollbackBackup(string Directory);
 /// <summary>Read-only discovery. The independent updater revalidates before any restore.</summary>
 public static class RollbackBackupCatalog
 {
+    public static string? FindInterrupted(string installation)
+    {
+        string root=Path.TrimEndingDirectorySeparator(Path.GetFullPath(installation));NoLinks(root);
+        foreach(string backup in System.IO.Directory.EnumerateDirectories(root,"update-backup-*",SearchOption.TopDirectoryOnly))
+        {
+            string journal=Scoped(backup,"transaction.json");
+            if(!File.Exists(journal))continue;
+            var record=DurableJson.Read<JsonElement>(journal);
+            if(record.GetProperty("Schema").GetInt32()!=1||!Path.GetFullPath(record.GetProperty("Root").GetString()!).Equals(root,StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException("更新事务归属不符，请检查备份记录。");
+            if(record.GetProperty("Phase").GetString() is "Applying" or "Recovering")return backup;
+        }
+        return null;
+    }
     public static RollbackBackup? Find(string installation, CancellationToken cancellation = default)
     {
         var root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(installation));
@@ -35,8 +49,7 @@ public static class RollbackBackupCatalog
         if (File.Exists(marker) || System.IO.Directory.Exists(marker)) return false;
         string manifest = Scoped(backup, "snapshot.json");
         if (new FileInfo(manifest).Length > 16 * 1024 * 1024) throw new InvalidDataException("备份清单过大。");
-        byte[] bytes = File.ReadAllBytes(manifest);
-        if (!Convert.ToHexString(SHA256.HashData(bytes)).Equals(File.ReadAllText(Scoped(backup, "snapshot.sha256")).Trim(), StringComparison.OrdinalIgnoreCase)) return false;
+        byte[] bytes = ReadMetadata(backup);
         using var json = JsonDocument.Parse(bytes);
         var value = json.RootElement;
         return value.GetProperty("Schema").GetInt32() == 1
@@ -54,9 +67,7 @@ public static class RollbackBackupCatalog
         if (File.Exists(marker) || System.IO.Directory.Exists(marker)) throw new InvalidDataException("此版本已经回退。");
         string manifest = Scoped(backup, "snapshot.json");
         if (new FileInfo(manifest).Length > 16 * 1024 * 1024) throw new InvalidDataException("备份清单过大。");
-        byte[] bytes = File.ReadAllBytes(manifest);
-        string digest = File.ReadAllText(Scoped(backup, "snapshot.sha256")).Trim();
-        if (!Convert.ToHexString(SHA256.HashData(bytes)).Equals(digest, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("备份清单损坏。");
+        byte[] bytes = ReadMetadata(backup);
         using var json = JsonDocument.Parse(bytes);
         var value = json.RootElement;
         if (value.GetProperty("Schema").GetInt32() != 1 || !value.GetProperty("Complete").GetBoolean()
@@ -94,6 +105,14 @@ public static class RollbackBackupCatalog
     private static bool SnapshotPath(string relative) => !relative.Contains('\\') && (!relative.Contains('/')
         ? !relative.Equals("WuWaUpdater.exe", StringComparison.OrdinalIgnoreCase) && new[] { ".exe", ".dll", ".json", ".config", ".pdb", ".ico", ".ini", ".txt", ".md" }.Contains(Path.GetExtension(relative), StringComparer.OrdinalIgnoreCase)
         : new[] { "components", "payload", "licenses", "data" }.Any(d => relative.StartsWith(d + "/", StringComparison.OrdinalIgnoreCase)));
+    private static byte[] ReadMetadata(string backup)
+    {
+        string durable=Scoped(backup,"snapshot.state.json");
+        if(File.Exists(durable))return JsonSerializer.SerializeToUtf8Bytes(DurableJson.Read<JsonElement>(durable));
+        byte[] bytes=File.ReadAllBytes(Scoped(backup,"snapshot.json"));
+        if(!Convert.ToHexString(SHA256.HashData(bytes)).Equals(File.ReadAllText(Scoped(backup,"snapshot.sha256")).Trim(),StringComparison.OrdinalIgnoreCase))throw new InvalidDataException("备份清单损坏。");
+        return bytes;
+    }
     private static string Scoped(string root, string relative)
     {
         if (string.IsNullOrWhiteSpace(relative) || relative.Contains('\\') || relative.Contains(':') || Path.IsPathRooted(relative)

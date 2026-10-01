@@ -25,6 +25,16 @@ try{
  Check(service.Inspect(settings,new ReShadeSpec{ProxyApi=""}).State=="Conflict","missing API is not guessed");
  var manifest=new PayloadManifest{PackageId="fixture",ReShade=spec,Files=[new(){Source="unused",Target="renodx-mfgunlock.addon64",Kind=PayloadKind.Addon,Anchor=TargetAnchor.AddonDir}]};JsonFiles.Save(settings.PackageManifest,manifest);
  Check(service.Inspect(settings).State=="Reusable","overview obtains API from selected manifest");
+ File.WriteAllText(ini,"[ADDON] ; inline comment\nAddonPath=addons,,shared\n");
+ Check(service.Inspect(settings,spec).AddonDirectory==Path.Combine(root,"addons,shared"),"escaped comma addon path matches ReShade value semantics");
+ string alternate=Path.Combine(root,"dxgi.ini");File.WriteAllText(alternate,"[USER]\nLegacy=1\n");
+ Check(service.Inspect(settings,spec).Ini==ini&&File.ReadAllText(alternate).Contains("Legacy=1"),"coexisting legacy proxy INI is preserved and global ReShade.ini selected");
+ File.Delete(ini);Check(service.Inspect(settings,spec).State=="Conflict","legacy proxy INI alone is refused before automatic writes");
+ File.WriteAllBytes(ini,originalIni);
+ string? originalOverride=Environment.GetEnvironmentVariable("RESHADE_BASE_PATH_OVERRIDE");
+ try{Environment.SetEnvironmentVariable("RESHADE_BASE_PATH_OVERRIDE",Path.Combine(root,"external"));Check(service.Inspect(settings,spec).State=="Conflict","environment global config redirection stops automatic writes");}
+ finally{Environment.SetEnvironmentVariable("RESHADE_BASE_PATH_OVERRIDE",originalOverride);}
+ File.Delete(alternate);
  File.Move(correct,Path.Combine(root,"d3d12.dll"));Check(service.Inspect(settings).State=="Conflict","overview rejects different proxy via manifest");
  Check(service.Inspect(settings,new ReShadeSpec{ProxyApi="d3d12"}).State=="Reusable","explicit matching d3d12 specification remains supported");
  File.WriteAllText(Path.Combine(root,"dxgi.dll"),"unknown proxy");Check(service.Inspect(settings,spec).State=="Conflict","unknown proxy still blocks");

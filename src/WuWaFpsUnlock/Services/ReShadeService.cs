@@ -34,8 +34,12 @@ public sealed class ReShadeService(Action<string> log)
                 return new("Conflict",proxy,Path.Combine(dir,"ReShade.ini"),dir,$"已有 ReShade 代理 {Path.GetFileName(proxy)} 与文件包要求的 {required} 不一致；已保留原文件、配置和滤镜，未自动覆盖或复用。请先确认该游戏的正确安装方式。");
         }
         string standard=Path.Combine(dir,"ReShade.ini"),alternate=proxy is null?standard:Path.ChangeExtension(proxy,".ini");
-        if(File.Exists(standard)&&alternate!=standard&&File.Exists(alternate))return new("Conflict",proxy,standard,dir,"存在 ReShade.ini 与代理同名 INI，配置位置有歧义；未修改。");
-        string ini=File.Exists(alternate)?alternate:standard;
+        // nullptr addon configuration always uses ReShade.ini for the supported runtime.
+        // A legacy proxy-named INI is preserved; never silently treat it as the global config.
+        if(!File.Exists(standard)&&alternate!=standard&&File.Exists(alternate))return new("Conflict",proxy,standard,dir,"仅检测到旧版代理同名 INI。ReShade 6.8 使用 ReShade.ini；请先确认并迁移配置，原文件保持不变。");
+        string ini=standard;
+        if(!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("RESHADE_BASE_PATH_OVERRIDE")))
+            return new("Conflict",proxy,ini,dir,"检测到 RESHADE_BASE_PATH_OVERRIDE 环境重定向；保留共享安装并停止自动写入。请先明确游戏实际使用的 ReShade 配置位置。");
         SafePaths.EnsureNoLinks(s.GameRoot,ini);
         string addon=dir;
         if(File.Exists(ini))
@@ -43,7 +47,7 @@ public sealed class ReShadeService(Action<string> log)
             var document=IniDocument.Load(ini);
             if(!string.IsNullOrWhiteSpace(document.Get("INSTALL","BasePath")))
                 return new("Conflict",proxy,ini,dir,"ReShade 配置含安装重定向 BasePath；保留原安装并停止自动写入。");
-            string? custom=document.Get("ADDON","AddonPath");
+            string? custom=ReShadeValues.Scalar(document.Get("ADDON","AddonPath"));
             if(!string.IsNullOrWhiteSpace(custom))
             {
                 addon=Path.GetFullPath(Path.IsPathRooted(custom)?custom:Path.Combine(dir,custom));

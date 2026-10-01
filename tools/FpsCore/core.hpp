@@ -53,6 +53,7 @@ template<class Read> SearchResult FindSecond(uintptr_t start,Read read,uintptr_t
 }
 template<class Read,class Write> bool Maintain(uintptr_t address,int target,Read read,Write write,bool& changed) {
  float current;changed=false;if(!read(address,current))return false;
+ if(target<kMinFps||target>kMaxFps||!std::isfinite(current)||current<kMinFps||current>kMaxFps)return false;
  if(current==static_cast<float>(target))return true;
  changed=write(address,static_cast<float>(target));return changed;
 }

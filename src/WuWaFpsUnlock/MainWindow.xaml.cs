@@ -18,7 +18,7 @@ public partial class MainWindow:Window
         vm.UpdateExitRequested+=ExitForUpdate;
         Width=Math.Min(Width,SystemParameters.WorkArea.Width-36);Height=Math.Min(Height,SystemParameters.WorkArea.Height-36);
         Closing+=OnClosing;Closed+=async(_,_)=>{_tray?.Dispose();_trayIcon?.Dispose();vm.ObserveResourceTiers(false);await vm.CloseAsync();};
-        Loaded+=async(_,_)=>{await vm.RefreshResourceTiersAsync();var predownload=vm.CheckOfficialPredownloadOnStartupAsync();try{await vm.RefreshAsync();}catch(Exception e){vm.ReportError(e);}await predownload;if(StartupCompleted is { } completed){StartupCompleted=null;completed();} else await vm.CheckForUpdatesOnStartupAsync();};
+        Loaded+=async(_,_)=>{try{await vm.RefreshResourceTiersAsync();}catch(Exception e){vm.Log("包体档位检查失败："+e.Message);}var predownload=vm.CheckOfficialPredownloadOnStartupAsync();try{await vm.RefreshAsync();}catch(Exception e){vm.ReportError(e);}try{await predownload;}catch(Exception e){vm.Log("官方启动器检查失败："+e.Message);}if(StartupCompleted is { } completed){StartupCompleted=null;completed();} else await vm.CheckForUpdatesOnStartupAsync();};
     }
     private void ResourceTier_Opened(object sender,EventArgs e)=>_vm.ObserveResourceTiers(true);
     private void ResourceTier_Closed(object sender,EventArgs e)=>_vm.ObserveResourceTiers(false);

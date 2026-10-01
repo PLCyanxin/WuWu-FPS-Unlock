@@ -62,7 +62,7 @@ public static class DeploymentIntegrity
                 string? current = ini.Get(edit.Section, edit.Key);
                 bool csv = edit.Section.Equals("ADDON", StringComparison.OrdinalIgnoreCase) && edit.Key.Equals("LoadFromDllMain", StringComparison.OrdinalIgnoreCase);
                 bool matches = csv
-                    ? edit.Written.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).All((current ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToHashSet(StringComparer.OrdinalIgnoreCase).Contains)
+                    ? ReShadeValues.Decode(edit.Written).All(ReShadeValues.Decode(current).ToHashSet(StringComparer.OrdinalIgnoreCase).Contains)
                     : string.Equals(current, edit.Written, StringComparison.Ordinal);
                 if (!matches)
                 {

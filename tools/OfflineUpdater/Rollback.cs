@@ -77,8 +77,11 @@ internal static partial class Program
         return path;
     }
 
-    static void WriteSnapshot(string backup, Snapshot snapshot)
+    static void WriteSnapshot(string backup, Snapshot snapshot, Action? committed = null)
     {
+        WuWaFpsUnlock.Core.DurableJson.Save(Scoped(backup,"snapshot.state.json"),snapshot);
+        committed?.Invoke();
+        SnapshotStateCheckpoint(snapshot.Complete);
         byte[] bytes = JsonSerializer.SerializeToUtf8Bytes(snapshot, JsonOptions);
         File.WriteAllBytes(Scoped(backup, "snapshot.json"), bytes);
         File.WriteAllText(Scoped(backup, "snapshot.sha256"), Convert.ToHexString(SHA256.HashData(bytes)), Encoding.ASCII);
@@ -86,6 +89,11 @@ internal static partial class Program
 
     static Snapshot ReadSnapshot(string backup)
     {
+        if(File.Exists(Scoped(backup,"snapshot.state.json")))
+        {
+            var durable=WuWaFpsUnlock.Core.DurableJson.Read<Snapshot>(Scoped(backup,"snapshot.state.json"));
+            ValidateSnapshot(backup,durable);return durable;
+        }
         byte[] bytes = File.ReadAllBytes(Scoped(backup, "snapshot.json"));
         if (Convert.ToHexString(SHA256.HashData(bytes)) != File.ReadAllText(Scoped(backup, "snapshot.sha256")).Trim())
             throw new InvalidDataException("备份清单已损坏，未写入任何安装文件。");
@@ -136,6 +144,7 @@ internal static partial class Program
             CopyFromHandle(input, Scoped(backup, "WuWaUpdater.exe"), Hash(input));
         const string local = "@echo off\r\n\"%~dp0WuWaUpdater.exe\" --rollback \"%~dp0.\"\r\n";
         File.WriteAllText(Scoped(backup, "rollback.cmd"), local, Encoding.ASCII);
+        File.WriteAllText(Scoped(backup,"恢复.cmd"),"@echo off\r\n\"%~dp0WuWaUpdater.exe\" --recover \"%~dp0.\"\r\n",Encoding.ASCII);
         string relative = Path.GetRelativePath(updaterDirectory, backup);
         // Backup names and parent components are generated ASCII; never interpolate user paths.
         if (relative.Any(c => c > 127 || c is '"' or '%' or '\r' or '\n')) throw new IOException("无法生成相对回退入口。");
@@ -153,9 +162,11 @@ internal static partial class Program
         ProductVersion(exe);
         ProductVersion(Scoped(backup, "snapshot/WuWaFpsUnlock.exe"));
         RejectRunning(exe);
+        RequireGameStopped();
         Console.WriteLine("回退安装目录：" + snapshot.Root + "\n恢复更新前程序和材料；保留当前 data 配置及部署记录，之后需要重新部署。");
-        RestoreSnapshot(backup, snapshot, () => RejectRunning(exe), completed:()=>MarkRollbackCompleted(backup));
+        RestoreSnapshot(backup, snapshot, () => { RejectRunning(exe); RequireGameStopped(); }, completed:()=>MarkRollbackCompleted(backup));
         RefreshDesktopShortcut(snapshot.Root);
+        PruneCompletedRollbackAttempts(snapshot.Root);
         Console.WriteLine("回退完成，此备份不能再次回退。程序与材料已恢复更新前状态；当前配置、部署记录和后来新增的其他文件已保留。\n请打开启动器，在设置中重新部署一次");
         return 0;
     }
@@ -191,6 +202,7 @@ internal static partial class Program
             NoLinks(transaction); Directory.CreateDirectory(transaction);
             foreach (var operation in operations)
             {
+                beforeWrites();
                 if (operation.Current is not null)
                     CopyFromHandle(operation.Current, Scoped(transaction, "before/" + operation.Relative), operation.Before!);
                 if (operation.Source is not null)
@@ -203,6 +215,7 @@ internal static partial class Program
             beforeWrites();
             foreach (var operation in operations)
             {
+                beforeWrites();
                 operation.Current?.Dispose();
                 EnsureUnchanged(operation.Target, operation.Before);
                 NoLinks(operation.Target);
@@ -221,6 +234,8 @@ internal static partial class Program
             foreach (string directory in snapshot.Directories.Where(d => !d.Equals("data", StringComparison.OrdinalIgnoreCase) && !d.StartsWith("data/", StringComparison.OrdinalIgnoreCase)))
                 Directory.CreateDirectory(Scoped(snapshot.Root, directory));
             completed?.Invoke();
+            try{MarkAttemptComplete(snapshot.Root,transaction,operations);}
+            catch(Exception error){Console.WriteLine("回退已完成；事务证据完成记录未保存，目录已保留："+error.Message);}
         }
         catch
         {
@@ -230,6 +245,7 @@ internal static partial class Program
             {
                 try
                 {
+                    beforeWrites();
                     EnsureUnchanged(operation.Target, operation.Desired);
                     if (operation.Before is null) File.Delete(operation.Target);
                     else

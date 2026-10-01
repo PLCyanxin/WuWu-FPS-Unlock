@@ -19,10 +19,12 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     public event Action? LaunchFailed;
     private bool _closing;
     private bool _gameExitPending, _completingGameExit;
+    private bool _sessionReady;
     private Task _sessionCleanup=Task.CompletedTask;
     private readonly RestartController _restart=new();
     private FpsSession? _fpsSession;
     private UserSettings _settings;
+    private UserSettings _savedSettings;
     private HardwareInfo _hardware=HardwareInfo.Unknown;
     private bool _busy,_running,_starting,_validFps=true;
     private string _status="请先在设置中确认游戏路径。",_logs="",_fpsInput="240",_reShade="未设置游戏路径",_deployState="未检测",_packageState="";
@@ -51,6 +53,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         catch(Exception e){_settings=new();Log("设置文件无法读取，保留原文件且载入空设置："+e.Message);}
         _settings.PackageManifest=PackageManifestLocation.Resolve(_settings.PackageManifest,AppPaths.Base);
         if(_settings.TargetFps is <30 or >420)_settings.TargetFps=240;
+        _savedSettings=_settings.Clone();
         _fpsInput=_settings.TargetFps.ToString(CultureInfo.InvariantCulture);
         OpenSettingsCommand=new(()=>SettingsRequested?.Invoke(),()=>!Busy);
         BrowseDirectoryCommand=new(BrowseRoot,()=>!Busy&&!IsGameRunning);
@@ -62,7 +65,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         RefreshCommand=new(RefreshAsync,()=>!Busy&&!_refreshing,ReportError);
         DeployCommand=new(DeployAsync,()=>!Busy&&!IsGameRunning,ReportError);
         CleanCommand=new(CleanAsync,()=>!Busy&&!IsGameRunning,ReportError);
-        StartCommand=new(StartAsync,()=>!Busy&&_validFps,ReportError);
+        StartCommand=new(StartAsync,()=>!Busy&&(!FpsEnabled||_validFps),ReportError);
         InitializeUpdates();
         _monitor.Tick+=Monitor;
         RememberValidSelection();
@@ -73,7 +76,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     public bool CanChangeFpsMode=>!Busy;
     public bool CanEditFps=>!Busy&&FpsEnabled;
     public bool CanEditSettings=>!Busy&&!IsGameRunning;
-    public bool FpsEnabled {get=>_settings.FpsEnabled;set{if(!CanChangeFpsMode)return;_settings.FpsEnabled=value;Save();Status="FPS 开关下次启动生效";NotifyAll();}}
+    public bool FpsEnabled {get=>_settings.FpsEnabled;set{if(!CanChangeFpsMode)return;_settings.FpsEnabled=value;if(Save())Status="FPS 开关下次启动生效";NotifyAll();}}
     public bool MfgSelected {get=>_settings.MfgSelected;set{if(!CanEditSettings)return;_settings.MfgSelected=value;Save();NotifyAll();}}
     public int ResourceTierIndex
     {
@@ -82,7 +85,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         {
             if (Busy || value is < 0 or > 2) return;
             _settings.ResourceTier = value switch { 0 => "uhd", 1 => "hd", _ => "sd" };
-            Save(); Notify(nameof(ResourceTierIndex)); Status = "包体档位已保存，下次启动游戏生效";
+            if(Save()) Status = "包体档位已保存，下次启动游戏生效"; Notify(nameof(ResourceTierIndex));
         }
     }
     public int TargetFps
@@ -91,7 +94,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         set
         {
             value=Math.Clamp(value,30,420);if(_settings.TargetFps==value&&_validFps)return;
-            _settings.TargetFps=value;_fpsInput=value.ToString(CultureInfo.InvariantCulture);_validFps=true;Save();NotifyAll();Status="FPS 设置已保存 · 下次启动生效";
+            _settings.TargetFps=value;_fpsInput=value.ToString(CultureInfo.InvariantCulture);_validFps=true;if(Save())Status="FPS 设置已保存 · 下次启动生效";NotifyAll();
         }
     }
     public string FpsInput
@@ -100,7 +103,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         set
         {
             _fpsInput=value;
-            if(int.TryParse(value,NumberStyles.Integer,CultureInfo.InvariantCulture,out int fps)&&fps is >=30 and <=420){_settings.TargetFps=fps;_validFps=true;Save();Status="FPS 设置已保存 · 下次启动生效";}
+            if(int.TryParse(value,NumberStyles.Integer,CultureInfo.InvariantCulture,out int fps)&&fps is >=30 and <=420){_settings.TargetFps=fps;_validFps=true;if(Save())Status="FPS 设置已保存 · 下次启动生效";}
             else{_validFps=false;Status="目标 FPS 必须是 30–420 的整数；无效值没有保存。";}
             NotifyAll();
         }
@@ -151,7 +154,15 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     {
         Status=e is OperationCanceledException?e.Message:"操作未完成："+e.Message;Log(Status);NotifyAll();
     }
-    private void Save(){try{JsonFiles.Save(AppPaths.Settings,_settings);}catch(Exception e){Status="设置未能保存："+e.Message;Log(Status);}}
+    private bool Save()
+    {
+        try{JsonFiles.Save(AppPaths.Settings,_settings);_savedSettings=_settings.Clone();return true;}
+        catch(Exception e)
+        {
+            _settings=_savedSettings.Clone();_fpsInput=_settings.TargetFps.ToString(CultureInfo.InvariantCulture);_validFps=true;
+            Status="设置未能保存："+e.Message;Log(Status);NotifyAll();return false;
+        }
+    }
     private void Notify([CallerMemberName]string? name=null)=>PropertyChanged?.Invoke(this,new(name));
     private void NotifyAll()
     {
@@ -234,7 +245,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         if(!MfgSelected){Status=FpsEnabled?"FPS 解锁无需部署，点击开始游戏即可。":"未选择多帧生成，无需部署。";Log(Status);return;}
         GameProcesses.ValidateExe(_settings);
         var materialPath=PackageManifestLocation.Resolve(_settings.PackageManifest,AppPaths.Base);
-        if(materialPath!=_settings.PackageManifest){_settings.PackageManifest=materialPath;Save();Log("已使用当前便携包中的材料清单："+materialPath);}
+        if(materialPath!=_settings.PackageManifest){_settings.PackageManifest=materialPath;if(!Save())return;Log("已使用当前便携包中的材料清单："+materialPath);}
         if(!File.Exists(_settings.PackageManifest))
         {
             Status="启动器部署文件缺失，请完整解压完整版启动器。";
@@ -266,7 +277,20 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
             Status="文件部署及校验完成；MFG 游戏内实际效果待确认。";await RefreshCore();
         }
         catch(IOException e) when(e.Message.StartsWith(GameFileBaselineStore.MissingFilesMessage,StringComparison.Ordinal))
-        {Status=GameFileBaselineStore.MissingFilesMessage;Log(e.Message);MessageBox.Show(Status,"文件缺失",MessageBoxButton.OK,MessageBoxImage.Warning);}
+        {
+            Status=GameFileBaselineStore.MissingFilesMessage;Log(e.Message);
+            if(MessageBox.Show(Status+"。\n\n如果已经完成官方修复，但官方更新移动或移除了旧运行库，可以查看并重建路径记录。是否查看重建计划？",
+                "文件缺失",MessageBoxButton.OKCancel,MessageBoxImage.Warning)==MessageBoxResult.OK)
+            {
+                GameProcesses.RequireStopped(GameRoot);MaterialSafety.RequireOutsideGame(GameRoot,AppPaths.Base);
+                var plan=await BaselineRebuild.PrepareAsync(AppPaths.Baseline(GameExe),AppPaths.Receipt(GameExe),GameRoot,GameExe);
+                if(OperationReview.Show("重建游戏路径记录",plan.Preview))
+                {
+                    string archive=await BaselineRebuild.CommitAsync(plan,()=>GameProcesses.RequireStopped(GameRoot));
+                    Status="路径记录已重建，请再次点击开始部署。";Log(Status+" 原记录："+archive);
+                }
+            }
+        }
         finally{Busy=false;}
     }
     private async Task CleanAsync()
@@ -282,7 +306,8 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
             Status="正在核对部署记录并清除…";
             try{await service.CleanAsync(snapshot);}
             catch(NeedsElevationException){await ElevatedWorker.RunFromUi("clean",snapshot,false,Log,service.ApprovalFingerprint);}
-            _settings.MfgSelected=false;Save();
+            _settings.MfgSelected=false;bool saved=Save();
+            if(!saved){Log("插件已清除，但部署选择未能保存；请检查配置文件权限后关闭多帧生成部署选择。");return;}
             Status=AppPaths.LoadReceipt(snapshot)?.Status=="CleanedWithSkips"?"清除结束，已变化文件或配置已跳过；请查看日志。":"已移除登记且未变化的替换 DLL 和自有插件；ReShade 已按来源记录处理。";
             await RefreshCore();
         }
@@ -322,14 +347,21 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
             {
                 Preflight=async token=>
                 {
+                    if(RollbackBackupCatalog.FindInterrupted(AppPaths.Base) is string interrupted)
+                        throw new IOException("检测到上次更新中断。请关闭启动器，运行备份目录中的恢复.cmd后重试："+interrupted);
                     GameProcesses.ValidateExe(snapshot);
                     resourceTier = snapshot.ResourceTier switch { "uhd" => "-krqlv=uhd", "hd" => "-krqlv=hd", "sd" => "-krqlv=sd", _ => throw new InvalidDataException("请在主页选择包体档位，并在官方启动器完成对应资源下载。") };
                     var tierInfo = (await Task.Run(() => ResourceTierCatalog.Read(snapshot.GameRoot), token)).First(x => x.Tier == snapshot.ResourceTier);
                     if(tierInfo.Status == TierDownloadStatus.Missing)throw new IOException("所选“"+tierInfo.Name+"”包体尚未下载完成，请先在官方启动器下载该档位。");
-                    if(snapshot.TargetFps is <30 or >420)throw new InvalidDataException("目标FPS无效。");
+                    if(snapshot.FpsEnabled && (snapshot.TargetFps is <30 or >420 || !_validFps))throw new InvalidDataException("目标FPS无效。");
                     var receipt=AppPaths.LoadReceipt(snapshot);
-                    if(receipt?.Status is "PartialFailure" or "Installing" or "PartialClean")throw new IOException("部署维护尚未完成，请在设置处理后再开始。");
-                    if(snapshot.MfgSelected&&(receipt is null||receipt.Status.StartsWith("Cleaned")))throw new IOException("已选择多帧生成但尚未部署，请先部署或关闭部署选择。");
+                    if(receipt is not null && (!Path.GetFullPath(receipt.GameRoot).Equals(Path.GetFullPath(snapshot.GameRoot),StringComparison.OrdinalIgnoreCase)||!Path.GetFullPath(receipt.GameExe).Equals(Path.GetFullPath(snapshot.GameExe),StringComparison.OrdinalIgnoreCase)))throw new InvalidDataException("部署记录与所选游戏安装不一致，请检查路径后重新部署。");
+                    await DeploymentLaunchGuard.RequireReadyAsync(receipt,snapshot.MfgSelected,Log,token);
+                    if(receipt is not null&&!string.IsNullOrWhiteSpace(receipt.ProxyPath)&&File.Exists(receipt.ProxyPath))
+                    {
+                        var info=new ReShadeService(Log).Inspect(snapshot,new ReShadeSpec{ProxyApi=Path.GetFileNameWithoutExtension(receipt.ProxyPath)});
+                        if(info.State=="Conflict")throw new IOException(info.Description);
+                    }
                     if(snapshot.FpsEnabled)await BuiltinFpsService.PreflightAsync(token);
                 },
                 ConfirmNotice=(_,token)=>
@@ -345,7 +377,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
                     if(fpsPending)BuiltinFpsService.Acknowledge(snapshot.GameExe);
                     return Task.FromResult(true);
                 },
-                ReleaseOldSession=async _=>{await ReleaseFpsSessionAsync();_game?.Dispose();_game=null;IsGameRunning=false;},
+                ReleaseOldSession=async _=>{await ReleaseFpsSessionAsync();_game?.Dispose();_game=null;_sessionReady=false;_gameExitPending=false;IsGameRunning=false;},
                 Start=(exe,token)=>
                 {
                     token.ThrowIfCancellationRequested();
@@ -353,7 +385,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
                     if(resourceTier is not null){startInfo.ArgumentList.Add(resourceTier);Log("包体启动参数："+resourceTier);}
                     if(snapshot.MfgSelected){startInfo.ArgumentList.Add("-dx12");Log("多帧生成启动参数：-dx12；实际D3D12加载以游戏日志为准。");}
                     var process=LauncherScheduling.StartProcess(startInfo)??throw new IOException("系统未返回游戏进程。");
-                    _game=process;startedThisAttempt=true;IsGameRunning=true;_deferredUpdate.GameStarted();GameStarted?.Invoke();
+                    _game=process;startedThisAttempt=true;_sessionReady=false;IsGameRunning=true;GameStarted?.Invoke();
                     Log($"仅启动所选Shipping一次：{exe}；PID={process.Id}；FPS={(snapshot.FpsEnabled?"ON":"OFF")}；目标={snapshot.TargetFps}");
                     return Task.FromResult(process);
                 },
@@ -369,12 +401,14 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
             },phase=>{Status=phase switch{"Preflight"=>"正在检查路径与组件…","AwaitingNotice"=>"检查首次部署须知…","ReleaseOldSession"=>"释放旧游戏会话…","Stopping"=>"正在结束同一安装的旧游戏…","Rechecking"=>"确认旧实例已退出…","Starting"=>"正在启动游戏…","AttachingFps"=>"等待游戏并连接内置FPS核心…","Cancelled"=>"已取消，未继续启动。",_=>"正在检查游戏状态…"};},TimeSpan.FromSeconds(15),_lifetime.Token);
             if(process is null){Status="已取消须知，未结束或启动游戏。";return;}
             if(!snapshot.FpsEnabled){await BuiltinFpsService.WaitForRendererAsync(process,snapshot.GameExe,_lifetime.Token,Log);GameReady?.Invoke();}
+            _sessionReady=true;_deferredUpdate.GameStarted();
             Status=snapshot.FpsEnabled?"游戏已启动 · 内置FPS已连接，实际效果以游戏为准":"游戏已启动 · FPS关闭";Log(Status);
         }
         catch
         {
             if(startedThisAttempt)
             {
+                _sessionReady=false;_gameExitPending=false;
                 LaunchFailed?.Invoke();
                 try{await ReleaseFpsSessionAsync();}
                 catch(Exception cleanupError){Log("释放失败启动会话失败："+cleanupError.Message);}
@@ -410,12 +444,13 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     {
         bool ownsBusy=!Busy;
         if(ownsBusy)Busy=true;
-        _completingGameExit=true;_gameExitPending=true;IsGameRunning=false;
+        bool completedSession=_sessionReady;_sessionReady=false;
+        _completingGameExit=true;_gameExitPending=completedSession;IsGameRunning=false;
         _updateDialog?.SetGameRunning(false);
         try
         {
             await ReleaseFpsSessionAsync();
-            Status=HasDeferredUpdate?"游戏已退出，准备执行预约更新。":"游戏已退出，启动器即将退出。";Log(Status);
+            Status=!completedSession?"游戏启动未完成，已释放会话，可以重新尝试。":HasDeferredUpdate?"游戏已退出，准备执行预约更新。":"游戏已退出，启动器即将退出。";Log(Status);
         }
         catch(Exception error){Log("释放游戏会话失败："+error.Message);}
         finally{_completingGameExit=false;if(ownsBusy)Busy=false;}

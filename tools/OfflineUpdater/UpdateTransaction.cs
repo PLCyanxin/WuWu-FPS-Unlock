@@ -14,6 +14,7 @@ internal static partial class Program
         // Never hard-link an active installation or maintain a second original copy.
         // Capture failure precedes every target write, so it requires no restoration.
         var snapshot = CaptureSnapshot(root, backup, updaterDirectory, entries);
+        WriteUpdateJournal(backup,"Prepared");
         foreach (var entry in entries)
             if (entry.OldHash is not null)
             {
@@ -24,7 +25,7 @@ internal static partial class Program
         return snapshot;
     }
 
-    static void ApplyUpdateEntries(List<Entry> entries, Action<int>? afterWrite = null)
+    static void ApplyUpdateEntries(List<Entry> entries, Action<int>? afterWrite = null, string? backup = null, Action? beforeWrite = null)
     {
         int appliedCount = 0;
         foreach (var entry in entries)
@@ -34,22 +35,27 @@ internal static partial class Program
             entry.TargetHandle?.Dispose();
             // Windows replacement needs the destination handle closed; recheck immediately.
             EnsureUnchanged(entry.Target, entry.OldHash);
+            beforeWrite?.Invoke();
+            if(backup is not null)WriteUpdateJournal(backup,"Applying",entry.Relative);
             if (entry.OldHash is null) File.Move(entry.Staged!, entry.Target, false);
             else File.Replace(entry.Staged!, entry.Target, null);
+            ++appliedCount;
+            UpdateCommitCheckpoint(appliedCount);
             entry.Applied = true;
             EnsureUnchanged(entry.Target, entry.NewHash);
             Console.WriteLine("已更新：" + entry.Relative);
-            afterWrite?.Invoke(++appliedCount);
+            afterWrite?.Invoke(appliedCount);
         }
     }
 
-    static bool RestoreFailedUpdate(List<Entry> entries, string? backup, Action? afterRestoreStaged = null)
+    static bool RestoreFailedUpdate(List<Entry> entries, string? backup, Action? afterRestoreStaged = null, Action? requireStopped = null)
     {
         bool restored = true;
         foreach (var entry in entries.Where(e => e.Applied).Reverse())
         {
             try
             {
+                requireStopped?.Invoke();
                 NoLinks(entry.Target);
                 EnsureUnchanged(entry.Target, entry.NewHash);
                 if (entry.Backup is null) File.Delete(entry.Target);
@@ -60,6 +66,8 @@ internal static partial class Program
                     using var original = new FileStream(entry.Backup, FileMode.Open, FileAccess.Read, FileShare.Read);
                     CopyFromHandle(original, restore, entry.OldHash!);
                     afterRestoreStaged?.Invoke();
+                    requireStopped?.Invoke();
+                    EnsureUnchanged(entry.Target, entry.NewHash);
                     File.Replace(restore, entry.Target, null);
                     EnsureUnchanged(entry.Target, entry.OldHash);
                 }

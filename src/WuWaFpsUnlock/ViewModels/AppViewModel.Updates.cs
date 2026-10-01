@@ -61,6 +61,11 @@ public sealed partial class AppViewModel
         RollbackStatus = "正在核对回退备份…"; RollbackVersionCommand.Refresh();
         try
         {
+            if(await Task.Run(()=>RollbackBackupCatalog.FindInterrupted(AppPaths.Base)) is string interrupted)
+            {
+                RollbackStatus="上次更新中断，请先关闭启动器并运行备份目录中的恢复.cmd："+interrupted;
+                Log(RollbackStatus);return;
+            }
             var backup = await Task.Run(() => RollbackBackupCatalog.Find(AppPaths.Base, _lifetime.Token));
             if (!_closing) { _rollbackBackup = backup; RollbackStatus = backup is null ? "没有可用备份，或此更新已经回退" : "可恢复更新前版本；保留部署记录，回退后请重新部署"; }
         }
@@ -234,6 +239,7 @@ public sealed partial class AppViewModel
         change(candidate);
         JsonFiles.Save(AppPaths.Settings, candidate);
         _settings = candidate; // Commit in-memory state only after durable write succeeds.
+        _savedSettings = candidate.Clone();
     }
     private void CancelUpdateWork()
     {

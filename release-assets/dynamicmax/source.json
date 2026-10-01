@@ -1,8 +1,8 @@
 {
   "file": "wuwa-dynamicmax.addon64",
   "version": "1.0.0",
-  "length": 202240,
-  "sha256": "236e841436b1baf6ac097e0292a822e7a1edadbc637b7a22895d2fd07e48f950",
+  "length": 203776,
+  "sha256": "f4a654a70fc3f7cbcea9c200951878d3140ac692cbba4e1db3bc9a9a58f070d5",
   "source": "tools/DynamicController",
   "license": "MIT",
   "buildScript": "tools/DynamicController/Build.ps1",
@@ -13,14 +13,54 @@
     "imgui": "3912b3d9a9c1b3f17431aebafd86d2f40ee6e59c"
   },
   "validation": {
-    "scope": "Native isolated fixtures and reference runtime read as data only",
-    "configurationApiAssertions": 65,
+    "scope": "Native isolated fixtures; no game or runtime GPU validation",
+    "configurationApiAssertions": 67,
     "gameIntegration": "Not yet tested",
-    "runtimeFixtureAssertions": 216,
+    "runtimeFixtureAssertions": 183,
     "nativeCursorIsolatedAssertions": 15,
     "nativeCursorOwnershipAssertions": 375,
     "frameStatus": "Enabled-mode status published only after native validation acceptance; native Off false preserved. Isolated rejection and choice-race fixtures passed.",
-    "unifiedModeAssertions": 15
+    "unifiedModeAssertions": 15,
+    "fixedOffCapability": "Off requires an installed, enabled and valid native hook; unsupported and guard-failed fixtures preserve the saved choice."
   },
-  "uiBridge": "ConfigureWuWaFrameModeV1; Dynamic derived V3 and Fixed derived V2; legacy exports retained"
+  "uiBridge": "ConfigureWuWaFrameModeV1; Dynamic derived V3 and Fixed derived V2; legacy exports retained",
+  "sourceFiles": [
+    {
+      "path": "tools/DynamicController/addon.cpp",
+      "sha256": "88df9cdb2b3bd00d72061b828f0069c132c7e9fb20753e313ab4bdc2426b57bb"
+    },
+    {
+      "path": "tools/DynamicController/addon.rc",
+      "sha256": "1180a69802e483a61bcd879c195eb76ff6e35f7d4e2e8972af4fc0d450aebc2c"
+    },
+    {
+      "path": "tools/DynamicController/Build.ps1",
+      "sha256": "b176f01de3b14c194dc231ca86d4a1f3da17ed576e7334f21b6314b0318b8cd9"
+    },
+    {
+      "path": "tools/DynamicController/cursor_hooks.hpp",
+      "sha256": "ef8df95ab27cd1af7948e9cf7e268391808863defe56eae4f9ae81965431b6c3"
+    },
+    {
+      "path": "tools/DynamicController/dynamiclive.hpp",
+      "sha256": "b63edd82158b1300ca8c6dcd208ea23f4bdde9e7084bc4af3512a73695bf0b46"
+    },
+    {
+      "path": "tools/DynamicController/dynamiclive_anchors.inc",
+      "sha256": "745111287f819b60f2c2aff6b04de688518577588e731fa7d95ce10c0f2b26e5"
+    },
+    {
+      "path": "tools/DynamicController/dynamiclive_config.hpp",
+      "sha256": "c67f30a60a7a96a46a1de68e81d30c79dface38bdf78740ded5be7c24544363a"
+    },
+    {
+      "path": "tools/DynamicController/menu_docking.hpp",
+      "sha256": "c5cdc01a093586fa968d632032132b7c5eac1304ee1ffcaaf2b2994b8a5c450c"
+    },
+    {
+      "path": "tools/DynamicController/native_cursor.hpp",
+      "sha256": "dc0714916fa0cea86f21efe595a339b33e8090464c6d48dde471f2cfe6a306b3"
+    }
+  ],
+  "sourceHashEncoding": "UTF-8 with normalized LF"
 }

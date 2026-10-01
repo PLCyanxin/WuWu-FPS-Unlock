@@ -14,8 +14,8 @@ public partial class App:Application
         {
             try{Shutdown(await ElevatedWorker.Execute(e.Args[1]));}catch{Shutdown(1);}return;
         }
-        _singleInstance=new Mutex(true,@"Local\WuWaFPSUnlock_0_9",out bool created);
-        if(!created){await SingleInstanceActivation.RequestAsync();if(e.Args.Contains("--update-completed"))MessageBox.Show("更新完成，请点击重新部署。\n已有启动器窗口正在运行，请打开更新后安装目录的启动器设置。","更新完成",MessageBoxButton.OK,MessageBoxImage.Information,MessageBoxResult.OK,MessageBoxOptions.DefaultDesktopOnly);Shutdown();return;}
+        _singleInstance=new Mutex(true,SingleInstanceActivation.MutexName,out bool created);
+        if(!created){bool restored=await SingleInstanceActivation.RequestAsync();if(e.Args.Contains("--update-completed"))MessageBox.Show("更新完成，请点击重新部署。\n已有启动器窗口正在运行，请打开更新后安装目录的启动器设置。","更新完成",MessageBoxButton.OK,MessageBoxImage.Information,MessageBoxResult.OK,MessageBoxOptions.DefaultDesktopOnly);else if(!restored)MessageBox.Show("启动器已经运行，但暂时无法唤醒窗口。请双击通知区中的启动器图标，或从托盘菜单选择显示启动器。","启动器已运行",MessageBoxButton.OK,MessageBoxImage.Information);Shutdown();return;}
         try{
             LauncherScheduling.Initialize();
             Activated+=(_,_)=>LauncherScheduling.SetBackground(false);
@@ -28,7 +28,8 @@ public partial class App:Application
                 vm.Log("更新完成，请点击重新部署。");
                 MessageBox.Show(MainWindow.OwnedWindows.OfType<SettingsWindow>().FirstOrDefault() ?? MainWindow,"更新完成，请点击重新部署。","更新完成",MessageBoxButton.OK,MessageBoxImage.Information);
             };
-            _activation=new SingleInstanceActivation(()=>Dispatcher.BeginInvoke(new Action(()=>((MainWindow)MainWindow).RestoreExistingInstance())));
+            _activation=new SingleInstanceActivation(()=>Dispatcher.BeginInvoke(new Action(()=>((MainWindow)MainWindow).RestoreExistingInstance())),
+                report:message=>Dispatcher.BeginInvoke(new Action(()=>vm.Log(message))));
             MainWindow.Show();
         }
         catch(Exception ex){try{Directory.CreateDirectory(AppPaths.Data);File.WriteAllText(Path.Combine(AppPaths.Data,"startup-error.log"),ex.ToString());}catch{} MessageBox.Show("无法启动："+ex.GetBaseException().Message+"\n详细记录：data/startup-error.log","启动失败",MessageBoxButton.OK,MessageBoxImage.Error);Shutdown(1);}

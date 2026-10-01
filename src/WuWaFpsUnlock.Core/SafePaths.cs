@@ -81,6 +81,7 @@ public static class PackageReader
     public static async Task<List<PlannedFile>> PlanAsync(PayloadManifest m, string manifestPath, string gameRoot, string exeDir, string addonDir, CancellationToken token = default)
     {
         string sourceRoot = Path.GetDirectoryName(Path.GetFullPath(manifestPath))!;
+        MaterialSafety.RequireOutsideGame(gameRoot, sourceRoot);
         var list = new List<PlannedFile>(); var destinations = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var vendorNames = m.Files.Where(f => f.Kind == PayloadKind.Vendor)
             .Select(f => Path.GetFileName(f.Target.Replace('\\', '/'))).ToArray();
@@ -101,6 +102,7 @@ public static class PackageReader
             foreach (var target in targets)
             {
                 SafePaths.EnsureInside(gameRoot, target); SafePaths.EnsureNoLinks(gameRoot, target);
+                MaterialSafety.RequireDifferentFiles(source, target);
                 if (!destinations.Add(target)) throw new InvalidDataException("重复写入目标：" + target);
                 list.Add(new(source, target, actual.Sha256, actual.Size, f.Kind,
                     File.Exists(target) ? await SafePaths.HashAsync(target, token) : null));

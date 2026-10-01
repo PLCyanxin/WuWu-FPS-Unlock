@@ -32,5 +32,6 @@ public static class PackageManifestLocation
         if (missing.Length > 0)
             throw new FileNotFoundException("启动器部署材料不完整，缺少以下文件：\n" + string.Join("\n", missing) +
                 "\n请重新完整解压完整版启动器；仅更换游戏路径或安装更新包无法补齐这些材料。");
+        foreach (var file in manifest.Files) MaterialSafety.RequireX64Dll(SafePaths.Under(root, file.Source));
     }
 }

@@ -16,7 +16,7 @@ public sealed record ResourceTierInfo(string Tier, TierDownloadStatus Status)
 public static class ResourceTierCatalog
 {
     public static readonly string[] Tiers = ["uhd", "hd", "sd"];
-    public static ResourceTierInfo[] Read(string root, Func<string, bool>? hasRecentWrite = null)
+    public static ResourceTierInfo[] Read(string root, Func<string, bool>? hasRecentWrite = null, Action<string>? log = null)
     {
         try
         {
@@ -28,8 +28,8 @@ public static class ResourceTierCatalog
             if (!installed.RootElement.TryGetProperty("bundles", out var bundles)) return Unknown();
             return Tiers.Select(tier => new ResourceTierInfo(tier, Status(root, bundles, tier, hasRecentWrite))).ToArray();
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException or InvalidOperationException or ArgumentException)
-        { return Unknown(); }
+        catch (Exception e) when (e is IOException or InvalidDataException or UnauthorizedAccessException or JsonException or InvalidOperationException or ArgumentException)
+        { log?.Invoke("包体档位记录无法读取，状态显示为未捕获："+e.Message);return Unknown(); }
     }
     private static TierDownloadStatus Status(string root, JsonElement bundles, string tier, Func<string, bool>? activity)
     {

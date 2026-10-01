@@ -17,6 +17,7 @@ try
         : args.Length == 3 && args[0] == "--wait-for-exit" ? WaitThenUpdate(args[1], args[2])
         : args.Length == 4 && args[0] == "--wait-for-rollback" ? WaitThenRollback(args[1], args[2], args[3])
         : args.Length == 2 && args[0] == "--rollback" ? Rollback(args[1])
+        : args.Length == 2 && args[0] == "--recover" ? RecoverCommand(args[1])
         : args.Length == 1 && args[0] == "--self-test" ? SelfTest()
         : args.Length == 1 && args[0] == "--self-test-child" ? SelfTestChild()
         : args.Length == 3 && args[0] == "--validate-package" ? ValidatePackageCommand(args[1], args[2])
@@ -66,14 +67,30 @@ static int Update(string? expectedLauncher = null)
     string exe = Path.Combine(root, "WuWaFpsUnlock.exe");
     if (expectedLauncher is not null) MatchExpectedLauncher(exe, expectedLauncher);
     NoLinks(root); NoLinks(payload); NoLinks(exe);
+    string? finishedBackup=RecoverInterruptedUpdates(root);
     string oldVersion = ProductVersion(exe);
     string newVersion = ProductVersion(Path.Combine(payload, "WuWaFpsUnlock.exe"));
+    if(finishedBackup is not null)
+    {
+        var completed=ReadSnapshot(finishedBackup);
+        var hashes=completed.Updated.ToDictionary(f=>f.Relative,f=>f.NewHash,StringComparer.OrdinalIgnoreCase);
+        bool samePackage=Enumerate(payload).All(source=>hashes.TryGetValue(Path.GetRelativePath(payload,source).Replace('\\','/'),out string? hash)&&FileHash(source)==hash);
+        if(samePackage)
+        {
+            RejectRunning(exe);RequireGameStopped();RefreshDesktopShortcut(root);
+            PrunePreviousBackups(root,finishedBackup);
+            WuWaFpsUnlock.Core.UpdateStageMaintenance.MarkCompleted(root,updaterDirectory);
+            Console.WriteLine("上次更新的文件已全部完成，已补全完成步骤并保留原更新前备份。请点击重新部署。");
+            completedUpdateLauncher=exe;return 0;
+        }
+    }
     Console.WriteLine($"鸣潮 FPS Unlock 离线更新\n安装目录：{root}\n当前版本：{oldVersion}\n包内版本：{newVersion}");
     RejectRunning(exe);
     RequireGameStopped();
     var entries = new List<Entry>();
     var held = new List<FileStream>();
     string? backup = null;
+    bool committed = false;
     string inventoryScratch = Path.Combine(Path.GetTempPath(), "WuWaUpdater-inventory-" + Guid.NewGuid().ToString("N"));
     try
     {
@@ -113,11 +130,16 @@ static int Update(string? expectedLauncher = null)
         PrepareRollbackLauncher(backup, updaterDirectory);
         RejectRunning(exe);
     RequireGameStopped();
-        ApplyUpdateEntries(entries);
-        WriteSnapshot(backup, snapshot with { Complete = true });
+        ApplyUpdateEntries(entries, backup: backup, beforeWrite:()=> { RejectRunning(exe); RequireGameStopped(); });
+        WriteSnapshot(backup, snapshot with { Complete = true }, () => committed = true);
+        WriteUpdateJournal(backup,"Completed");
+        try{WuWaFpsUnlock.Core.UpdateStageMaintenance.MarkCompleted(root,updaterDirectory);}
+        catch(Exception error){Console.WriteLine("更新已完成；缓存完成记录未保存："+error.Message);}
         RefreshDesktopShortcut(root);
         try { PrunePreviousBackups(root,backup); }
         catch(Exception error){Console.WriteLine("更新已完成；旧备份暂未清理："+error.Message);}
+        try { PruneCompletedRollbackAttempts(root); }
+        catch(Exception error){Console.WriteLine("更新已完成；回退操作记录暂未清理："+error.Message);}
         Console.WriteLine("更新完成，最近一次更新前完整快照已保留。可删除更新文件夹，但请保留安装目录中的备份文件夹。\n需要回退时在启动器设置中选择“回退版本”，或使用更新器文件夹中的“回退.cmd”及备份中的 rollback.cmd。\n自动回退恢复旧程序与材料，保留当前配置和部署记录；data 快照仅供人工参考，避免丢失后续部署记录。\n请打开启动器，在设置中重新部署一次");
         completedUpdateLauncher = exe;
         return 0;
@@ -125,7 +147,12 @@ static int Update(string? expectedLauncher = null)
     catch
     {
         foreach (var handle in held) handle.Dispose();
-        bool restored = RestoreFailedUpdate(entries, backup);
+        if(committed)
+        {
+            Console.Error.WriteLine("安装文件已全部更新，但完成步骤未能结束。请保持游戏和启动器关闭，重新运行此更新包以补全完成记录；更新前备份已保留于："+backup);
+            throw;
+        }
+        bool restored = RestoreFailedUpdate(entries, backup,requireStopped:()=>{RejectRunning(exe);RequireGameStopped();});
         Console.Error.WriteLine(restored ? "本次已修改的文件均已恢复（尚未替换时原文件未改变）。" : "未能完整恢复，请勿启动应用；请从备份 snapshot 目录手动恢复上述文件。");
         if (backup is not null) Console.Error.WriteLine("备份保留于：" + backup);
         throw;

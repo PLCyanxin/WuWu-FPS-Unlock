@@ -25,10 +25,22 @@ public static class PreferenceTests
   UpdateDialog? dialog=null;
   try
   {
+   int retained=vm.TargetFps;vm.FpsInput="invalid";Assert(!vm.StartCommand.CanExecute(null),"invalid FPS prevents FPS-enabled start");
+   vm.FpsEnabled=false;Assert(vm.StartCommand.CanExecute(null)&&vm.TargetFps==retained,"disabled FPS permits ordinary start without changing target");
+   vm.FpsEnabled=true;Assert(!vm.StartCommand.CanExecute(null),"reenabling FPS still requires valid input");vm.FpsInput=retained.ToString();
    dialog=new UpdateDialog("2.0.0RC","fixture",true,Skip,(_,_)=>Task.FromResult(false),_=>{});
    var check=(CheckBox)dialog.FindName("SkipVersion");
    using(var held=new FileStream(AppPaths.Settings,FileMode.Open,FileAccess.Read,FileShare.Read))
    {
+    int oldFps=vm.TargetFps,oldTier=vm.ResourceTierIndex;bool oldFpsEnabled=vm.FpsEnabled,oldMfg=vm.MfgSelected;
+    vm.TargetFps=oldFps==160?180:160;
+    Assert(vm.TargetFps==oldFps&&vm.FpsInput==oldFps.ToString()&&vm.Status.Contains("未能保存"),"FPS slider restores memory and displays failure");
+    vm.FpsInput="200";
+    Assert(vm.TargetFps==oldFps&&vm.Status.Contains("未能保存"),"FPS text cannot claim a failed save succeeded");
+    vm.FpsEnabled=!oldFpsEnabled;vm.MfgSelected=!oldMfg;vm.ResourceTierIndex=(oldTier+1)%3;
+    Assert(vm.FpsEnabled==oldFpsEnabled&&vm.MfgSelected==oldMfg&&vm.ResourceTierIndex==oldTier,"mode and tier choices revert after persistence failure");
+    string oldRoot=vm.GameRoot,oldExe=vm.GameExe;vm.GameRoot="X:/missing-fixture";vm.GameExe="X:/missing-fixture.exe";
+    Assert(vm.GameRoot==oldRoot&&vm.GameExe==oldExe,"game path entry reverts after persistence failure");
     vm.AutoCheckUpdates=false;
     Assert(vm.AutoCheckUpdates,"auto preference unchanged on denied replacement");
     Assert(vm.UpdateStatus.Contains("未保存"),"auto preference reports save failure");

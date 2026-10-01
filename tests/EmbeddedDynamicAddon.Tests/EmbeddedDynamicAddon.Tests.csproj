@@ -3,6 +3,6 @@
   <ItemGroup>
     <ProjectReference Include="../../src/WuWaFpsUnlock.Core/WuWaFpsUnlock.Core.csproj" />
     <Compile Include="../../src/WuWaFpsUnlock/Services/EmbeddedDynamicAddon.cs" Link="Production/EmbeddedDynamicAddon.cs" />
-    <EmbeddedResource Include="inert-addon.txt" LogicalName="WuWaFpsUnlock.DynamicMax.addon64" />
+    <EmbeddedResource Include="inert-addon.bin" LogicalName="WuWaFpsUnlock.DynamicMax.addon64" />
   </ItemGroup>
 </Project>

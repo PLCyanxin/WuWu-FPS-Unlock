@@ -8,6 +8,6 @@
     "ww_plugin_base/HookUtility.h"
   ],
   "originalBinarySha256": "844d7552692f53e8a1bfe45edf360a094597c5bf2b26dc058ff59b21d2250c3a",
-  "status": "Built-in FPS core for v1.2.2RC; compatibility depends on the game runtime",
-  "integratedBinarySha256": "8027528f9ee6f5ee7a851f3d1499f848a0b219f4f9aa88f41dba4d7c707a1816"
+  "status": "Built-in FPS module; compatibility depends on the game runtime",
+  "integratedBinarySha256": "3b4eb2a4f9ef1a6b07a9c53aba81374290e1288daa6fbd4d4f5bee4feca92c80"
 }

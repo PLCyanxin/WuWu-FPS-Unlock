@@ -42,6 +42,7 @@ internal static class EmbeddedDynamicAddon
             finally { if (File.Exists(temporary)) File.Delete(temporary); }
         }
         string? priorHash = File.Exists(target) ? await SafePaths.HashAsync(target, token) : null;
+        MaterialSafety.RequireX64Dll(source);
         plan.Add(new(source, target, hash, length, PayloadKind.Addon, priorHash));
     }
 }

@@ -55,5 +55,9 @@ Verify(ResourceTierCatalog.Read(root)[1].Status==TierDownloadStatus.Missing,"mis
 File.WriteAllText(Path.Combine(root,"launcherDownloadConfig.json"),"{bad");Verify(ResourceTierCatalog.Read(root).All(x=>x.Status==TierDownloadStatus.Unknown),"partial official writes do not claim installed");
 Verify(ResourceTierCatalog.TierFromResourcePath(@"C:\game\launcherDownload\UHD\a.tmp")=="uhd","specific download resource path");
 Verify(ResourceTierCatalog.TierFromResourcePath(@"C:\game\launcherDownload\common\a.tmp") is null,"shared download not attributed to all tiers");
+File.WriteAllText(Path.Combine(root,"launcherDownloadConfig.json"),"{\"padding\":\""+new string('x',130*1024)+"\"}");
+var diagnostics=new List<string>();Verify(ResourceTierCatalog.Read(root,log:diagnostics.Add).All(x=>x.Status==TierDownloadStatus.Unknown)&&diagnostics.Count==1,"oversized metadata is a reported nonblocking unknown diagnostic");
+File.WriteAllText(Path.Combine(root,"launcherDownloadConfig.json"),"{\"bundles\":[]}");Verify(ResourceTierCatalog.Read(root).All(x=>x.Status==TierDownloadStatus.Unknown),"wrong metadata field type remains nonblocking");
+using(var held=new FileStream(Path.Combine(root,"launcherDownloadConfig.json"),FileMode.Open,FileAccess.ReadWrite,FileShare.None))Verify(ResourceTierCatalog.Read(root).All(x=>x.Status==TierDownloadStatus.Unknown),"inaccessible bundle record remains nonblocking");
 Console.WriteLine($"{count} launch option tests passed; no game started or registry modified.");
 Directory.Delete(fixture,true);

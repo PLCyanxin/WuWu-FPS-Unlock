@@ -3,7 +3,7 @@
     <OutputType>WinExe</OutputType><TargetFramework>net10.0-windows</TargetFramework><UseWPF>true</UseWPF><UseWindowsForms>true</UseWindowsForms>
     <EnableWindowsTargeting>true</EnableWindowsTargeting><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
     <AssemblyName>WuWaFpsUnlock</AssemblyName><RootNamespace>WuWaFpsUnlock</RootNamespace>
-    <Version>1.2.3</Version><AssemblyVersion>1.2.3.0</AssemblyVersion><FileVersion>1.2.3.0</FileVersion><InformationalVersion>1.2.3</InformationalVersion>
+    <Version>1.2.4</Version><AssemblyVersion>1.2.4.0</AssemblyVersion><FileVersion>1.2.4.0</FileVersion><InformationalVersion>1.2.4RC</InformationalVersion>
     <ApplicationIcon>Assets\App.ico</ApplicationIcon><ApplicationManifest>app.manifest</ApplicationManifest>
     <Platforms>x64</Platforms><PlatformTarget>x64</PlatformTarget><PublishTrimmed>false</PublishTrimmed><PublishAot>false</PublishAot>
   </PropertyGroup>
@@ -21,7 +21,7 @@
     <UpdaterDotNetHost Condition="'$(UpdaterDotNetHost)' == ''">dotnet</UpdaterDotNetHost>
   </PropertyGroup>
   <ItemGroup>
-    <UpdaterBuildInputs Include="$(MSBuildProjectDirectory)\..\..\Directory.Build.props;$(MSBuildProjectDirectory)\..\..\tools\OfflineUpdater\*.cs;$(MSBuildProjectDirectory)\..\..\tools\OfflineUpdater\*.csproj;$(MSBuildProjectDirectory)\..\WuWaFpsUnlock.Core\UpdatePackageProtocol.cs" />
+    <UpdaterBuildInputs Include="$(MSBuildProjectDirectory)\..\..\Directory.Build.props;$(MSBuildProjectDirectory)\..\..\tools\OfflineUpdater\*.cs;$(MSBuildProjectDirectory)\..\..\tools\OfflineUpdater\*.csproj;$(MSBuildProjectDirectory)\..\WuWaFpsUnlock.Core\UpdatePackageProtocol.cs;$(MSBuildProjectDirectory)\..\WuWaFpsUnlock.Core\DurableJson.cs;$(MSBuildProjectDirectory)\..\WuWaFpsUnlock.Core\UpdateStageMaintenance.cs" />
     <EmbeddedResource Include="$(EmbeddedUpdaterDirectory)WuWaUpdater.zip" LogicalName="WuWaFpsUnlock.RollbackWorker.zip" />
   </ItemGroup>
   <Target Name="BuildEmbeddedRollbackWorker" BeforeTargets="PrepareResources" Inputs="@(UpdaterBuildInputs)" Outputs="$(EmbeddedUpdaterDirectory)WuWaUpdater.exe" Condition="'$(DesignTimeBuild)' != 'true'">
