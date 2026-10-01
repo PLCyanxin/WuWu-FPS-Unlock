@@ -1,11 +1,17 @@
-param([Parameter(Mandatory)][string]$Version,[string]$BaselineZip)
+﻿param([Parameter(Mandatory)][string]$Version,[string]$BaselineZip)
 $ErrorActionPreference='Stop'
 $repo=Split-Path $PSScriptRoot -Parent
 if($Version -notmatch '^\d+\.\d+\.\d+(?:RC\d*)?$'){throw 'Invalid release version'}
 if(!$BaselineZip){
-    gh release download v1.2.3RC --repo $env:GITHUB_REPOSITORY --pattern WuWaFPSUnlock-1.2.3RC-win-x64.zip --dir baseline
+    $baselineRepo=if($env:GITHUB_REPOSITORY){$env:GITHUB_REPOSITORY}else{'PLCyanxin/WuWu-FPS-Unlock'}
+    $latestJson=gh release view --repo $baselineRepo --json tagName,assets
+    if($LASTEXITCODE -ne 0){throw 'Cannot resolve the latest release component baseline'}
+    $latest=$latestJson | ConvertFrom-Json
+    $fullAssets=@($latest.assets | Where-Object { $_.name -match '^WuWaFPSUnlock-\d+\.\d+\.\d+(?:RC\d*)?-win-x64\.zip$' })
+    if($fullAssets.Count -ne 1){throw 'Latest release must provide exactly one complete component package'}
+    gh release download $latest.tagName --repo $baselineRepo --pattern $fullAssets[0].name --dir baseline
     if($LASTEXITCODE -ne 0){throw 'Component package download failed'}
-    $BaselineZip='baseline/WuWaFPSUnlock-1.2.3RC-win-x64.zip'
+    $BaselineZip=Join-Path baseline $fullAssets[0].name
 }
 Expand-Archive -LiteralPath $BaselineZip -DestinationPath baseline/extracted
 New-Item package -ItemType Directory | Out-Null
