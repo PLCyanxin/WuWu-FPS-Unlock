@@ -2,14 +2,14 @@
   "route": "builtin-fps-only",
   "runtimePath": "components/fps/ww_plugin_base.dll",
   "source": "Source-built FPS-only core derived from 30launchers/WutheringWaves-FPS-unlocker; project modifications in tools/FpsCore.",
-  "size": 149504,
-  "sha256": "3b4eb2a4f9ef1a6b07a9c53aba81374290e1288daa6fbd4d4f5bee4feca92c80",
+  "size": 153600,
+  "sha256": "aa8bd2a3fe239fb62697a844ce6851dbc2248d278fd7ca3771b8b2eaccf1d01e",
   "upstreamRepository": "https://github.com/30launchers/WutheringWaves-FPS-unlocker",
   "upstreamCommit": "5f73ebcf0166c899ff347593492fe523ccbab89f",
   "originalBinarySha256": "844d7552692f53e8a1bfe45edf360a094597c5bf2b26dc058ff59b21d2250c3a",
   "license": "MIT",
   "buildScript": "tools/FpsCore/Build.ps1",
-  "verification": "54 isolated native fixtures passed; game compatibility and actual FPS remain unverified.",
+  "verification": "87 isolated native fixtures passed, including same-address recovery, mapping/anchor rejection and status IPC cancellation; actual game FPS remains unverified.",
   "externalUnlocker": "Built-in core; no external unlock.exe.",
   "sourceFiles": [
     {
@@ -18,11 +18,11 @@
     },
     {
       "path": "tools/FpsCore/core.hpp",
-      "sha256": "ea42cde6882270f537aa2709663be076143968e9125fba4935168d725e72eadb"
+      "sha256": "adb946a39c848b7f907352a509d6acae857a8518d16ecbb32418313a69a1cf21"
     },
     {
       "path": "tools/FpsCore/dllmain.cpp",
-      "sha256": "96e6da35fa42c6de79e8d937abd5741fb7435c1dbe87f638f8d1dc5407ec1b30"
+      "sha256": "9285fd900cf8a27222dca97f50a66858de628671d1161f3679d349f0fd85188f"
     },
     {
       "path": "tools/FpsCore/signature.hpp",

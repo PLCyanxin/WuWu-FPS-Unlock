@@ -7,6 +7,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using WuWaFpsUnlock;
+using WuWaFpsUnlock.Services;
 using WuWaFpsUnlock.ViewModels;
 
 namespace UiRendering;
@@ -55,6 +56,35 @@ public static class Program
             TextBox Fps(FrameworkElement root)=>Tree(root).OfType<TextBox>().Single(x=>AutomationProperties.GetName(x)=="目标帧率");
             Button Command(FrameworkElement root,object command)=>Tree(root).OfType<Button>().Single(x=>ReferenceEquals(x.Command,command));
             Test("real MainWindow and SettingsWindow share production VM",()=>Check(ReferenceEquals(main.DataContext,settings.DataContext)&&ReferenceEquals(main.DataContext,vm),"VM mismatch"));
+            Test("native FPS suspension and recovery update the running session status",()=>{
+                var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+                var session=new FpsSession();
+                typeof(AppViewModel).GetField("_fpsSession",flags)!.SetValue(vm,session);
+                typeof(AppViewModel).GetField("_running",flags)!.SetValue(vm,true);
+                var observe=typeof(AppViewModel).GetMethod("ObserveFpsStatus",flags)!;
+                var paused=new FpsCoreStatus(1234,FpsCoreState.Suspended,FpsCoreReason.TargetValueInvalid,160,160,2);
+                observe.Invoke(vm,[session,paused]);Dispatcher.CurrentDispatcher.Invoke(()=>{},DispatcherPriority.ContextIdle);
+                Check(vm.Status.Contains(paused.ToDisplayText())&&vm.Status.Contains("暂不可用"),"native suspension was hidden");
+                var resumed=paused with { State=FpsCoreState.Maintaining,Reason=FpsCoreReason.None,Repairs=3 };
+                observe.Invoke(vm,[session,resumed]);Dispatcher.CurrentDispatcher.Invoke(()=>{},DispatcherPriority.ContextIdle);
+                Check(vm.Status.Contains(resumed.ToDisplayText())&&!vm.Status.Contains("暂不可用"),"native recovery was hidden");
+                typeof(AppViewModel).GetField("_fpsSession",flags)!.SetValue(vm,null);
+                typeof(AppViewModel).GetField("_running",flags)!.SetValue(vm,false);
+                session.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            });
+            Test("queued feedback from an old FPS session cannot overwrite its replacement",()=>{
+                var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+                var oldSession=new FpsSession();var replacement=new FpsSession();
+                var field=typeof(AppViewModel).GetField("_fpsSession",flags)!;
+                field.SetValue(vm,oldSession);typeof(AppViewModel).GetField("_running",flags)!.SetValue(vm,true);
+                string prior=vm.Status;
+                typeof(AppViewModel).GetMethod("ObserveFpsStatus",flags)!.Invoke(vm,[oldSession,new FpsCoreStatus(1234,FpsCoreState.Stopped,FpsCoreReason.AnchorChanged,160,160,2)]);
+                typeof(AppViewModel).GetMethod("ObserveFpsFailure",flags)!.Invoke(vm,[oldSession,new IOException("fixture old connection closed")]);
+                field.SetValue(vm,replacement);Dispatcher.CurrentDispatcher.Invoke(()=>{},DispatcherPriority.ContextIdle);
+                Check(vm.Status==prior,"stale session feedback overwrote replacement status");
+                field.SetValue(vm,null);typeof(AppViewModel).GetField("_running",flags)!.SetValue(vm,false);
+                oldSession.DisposeAsync().AsTask().GetAwaiter().GetResult();replacement.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            });
             Test("FPS binding changes from main input to settings input",()=>{
                 var input=Fps(MainRoot());input.SetCurrentValue(TextBox.TextProperty,"321");input.GetBindingExpression(TextBox.TextProperty)!.UpdateSource();Layout(main);Layout(settings);
                 Check(vm.TargetFps==321&&Fps(SettingsRoot()).Text=="321","main->settings binding did not propagate");

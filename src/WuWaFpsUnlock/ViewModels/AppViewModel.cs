@@ -182,6 +182,8 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         var currentReShade=_reShade;
         var currentDeployment=_deployState;
         var currentMenuKey=MenuKeyText;
+        var currentFps=_fpsSession?.Status?.ToDiagnosticText()??"本次游戏尚未捕获内置 FPS 维持状态。";
+        var currentFpsError=_fpsSession?.MonitoringError?.ToString();
         var exportedAt=DateTimeOffset.Now;
         await Task.Run(async ()=>
         {
@@ -195,6 +197,8 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
                 "所选游戏目录："+snapshot.GameRoot,
                 "所选 Shipping EXE："+snapshot.GameExe,
                 "FPS："+(snapshot.FpsEnabled?"开启":"关闭")+"；目标："+snapshot.TargetFps,
+                "FPS 核心回执："+currentFps,
+                "FPS 通信异常："+(currentFpsError??"无"),
                 "MFG 部署选择："+(snapshot.MfgSelected?"开启":"关闭"),
                 "菜单按键："+currentMenuKey,
                 "包体档位："+snapshot.ResourceTier,
@@ -488,16 +492,18 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
                 {
                     await BuiltinFpsService.WaitForRendererAsync(process,snapshot.GameExe,token,Log);
                     GameReady?.Invoke();
-                    _fpsSession=new FpsSession();
-                    await _fpsSession.ConnectAsync(process,AppPaths.FpsCore,Log,token);
-                    await _fpsSession.SetFpsAsync(snapshot.TargetFps,token);
-                    Log($"内置FPS设置已发送；PID={process.Id}；目标={snapshot.TargetFps}，实际帧率待游戏验证。");
+                    var session=new FpsSession();_fpsSession=session;
+                    session.StatusChanged+=state=>ObserveFpsStatus(session,state);
+                    session.MonitoringFailed+=error=>ObserveFpsFailure(session,error);
+                    await session.ConnectAsync(process,AppPaths.FpsCore,Log,token);
+                    await session.SetFpsAsync(snapshot.TargetFps,token);
+                    Log($"内置FPS设置已接收；PID={process.Id}；目标={snapshot.TargetFps}，实际帧率待游戏验证。");
                 }
             },phase=>{Status=phase switch{"Preflight"=>"正在检查路径与组件…","AwaitingNotice"=>"检查首次部署须知…","ReleaseOldSession"=>"释放旧游戏会话…","Stopping"=>"正在结束同一安装的旧游戏…","Rechecking"=>"确认旧实例已退出…","Starting"=>"正在启动游戏…","AttachingFps"=>"等待游戏并连接内置FPS核心…","Cancelled"=>"已取消，未继续启动。",_=>"正在检查游戏状态…"};if(lastPhase!=phase){lastPhase=phase;Log("启动阶段："+Status);}},TimeSpan.FromSeconds(15),_lifetime.Token);
             if(process is null){Status="已取消须知，未结束或启动游戏。";return;}
             if(!snapshot.FpsEnabled){await BuiltinFpsService.WaitForRendererAsync(process,snapshot.GameExe,_lifetime.Token,Log);GameReady?.Invoke();}
             _sessionReady=true;_deferredUpdate.GameStarted();
-            Status=snapshot.FpsEnabled?"游戏已启动 · 内置FPS已连接，实际效果以游戏为准":"游戏已启动 · FPS关闭";Log(Status);
+            Status=snapshot.FpsEnabled?"游戏已启动 · "+(_fpsSession?.Status?.ToDisplayText()??"FPS 维持状态未捕获"):"游戏已启动 · FPS关闭";Log(Status);
         }
         catch
         {
@@ -511,6 +517,24 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
             throw;
         }
         finally{_starting=false;Busy=false;Log($"启动操作结束：{Status}；耗时={elapsed.Elapsed.TotalSeconds:F1}s");}
+    }
+    private void ObserveFpsStatus(FpsSession session,FpsCoreStatus state)
+    {
+        if(_dispatcher.HasShutdownStarted)return;
+        _dispatcher.BeginInvoke(new Action(()=>
+        {
+            if(_closing||_starting||!IsGameRunning||!ReferenceEquals(_fpsSession,session))return;
+            Status="游戏运行中 · "+state.ToDisplayText();
+        }));
+    }
+    private void ObserveFpsFailure(FpsSession session,Exception error)
+    {
+        if(_dispatcher.HasShutdownStarted)return;
+        _dispatcher.BeginInvoke(new Action(()=>
+        {
+            if(_closing||!IsGameRunning||!ReferenceEquals(_fpsSession,session))return;
+            Status="游戏运行中 · 帧率解锁通信中断，请导出日志。";
+        }));
     }
     private Task ReleaseFpsSessionAsync()
     {
