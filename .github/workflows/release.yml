@@ -39,6 +39,10 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Activation listener tests failed' }
           dotnet run --project tests/WuWaFpsUnlock.Tests -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Core tests failed' }
+          foreach ($project in @('Fps.ChannelTests','FpsIdentity.Tests','UiRendering.Wpf')) {
+            dotnet run --project "tests/$project" -c Release
+            if ($LASTEXITCODE -ne 0) { throw "FPS regression failed: $project" }
+          }
           dotnet run --project tests/Deployment.CleanupTests -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Cleanup preflight tests failed' }
           dotnet run --project tests/MenuShortcut.Tests -c Release

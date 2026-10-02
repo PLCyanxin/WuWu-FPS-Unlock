@@ -11,9 +11,9 @@
 > [!IMPORTANT]
 > **本工具仅适用于 NVIDIA GeForce RTX 40 系列显卡，且仅支持通过鸣潮官方启动器安装的游戏版本。未来不计划扩大显卡或游戏渠道的支持范围。**
 
-**Windows x64 · 正式版 v1.2.3 · 准正式版 v1.2.4RC（Pre-release）**
+**Windows x64 · 当前版本 v1.2.4**
 
-[下载正式版 v1.2.3](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/tag/v1.2.3) · [下载 v1.2.4RC](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/tag/v1.2.4RC) · [全部版本与更新日志](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases)
+[下载 v1.2.4](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/tag/v1.2.4) · [全部版本与更新日志](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases)
 
 首次安装请选择完整包，已有完整安装可使用更新包。启动器只检测正式 Release；Pre-release 请在发布页手动下载。维护者验证稳定后，会将其设置为 Release，供启动器检查和更新。本文介绍当前功能的完整用法，不同版本的可用选项以实际界面为准。
 
@@ -81,7 +81,7 @@ Client\Binaries\Win64\Client-Win64-Shipping.exe
 <a id="fps-unlock"></a>
 ## 帧率解锁
 
-在主页开启 **解锁帧率上限**，通过数值框或滑块设置 **30–420 FPS** 目标，再点击 **开始游戏**。内置模块会在游戏运行期间持续维持设置，请让启动器留在托盘运行。
+在主页开启 **解锁帧率上限**，通过数值框或滑块设置 **30–420 FPS** 目标，再点击 **开始游戏**。内置模块会在游戏运行期间持续维持设置，请让启动器留在托盘运行。模块会确认目标值的写入结果；遇到暂时无法访问的设置时，保留会话，并在原设置恢复可用后自动继续维持。启动器日志会记录模块状态，便于排查帧率解锁问题。
 
 **帧率开关和目标值在下一次通过本工具启动游戏时生效。**“解锁帧率上限”不会向您的游戏文件夹部署插件，开启、关闭或修改目标均无需重新部署。关闭后启动游戏，不加载帧率解锁模块，也不会卸载已经部署的多帧生成组件。
 

@@ -19,6 +19,13 @@ jobs:
         run: dotnet run --project tests/Activation.ListenerTests -c Release
       - name: Core tests (no game or injected process)
         run: dotnet run --project tests/WuWaFpsUnlock.Tests -c Release
+      - name: FPS channel, process identity and native WPF state
+        shell: pwsh
+        run: |
+          foreach ($project in @('Fps.ChannelTests','FpsIdentity.Tests','UiRendering.Wpf')) {
+            dotnet run --project "tests/$project" -c Release
+            if ($LASTEXITCODE -ne 0) { throw "FPS regression failed: $project" }
+          }
       - name: Cleanup preflight and filesystem regression
         run: dotnet run --project tests/Deployment.CleanupTests -c Release
       - name: Menu shortcut configuration and guarded writes
