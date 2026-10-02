@@ -17,7 +17,31 @@
 
 候选只在主程序文件名为 `Client-Win64-Shipping.exe` 时初始化。工作线程开始长期工作前固定自身模块，成功后不支持热卸载。调用方不得在初始化线程开始之前卸载它。`RequestFpsCoreStop` 只发出停止请求；当前启动器没有调用此新增入口，也没有新增管道停止协议。停止事件保留至进程结束，`DllMain` 不等待线程。
 
-管道使用可取消的重叠 I/O，取消完成后才关闭句柄。它拒绝远程连接，但保留 Windows 默认 DACL，未提供本地客户端身份认证。现有管道没有应用结果回执，因此连接成功与发送成功均不能证明游戏帧率已改变。
+管道使用可取消的重叠 I/O，取消完成后才关闭句柄。它拒绝远程连接，但保留 Windows 默认 DACL，未提供本地客户端身份认证。六字段指令保持无回复；连接成功与发送成功均不能证明游戏帧率已改变。新增按需状态协议见下文，内存应用状态同样不等于实测渲染帧率。
+
+## 同地址暂停与诊断修正（2026-10-02，本地候选）
+
+实际维护循环现共用 `RunMaintenance` / `MaintenanceStep`，隔离测试执行这两个生产入口。正常检查仍为 51ms；原地址暂时不可读、值不在 30–420 或写入失败时停止写入，以 250ms 重试。每次尝试都核对原目标映射、原 154 字节特征锚点及其映射，随后只接受有限且在原范围内的当前浮点值。异常零值不被改写，不重新扫描挑选其他浮点地址。写入后回读符合请求值才更新 `applied`；`repairs` 仅计成功的实际 store，即使其后回读失败也保留次数。
+
+映射元数据或锚点改变会锁存终止原因，后续 FPS 指令不会重新启动或换地址。映射比较包括区域起点/长度、AllocationBase、Type 与 AllocationProtect；它不是 Windows 分配世代标识，不能保证识别两次采样之间同址、同布局、同内容的释放重用。锚点读取失败也保守停止；本候选不通过降低身份检查换取恢复。页面保护引起区域拆分会被判为映射变化。
+
+后续 `0x70` 搜索限制在首特征所在的同一 `VirtualQuery` 区域内，且最多读取 64KiB，先到边界者为准。合法可读 `0xFF` 现作为普通数据；内存异常仍失败关闭。64KiB 是明确的保守工作量上限，并非已证明所有游戏版本的布局范围。超出边界的版本会报告 `SecondMarkerUnavailable`，不扩大到任意进程区域继续找。原始特征仍只作一次全进程扫描；此变更不新增每 51ms 全进程扫描或运行时重新选址。
+
+扫描/维护返回后只结束逻辑任务，原接收线程继续提供终止状态，直到显式停止或进程退出。仍只有现有两个线程，无第三个常驻线程或游戏钩子。诊断只按需走管道，不每帧/每轮写日志。
+
+客户端发送精确 ASCII 消息 `status-v1`，服务器返回单条不超过 128 字节的 ASCII 消息（结尾换行）：
+
+```text
+WUWA-FPS/1,pid,state,reason,target,applied,repairs\n
+```
+
+除版本前缀外全部字段为十进制整数。`target` 为最近接受的合法 FPS 指令（初始 0）；`applied` 为最后一次经过同地址校验及读回确认的值（初始 0，暂停/终止时保留上一次值）；`repairs` 为实际成功 store 次数。状态快照采用原子发布；请求目标独立由接收线程读取。客户端必须结合 state/reason 判断当前是否正在维护，不可仅凭历史 applied 显示正在应用。
+
+state：0 WaitingRenderer、1 SearchingMarker、2 SearchingCandidate、3 WaitingCommand、4 Maintaining、5 Suspended、6 Stopped。
+
+reason：0 None、1 MarkerNotFound、2 SecondMarkerUnavailable、3 CandidateUnreadable、4 CandidateTimeout、5 TargetUnreadable、6 TargetValueInvalid、7 TargetWriteFailed、8 TargetMappingChanged、9 RendererTimeout、10 StopRequested、11 AnchorChanged、12 InternalFailure。
+
+状态回复使用可取消重叠写入；客户端不读时不调用 `FlushFileBuffers`，停止事件可以取消等待。六字段命令不附加回复，保留旧客户端行为。状态协议需要客户端主动请求，旧客户端不能自动获得该状态。状态消息只证明核心阶段、内存读回和写入计数，不能证明游戏内最终帧率。
 
 可以在 Windows x64 的 MSVC 开发环境执行以下命令构建候选并运行隔离测试：
 
@@ -25,4 +49,4 @@
 ./tools/FpsCore/Build.ps1 -OutputDirectory ./artifacts/tests/fps-core-candidate
 ```
 
-输出文件名为 `ww_fps_core_candidate.dll`。脚本不会复制它到现有组件目录或游戏目录。测试程序使用自己创建的内存和独立管道，不加载该 DLL，不执行生产扫描，也不启动或访问游戏进程。测试涵盖协议、并发请求、重复候选、首匹配、必要写入与阻塞管道取消。扫描基准只比较相同测试数据上的算法工作量，不代表游戏启动时间或游戏 FPS 收益。
+输出文件名为 `ww_fps_core_candidate.dll`。脚本不会复制它到现有组件目录或游戏目录。测试程序使用自己创建的内存和独立管道，不加载该 DLL，不执行生产全进程扫描，也不启动或访问游戏进程。测试涵盖协议、并发请求、重复候选、首匹配、必要写入、真实同地址维护编排的异常暂停/恢复/频率、真实映射与锚点验证、终止状态查询和阻塞回复取消。扫描基准只比较相同测试数据上的算法工作量，不代表游戏启动时间或游戏 FPS 收益。

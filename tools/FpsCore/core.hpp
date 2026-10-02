@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Derived from 30launchers/WutheringWaves-FPS-unlocker, see SOURCE.json.
 #pragma once
+#include <algorithm>
 #include <atomic>
 #include <charconv>
 #include <cmath>
@@ -12,6 +13,46 @@
 namespace wuwa::fps {
 inline constexpr int kDefaultFps=150, kMinFps=30, kMaxFps=420;
 inline constexpr unsigned kCheckMs=51;
+inline constexpr unsigned kSuspendedCheckMs=250;
+inline constexpr size_t kSecondMarkerBudget=64*1024;
+enum class State:int {WaitingRenderer,SearchingMarker,SearchingCandidate,WaitingCommand,Maintaining,Suspended,Stopped};
+enum class Reason:int {None,MarkerNotFound,SecondMarkerUnavailable,CandidateUnreadable,CandidateTimeout,TargetUnreadable,TargetValueInvalid,TargetWriteFailed,TargetMappingChanged,RendererTimeout,StopRequested,AnchorChanged,InternalFailure};
+struct Maintenance { State state=State::WaitingCommand; Reason reason=Reason::None; int applied=0; uint64_t repairs=0; };
+// These validators/readers operate on the original address only. Never select a
+// replacement candidate during maintenance. Terminal identity failures latch.
+template<class Validate,class Read,class Write>
+inline void MaintenanceStep(Maintenance& state,uintptr_t address,int requested,Validate validate,Read read,Write write) {
+ if(state.state==State::Stopped)return;
+ const auto identity=validate();
+ if(identity!=Reason::None){state.state=State::Stopped;state.reason=identity;return;}
+ if(requested==0){state.state=State::WaitingCommand;state.reason=Reason::None;return;}
+ float current=0;
+ if(!read(address,current)){state.state=State::Suspended;state.reason=Reason::TargetUnreadable;return;}
+ if(requested<kMinFps||requested>kMaxFps||!std::isfinite(current)||current<kMinFps||current>kMaxFps){state.state=State::Suspended;state.reason=Reason::TargetValueInvalid;return;}
+ if(current!=static_cast<float>(requested)){
+  if(!write(address,static_cast<float>(requested))){state.state=State::Suspended;state.reason=Reason::TargetWriteFailed;return;}
+  ++state.repairs;
+  if(!read(address,current)){state.state=State::Suspended;state.reason=Reason::TargetUnreadable;return;}
+  if(current!=static_cast<float>(requested)){state.state=State::Suspended;state.reason=Reason::TargetWriteFailed;return;}
+ }
+ state.applied=requested;state.state=State::Maintaining;state.reason=Reason::None;
+}
+template<class Requested,class Validate,class Read,class Write,class Delay,class Publish>
+inline void RunMaintenance(Maintenance& state,uintptr_t address,Requested requested,Validate validate,Read read,Write write,Delay delay,Publish publish){
+ do{MaintenanceStep(state,address,requested(),validate,read,write);publish(state);if(state.state==State::Stopped)return;}
+ while(!delay(state.state==State::Suspended?kSuspendedCheckMs:kCheckMs));
+ state.state=State::Stopped;state.reason=Reason::StopRequested;publish(state);
+}
+// Exclusive end must be the end of the original readable region. A byte 0xff
+// is ordinary data, not an exception sentinel. Both region and budget bound work.
+template<class Read,class Stop>
+inline bool FindSecondMarker(uintptr_t start,uintptr_t end,Read read,Stop stop,uintptr_t& result){
+ result=0;if(end<=start)return false;
+ const size_t count=static_cast<size_t>((std::min)(uintptr_t(kSecondMarkerBudget),end-start));
+ for(size_t offset=0;offset<count;++offset){if(offset%4096==0&&stop())return false;uint8_t value=0;
+  if(!read(start+offset,value))return false;if(value==0x70){result=start+offset;return true;}}
+ return false;
+}
 inline constexpr char kPipe[]=R"(\\.\pipe\55984705-F24C-45C2-B2B7-27F047B43A56)";
 inline bool ParseMessage(std::string_view message,int& fps) {
  if(message.empty()||message.size()>128)return false;
