@@ -122,7 +122,6 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     public string VersionLabel=>"v"+CurrentUpdateVersion;
     public string Gpu=>_hardware.Gpu;
     public string Driver=>_hardware.DriverText;
-    public string GpuWithDriver=>Gpu+" \\ "+Driver;
     public string Os=>_hardware.Os;
     public string Hags=>_hardware.Hags;
     public string MenuKeyText=>(_settings.MenuShortcut??_observedMenuShortcut)?.DisplayName??"未识别";

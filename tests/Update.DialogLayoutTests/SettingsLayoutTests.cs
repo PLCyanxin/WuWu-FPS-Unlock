@@ -47,17 +47,37 @@ internal static class SettingsLayoutTests
                 check(Math.Abs(left.ActualHeight - 474) <= 1.1 && Math.Abs(right.ActualHeight - 474) <= 1.1,
                     "settings columns preserve total height 474");
                 check(Math.Abs(environment.ActualHeight-284)<=1.1,"environment card keeps its existing outer height");
+                var environmentBounds=Bounds(environment,left);
+                check(Math.Abs(environmentBounds.Left)<=1.1 && Math.Abs(environmentBounds.Top-190)<=1.1 &&
+                    Math.Abs(environmentBounds.Width-left.ActualWidth)<=1.1,
+                    "environment card keeps its existing outer position and width");
                 var rows=(Grid)window.FindName("EnvironmentRows");
-                check(rows.RowDefinitions.Count==4,"environment has four rows");
-                foreach(string name in new[]{"MenuShortcutEditor","MenuKeyButton","ClearMenuKeyButton","GpuDriverText"})
+                check(rows.RowDefinitions.Count==5,"environment has five rows");
+                check(rows.Children.OfType<WuWaFpsUnlock.Controls.IconView>().Any(x=>Grid.GetRow(x)==3 && x.Kind=="settings") &&
+                    rows.Children.OfType<WuWaFpsUnlock.Controls.IconView>().Any(x=>Grid.GetRow(x)==4 && x.Kind=="keyboard"),
+                    "HAGS gear and menu keyboard icons stay on their rows");
+                foreach(string name in new[]{"MenuShortcutEditor","MenuKeyButton","ClearMenuKeyButton","GpuText","DriverText"})
                     Inside((FrameworkElement)window.FindName(name),environment,check,name);
+                check(rows.Children.OfType<TextBlock>().Count(x=>Grid.GetColumn(x)==1)==5,
+                    "environment has five labels");
+                check(rows.Children.OfType<TextBlock>().All(x=>Math.Abs(x.FontSize-13)<0.01 &&
+                    x.FontFamily.Source=="Microsoft YaHei UI, Segoe UI"),
+                    "environment labels and values use the main window font");
+                var menuKeyButton=(Button)window.FindName("MenuKeyButton");
+                check(Math.Abs(menuKeyButton.FontSize-13)<0.01 && menuKeyButton.FontFamily.Source=="Microsoft YaHei UI, Segoe UI",
+                    "menu shortcut input uses the same font");
                 check(vm.MenuKeyText=="Home","default menu key is Home");
                 check(vm.SetMenuShortcut(new MenuShortcut(112,true,false,true))&&vm.MenuKeyText=="Ctrl + Alt + F1","custom combination is saved and displayed");
                 var clearButton=(Button)window.FindName("ClearMenuKeyButton");
                 clearButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 check(vm.MenuKeyText=="未设置"&&JsonFiles.Read<UserSettings>(AppPaths.Settings).MenuShortcut==MenuShortcut.None,"clear button clears and saves the binding");
                 check(vm.SetMenuShortcut(MenuShortcut.Home)&&vm.MenuKeyText=="Home","Home can be assigned again after clear");
-                check(((TextBlock)window.FindName("GpuDriverText")).Text=="NVIDIA GeForce RTX 4090 \\ 595.41","GPU and driver share one text run separated by backslash");
+                var gpuText=(TextBlock)window.FindName("GpuText");
+                var driverText=(TextBlock)window.FindName("DriverText");
+                check(gpuText.Text=="NVIDIA GeForce RTX 4090" && gpuText.ToolTip?.ToString()==gpuText.Text &&
+                    gpuText.TextTrimming==TextTrimming.CharacterEllipsis,"GPU keeps its ellipsis and full tooltip");
+                check(driverText.Text=="595.41" && Grid.GetRow(driverText)==1,
+                    "driver version appears on its own row below GPU");
                 foreach (var card in new[] { mfg, maintenance })
                 {
                     Inside(card, right, check, "right settings card");
