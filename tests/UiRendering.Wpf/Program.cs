@@ -23,7 +23,7 @@ public static class Program
         void Test(string name,Action action){try{action();passed++;Write("PASS "+name);}catch(Exception e){failed++;Write("FAIL "+name+": "+e);}}
         void Check(bool condition,string reason){if(!condition)throw new InvalidOperationException(reason);}
         Write("NATIVE WPF OFFSCREEN COMPONENT TEST. No Show, Application.Run, desktop automation, game, unlocker or installer execution.");
-        Write("Raster scales 100/150/200% are RenderTargetBitmap DPI, not a claim of actual monitor DPI or desktop interaction.");
+        Write("Scales 100/150/200% set the offscreen visual-tree and RenderTargetBitmap DPI, not a claim of actual monitor DPI or desktop interaction.");
         try
         {
             // Load exact production resources, then detach the source-inspected Startup handler before any dispatcher flush.
@@ -181,11 +181,23 @@ public static class Program
             }
             void Render(Window window,double scale,string name)
             {
-                Layout(window);var root=(FrameworkElement)window.Content;
+                var root=(FrameworkElement)window.Content;
+                VisualTreeHelper.SetRootDpi(root, new DpiScale(scale, scale));
+                foreach (var banner in Tree(root).OfType<WuWaFpsUnlock.Controls.HeroBanner>()) banner.InvalidateVisual();
+                Layout(window);
                 int width=(int)Math.Round(window.Width*scale),height=(int)Math.Round(window.Height*scale);
                 var bitmap=new RenderTargetBitmap(width,height,96*scale,96*scale,PixelFormats.Pbgra32);
                 var background=new DrawingVisual();using(var drawing=background.RenderOpen())drawing.DrawRectangle(window.Background,null,new Rect(0,0,window.Width,window.Height));
                 bitmap.Render(background);bitmap.Render(root);
+                foreach (var banner in Tree(root).OfType<WuWaFpsUnlock.Controls.HeroBanner>())
+                {
+                    var field = typeof(WuWaFpsUnlock.Controls.HeroBanner).GetField("_renderedCover", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+                    var cover = (BitmapSource)field.GetValue(banner)!;
+                    Check(cover.PixelHeight == (int)Math.Round(banner.ActualHeight * scale), $"banner raster does not match output DPI: pixels={cover.PixelHeight}; DIP={banner.ActualHeight}; DPI={VisualTreeHelper.GetDpi(banner).DpiScaleY}; target={scale}");
+                    Check(Math.Abs(cover.PixelWidth - banner.ActualWidth * .57 * scale) <= 1, "banner viewport lost physical pixel resolution");
+                    banner.InvalidateVisual();root.UpdateLayout();
+                    Check(ReferenceEquals(cover, field.GetValue(banner)), "unchanged banner was resampled on repaint");
+                }
                 string file=Path.Combine(output,$"{name}-offscreen-{scale*100:0}pct.png");var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(bitmap));using(var stream=File.Create(file))encoder.Save(stream);
                 Check(new FileInfo(file).Length>10000,"render unexpectedly blank/tiny");Check(bitmap.PixelWidth==width&&bitmap.PixelHeight==height,"wrong pixel size");
                 Write($"RENDER {file} {width}x{height}, {96*scale:0}dpi");
