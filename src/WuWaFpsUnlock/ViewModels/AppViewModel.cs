@@ -188,6 +188,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
             {
                 "导出时间："+exportedAt.ToString("O",CultureInfo.InvariantCulture),
                 "产品版本："+CurrentUpdateVersion,
+                "构建标识："+(typeof(AppViewModel).Assembly.GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute),false).OfType<System.Reflection.AssemblyInformationalVersionAttribute>().FirstOrDefault()?.InformationalVersion??"未捕获"),
                 "程序集版本："+(typeof(AppViewModel).Assembly.GetName().Version?.ToString()??"未知"),
                 "启动器路径："+AppPaths.Base,
                 "所选游戏目录："+snapshot.GameRoot,
@@ -198,6 +199,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
                 "包体档位："+snapshot.ResourceTier,
                 "材料清单："+snapshot.PackageManifest+"；存在："+File.Exists(snapshot.PackageManifest),
                 "系统："+hardware.Os+"；GPU："+hardware.Gpu+"；驱动："+hardware.DriverText+"；HAGS："+hardware.Hags,
+                "后台调度："+LauncherScheduling.Status,
                 "启动器当前状态："+currentStatus+"；部署概况："+currentDeployment+"；ReShade 概况："+currentReShade,
                 "启动器日志源："+_logFile
             };
