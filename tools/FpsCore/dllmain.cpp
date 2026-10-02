@@ -2,7 +2,6 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <windows.h>
-#include <cstdio>
 #include "core.hpp"
 #include "signature.hpp"
 namespace {
@@ -109,13 +108,21 @@ bool CompleteIo(HANDLE pipe,OVERLAPPED& operation,DWORD& bytes){
 }
 bool ReplyStatus(HANDLE pipe,HANDLE event){
  const auto value=status.Read();char buffer[128];
- const int length=std::snprintf(buffer,sizeof buffer,"WUWA-FPS/1,%lu,%d,%d,%d,%d,%llu\n",static_cast<unsigned long>(GetCurrentProcessId()),
-  static_cast<int>(value.state),static_cast<int>(value.reason),target.load(std::memory_order_relaxed),value.applied,static_cast<unsigned long long>(value.repairs));
- if(length<=0||length>=static_cast<int>(sizeof buffer))return false;
+ constexpr char prefix[]="WUWA-FPS/1,";std::memcpy(buffer,prefix,sizeof(prefix)-1);
+ char* cursor=buffer+sizeof(prefix)-1;char* const end=buffer+sizeof buffer;
+ auto append=[&](auto number,char separator){
+  if(cursor>=end)return false;
+  const auto result=std::to_chars(cursor,end-1,number); // Reserve one byte for separator/newline.
+  if(result.ec!=std::errc{})return false;
+  cursor=result.ptr;*cursor++=separator;return true;
+ };
+ if(!append(GetCurrentProcessId(),',')||!append(static_cast<int>(value.state),',')||!append(static_cast<int>(value.reason),',')||
+    !append(target.load(std::memory_order_relaxed),',')||!append(value.applied,',')||!append(value.repairs,'\n'))return false;
+ const auto length=static_cast<DWORD>(cursor-buffer);
  OVERLAPPED operation{};operation.hEvent=event;ResetEvent(event);DWORD bytes=0;
- bool ok=WriteFile(pipe,buffer,static_cast<DWORD>(length),&bytes,&operation)!=FALSE;
+ bool ok=WriteFile(pipe,buffer,length,&bytes,&operation)!=FALSE;
  if(!ok&&GetLastError()==ERROR_IO_PENDING)ok=CompleteIo(pipe,operation,bytes);
- return ok&&bytes==static_cast<DWORD>(length);
+ return ok&&bytes==length;
 }
 DWORD WINAPI Receive(void* fixturePipe){
  const char* pipeName=fixturePipe?static_cast<const char*>(fixturePipe):wuwa::fps::kPipe;
