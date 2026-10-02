@@ -8,7 +8,13 @@ public partial class App:Application
     private SingleInstanceActivation? _activation;
     private async void OnStartup(object sender,StartupEventArgs e)
     {
-        DispatcherUnhandledException+=(_,args)=>{MessageBox.Show(args.Exception.Message,"鸣潮 FPS Unlock：未处理错误",MessageBoxButton.OK,MessageBoxImage.Error);args.Handled=true;};
+        AppViewModel? activeVm=null;
+        DispatcherUnhandledException+=(_,args)=>
+        {
+            try { activeVm?.Log("未处理界面异常："+args.Exception); } catch { /* Keep the original error dialog available. */ }
+            try { Directory.CreateDirectory(AppPaths.Data);File.AppendAllText(Path.Combine(AppPaths.Data,"startup-error.log"),$"[{DateTimeOffset.Now:O}] {DiagnosticExport.Redact(args.Exception.ToString())}{Environment.NewLine}"); } catch { /* Logging must not recurse through the dispatcher. */ }
+            MessageBox.Show(args.Exception.Message,"鸣潮 FPS Unlock：未处理错误",MessageBoxButton.OK,MessageBoxImage.Error);args.Handled=true;
+        };
         if(e.Args.Any(a=>a=="--external-launch-worker")){Shutdown(1);return;}
         if(e.Args.Length==2&&e.Args[0]=="--worker")
         {
@@ -21,7 +27,7 @@ public partial class App:Application
             Activated+=(_,_)=>LauncherScheduling.SetBackground(false);
             Deactivated+=(_,_)=>LauncherScheduling.SetBackground(true);
             Exit+=(_,_)=>LauncherScheduling.SetBackground(false);
-            var vm=new AppViewModel();LauncherScheduling.StatusChanged+=vm.Log;vm.Log(LauncherScheduling.Status);MainWindow=new MainWindow(vm);
+            var vm=new AppViewModel();activeVm=vm;LauncherScheduling.StatusChanged+=vm.Log;vm.Log(LauncherScheduling.Status);MainWindow=new MainWindow(vm);
             if(e.Args.Contains("--update-completed")) ((MainWindow)MainWindow).StartupCompleted=()=>
             {
                 MainWindow.Activate();vm.OpenSettingsCommand.Execute(null);
@@ -32,7 +38,7 @@ public partial class App:Application
                 report:message=>Dispatcher.BeginInvoke(new Action(()=>vm.Log(message))));
             MainWindow.Show();
         }
-        catch(Exception ex){try{Directory.CreateDirectory(AppPaths.Data);File.WriteAllText(Path.Combine(AppPaths.Data,"startup-error.log"),ex.ToString());}catch{} MessageBox.Show("无法启动："+ex.GetBaseException().Message+"\n详细记录：data/startup-error.log","启动失败",MessageBoxButton.OK,MessageBoxImage.Error);Shutdown(1);}
+        catch(Exception ex){try{Directory.CreateDirectory(AppPaths.Data);File.WriteAllText(Path.Combine(AppPaths.Data,"startup-error.log"),DiagnosticExport.Redact(ex.ToString()));}catch{} MessageBox.Show("无法启动："+ex.GetBaseException().Message+"\n详细记录：data/startup-error.log","启动失败",MessageBoxButton.OK,MessageBoxImage.Error);Shutdown(1);}
     }
     protected override void OnExit(ExitEventArgs e){_activation?.Dispose();_singleInstance?.Dispose();base.OnExit(e);}
 }

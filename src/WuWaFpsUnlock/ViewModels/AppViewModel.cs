@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -63,6 +63,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         IncrementFpsCommand=new(()=>TargetFps=Math.Min(420,TargetFps+1),()=>CanEditFps);
         DecrementFpsCommand=new(()=>TargetFps=Math.Max(30,TargetFps-1),()=>CanEditFps);
         ClearLogCommand=new(()=>{_logs="";Notify(nameof(Logs));lock(_logLock)File.WriteAllText(_logFile,"");});
+        ExportLogCommand=new(ExportLogsAsync,()=>!_closing,ReportError);
         RefreshCommand=new(RefreshAsync,()=>!Busy&&!_refreshing,ReportError);
         DeployCommand=new(DeployAsync,()=>!Busy&&!IsGameRunning,ReportError);
         CleanCommand=new(CleanAsync,()=>!Busy&&!IsGameRunning,ReportError);
@@ -148,6 +149,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     public RelayCommand IncrementFpsCommand{get;}
     public RelayCommand DecrementFpsCommand{get;}
     public RelayCommand ClearLogCommand{get;}
+    public AsyncCommand ExportLogCommand{get;}
     public AsyncCommand RefreshCommand{get;}
     public AsyncCommand DeployCommand{get;}
     public AsyncCommand CleanCommand{get;}
@@ -157,13 +159,76 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     public void Log(string text)
     {
         if(!_dispatcher.CheckAccess()){_dispatcher.Invoke(()=>Log(text));return;}
-        string line=$"[{DateTime.Now:HH:mm:ss}] {text}";
+        string line=$"[{DateTime.Now:HH:mm:ss}] {DiagnosticExport.Redact(text)}";
         _logs+=line+Environment.NewLine;if(_logs.Length>180000)_logs=_logs[^120000..];Notify(nameof(Logs));
         try{if(!string.IsNullOrWhiteSpace(_logFile))lock(_logLock)File.AppendAllText(_logFile,line+Environment.NewLine);}catch{ /* UI retains error details if log destination is unavailable. */ }
     }
     public void ReportError(Exception e)
     {
-        Status=e is OperationCanceledException?e.Message:"操作未完成："+e.Message;Log(Status);NotifyAll();
+        Status=e is OperationCanceledException?e.Message:"操作未完成："+e.Message;Log("异常详情："+e);NotifyAll();
+    }
+    private async Task ExportLogsAsync()
+    {
+        var dialog=new SaveFileDialog { Title="导出诊断日志", Filter="文本文件 (*.txt)|*.txt", DefaultExt=".txt", AddExtension=true,
+            FileName="WuWa-FPS-Unlock-诊断-"+DateTime.Now.ToString("yyyyMMdd-HHmmss",CultureInfo.InvariantCulture)+".txt" };
+        if(dialog.ShowDialog()!=true)return;
+        var destination=Path.GetFullPath(dialog.FileName);
+        var snapshot=_settings.Clone();
+        if(destination.Equals(Path.GetFullPath(_logFile),StringComparison.OrdinalIgnoreCase) ||
+            (Directory.Exists(snapshot.GameRoot) && SafePaths.IsInside(snapshot.GameRoot,destination)))
+            throw new IOException("诊断日志不能覆盖运行日志或写入所选游戏目录，请选择其他位置。");
+        var hardware=_hardware;
+        var currentStatus=Status;
+        var currentReShade=_reShade;
+        var currentDeployment=_deployState;
+        var exportedAt=DateTimeOffset.Now;
+        await Task.Run(async ()=>
+        {
+            var details=new List<string>
+            {
+                "导出时间："+exportedAt.ToString("O",CultureInfo.InvariantCulture),
+                "产品版本："+CurrentUpdateVersion,
+                "程序集版本："+(typeof(AppViewModel).Assembly.GetName().Version?.ToString()??"未知"),
+                "启动器路径："+AppPaths.Base,
+                "所选游戏目录："+snapshot.GameRoot,
+                "所选 Shipping EXE："+snapshot.GameExe,
+                "FPS："+(snapshot.FpsEnabled?"开启":"关闭")+"；目标："+snapshot.TargetFps,
+                "MFG 部署选择："+(snapshot.MfgSelected?"开启":"关闭"),
+                "菜单按键："+(snapshot.MenuShortcut?.DisplayName??"未设置；使用游戏内配置"),
+                "包体档位："+snapshot.ResourceTier,
+                "材料清单："+snapshot.PackageManifest+"；存在："+File.Exists(snapshot.PackageManifest),
+                "系统："+hardware.Os+"；GPU："+hardware.Gpu+"；驱动："+hardware.DriverText+"；HAGS："+hardware.Hags,
+                "启动器当前状态："+currentStatus+"；部署概况："+currentDeployment+"；ReShade 概况："+currentReShade,
+                "启动器日志源："+_logFile
+            };
+            string? reShadeDirectory=null;
+            string selection="未确认所选游戏的 ReShade 加载目录。";
+            try
+            {
+                var receipt=AppPaths.LoadReceipt(snapshot);
+                details.Add("部署记录："+(receipt is null?"无":$"{receipt.Status}；包：{receipt.PackageId}；更新时间：{receipt.Updated:O}；文件来源："+
+                    string.Join(", ",receipt.Files.GroupBy(f=>f.SourceKind).Select(g=>g.Key+"="+g.Count()))));
+            }
+            catch(Exception error){details.Add("部署记录读取失败："+error);}
+            try
+            {
+                if(!string.IsNullOrWhiteSpace(snapshot.GameRoot)&&!string.IsNullOrWhiteSpace(snapshot.GameExe))
+                {
+                    var info=new ReShadeService(_=>{}).Inspect(snapshot);
+                    selection="ReShade 检测："+info.Description+"；代理："+(info.Proxy??"无");
+                    if(info.Proxy is not null && (info.State is "Reusable" or "UpgradeRequired" ||
+                        PeInspector.AddonBuild(info.Proxy) is "FullCandidate" or "UnknownReShade"))
+                    {
+                        reShadeDirectory=Path.GetDirectoryName(info.Proxy);
+                        selection+="；日志仅取已识别代理的加载目录："+reShadeDirectory;
+                    }
+                }
+            }
+            catch(Exception error){selection="ReShade/部署来源检测失败："+error;}
+            await DiagnosticExport.WriteAsync(destination,details,DiagnosticExport.RecentLauncherLogs(_logFile),reShadeDirectory,selection);
+        });
+        Log("诊断日志已导出："+destination);
+        Status="诊断日志已导出。";
     }
     private bool Save()
     {
@@ -233,7 +298,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
             }
             else{reShade="未设置游戏路径";deployState="请先选择路径";}
         }
-        catch(Exception e){reShade="检测未完成";deployState=e.Message;Log(e.Message);}
+        catch(Exception e){reShade="检测未完成";deployState=e.Message;Log("环境与部署状态检测失败："+e);}
         // A path change or a newer post-operation refresh invalidates older results.
         if(_closing||generation!=_refreshGeneration||(passive&&Busy)||
            snapshot.GameRoot!=GameRoot||snapshot.GameExe!=GameExe)return;
@@ -255,11 +320,13 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         {
             if(_closing||generation!=_refreshGeneration)return;
             _hardware=_hardware with { Hags=EnvironmentStatus.HagsText(null,basic.HagsConfigured) };
-            Notify(nameof(Hags));Log("HAGS 后台检测未完成："+e.Message);
+            Notify(nameof(Hags));Log("HAGS 后台检测未完成："+e);
         }
     }
     private async Task DeployAsync()
     {
+        var elapsed=Stopwatch.StartNew();
+        Log($"部署请求：游戏={GameExe}；MFG={MfgSelected}；清单={_settings.PackageManifest}");
         if(!MfgSelected){Status=FpsEnabled?"FPS 解锁无需部署，点击开始游戏即可。":"未选择多帧生成，无需部署。";Log(Status);return;}
         GameProcesses.ValidateExe(_settings);
         var materialPath=PackageManifestLocation.Resolve(_settings.PackageManifest,AppPaths.Base);
@@ -309,10 +376,12 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
                 }
             }
         }
-        finally{Busy=false;}
+        finally{Busy=false;Log($"部署操作结束：{Status}；耗时={elapsed.Elapsed.TotalSeconds:F1}s");}
     }
     private async Task CleanAsync()
     {
+        var elapsed=Stopwatch.StartNew();
+        Log("清除请求：游戏="+GameExe);
         GameProcesses.ValidateExe(_settings);GameProcesses.RequireStopped(GameRoot);
         Busy=true;
         try
@@ -329,7 +398,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
             Status=AppPaths.LoadReceipt(snapshot)?.Status=="CleanedWithSkips"?"清除结束，已变化文件或配置已跳过；请查看日志。":"已移除登记且未变化的替换 DLL 和自有插件；ReShade 已按来源记录处理。";
             await RefreshCore();
         }
-        finally{Busy=false;}
+        finally{Busy=false;Log($"清除操作结束：{Status}；耗时={elapsed.Elapsed.TotalSeconds:F1}s");}
     }
     private async Task FindGameAsync()
     {
@@ -356,9 +425,12 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
     private async Task StartAsync()
     {
         if(Busy||_closing)return;_starting=true;Busy=true;
+        var elapsed=Stopwatch.StartNew();
         bool startedThisAttempt=false;
         string? resourceTier = null;
         var snapshot=_settings.Clone();
+        Log($"启动请求：Shipping={snapshot.GameExe}；FPS={snapshot.FpsEnabled}；目标={snapshot.TargetFps}；MFG={snapshot.MfgSelected}；包体={snapshot.ResourceTier}；菜单={snapshot.MenuShortcut?.DisplayName??"游戏内配置"}");
+        string? lastPhase=null;
         try
         {
             var process=await _restart.RunAsync(new(snapshot.GameExe,snapshot.FpsEnabled),new WindowsRestartProcessCatalog(),new RestartActions
@@ -418,7 +490,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
                     await _fpsSession.SetFpsAsync(snapshot.TargetFps,token);
                     Log($"内置FPS设置已发送；PID={process.Id}；目标={snapshot.TargetFps}，实际帧率待游戏验证。");
                 }
-            },phase=>{Status=phase switch{"Preflight"=>"正在检查路径与组件…","AwaitingNotice"=>"检查首次部署须知…","ReleaseOldSession"=>"释放旧游戏会话…","Stopping"=>"正在结束同一安装的旧游戏…","Rechecking"=>"确认旧实例已退出…","Starting"=>"正在启动游戏…","AttachingFps"=>"等待游戏并连接内置FPS核心…","Cancelled"=>"已取消，未继续启动。",_=>"正在检查游戏状态…"};},TimeSpan.FromSeconds(15),_lifetime.Token);
+            },phase=>{Status=phase switch{"Preflight"=>"正在检查路径与组件…","AwaitingNotice"=>"检查首次部署须知…","ReleaseOldSession"=>"释放旧游戏会话…","Stopping"=>"正在结束同一安装的旧游戏…","Rechecking"=>"确认旧实例已退出…","Starting"=>"正在启动游戏…","AttachingFps"=>"等待游戏并连接内置FPS核心…","Cancelled"=>"已取消，未继续启动。",_=>"正在检查游戏状态…"};if(lastPhase!=phase){lastPhase=phase;Log("启动阶段："+Status);}},TimeSpan.FromSeconds(15),_lifetime.Token);
             if(process is null){Status="已取消须知，未结束或启动游戏。";return;}
             if(!snapshot.FpsEnabled){await BuiltinFpsService.WaitForRendererAsync(process,snapshot.GameExe,_lifetime.Token,Log);GameReady?.Invoke();}
             _sessionReady=true;_deferredUpdate.GameStarted();
@@ -435,7 +507,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
             }
             throw;
         }
-        finally{_starting=false;Busy=false;}
+        finally{_starting=false;Busy=false;Log($"启动操作结束：{Status}；耗时={elapsed.Elapsed.TotalSeconds:F1}s");}
     }
     private Task ReleaseFpsSessionAsync()
     {
