@@ -43,6 +43,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Cleanup preflight tests failed' }
           dotnet run --project tests/MenuShortcut.Tests -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Menu shortcut tests failed' }
+          dotnet run --project tests/DiagnosticExport.Tests -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Diagnostic export tests failed' }
           dotnet run --project tests/EmbeddedDynamicAddon.Tests -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Embedded companion tests failed' }
           dotnet run --project tests/DynamicMultiplier.Tests -c Release

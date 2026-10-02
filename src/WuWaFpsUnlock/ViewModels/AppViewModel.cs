@@ -181,6 +181,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
         var currentStatus=Status;
         var currentReShade=_reShade;
         var currentDeployment=_deployState;
+        var currentMenuKey=MenuKeyText;
         var exportedAt=DateTimeOffset.Now;
         await Task.Run(async ()=>
         {
@@ -195,7 +196,7 @@ public sealed partial class AppViewModel:INotifyPropertyChanged
                 "所选 Shipping EXE："+snapshot.GameExe,
                 "FPS："+(snapshot.FpsEnabled?"开启":"关闭")+"；目标："+snapshot.TargetFps,
                 "MFG 部署选择："+(snapshot.MfgSelected?"开启":"关闭"),
-                "菜单按键："+(snapshot.MenuShortcut?.DisplayName??"未设置；使用游戏内配置"),
+                "菜单按键："+currentMenuKey,
                 "包体档位："+snapshot.ResourceTier,
                 "材料清单："+snapshot.PackageManifest+"；存在："+File.Exists(snapshot.PackageManifest),
                 "系统："+hardware.Os+"；GPU："+hardware.Gpu+"；驱动："+hardware.DriverText+"；HAGS："+hardware.Hags,
