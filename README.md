@@ -14,9 +14,12 @@
 > [!IMPORTANT]
 > **本工具仅适用于 NVIDIA GeForce RTX 40 系列显卡，且仅支持通过鸣潮官方启动器安装的游戏版本。未来不计划扩大显卡或游戏渠道的支持范围。**
 
-**Windows x64 · 当前版本 v1.2.4**
+**Windows x64 · 稳定版 v1.2.4 · 预发布 v1.2.5Beta**
 
-[下载 v1.2.4](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/tag/v1.2.4) · [全部版本与更新日志](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases)
+[下载稳定版 v1.2.4](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/tag/v1.2.4) · [试用 v1.2.5Beta](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases/tag/v1.2.5Beta) · [全部版本与更新日志](https://github.com/PLCyanxin/WuWu-FPS-Unlock/releases)
+
+> [!NOTE]
+> **v1.2.5Beta 为预发布版本，只能在发布页手动下载。** 同数字版本按 Beta → RC → 正式版比较；后续 RC 作为正式 Release 公开后，Beta 可检查并获取更新。标为 Pre-release 的 RC 仍不会推送。
 
 首次安装请选择完整包，已有完整安装可使用更新包。启动器只检测正式 Release；Pre-release 请在发布页手动下载。维护者验证稳定后，会将其设置为 Release，供启动器检查和更新。本文介绍当前功能的完整用法，不同版本的可用选项以实际界面为准。
 
@@ -107,7 +110,7 @@ Client\Binaries\Win64\Client-Win64-Shipping.exe
 <a id="frame-generation"></a>
 ## 游戏内帧生成设置
 
-进入游戏后，按菜单按键（默认 **Home**）打开 ReShade，选择 **MFG Unlock**。随包插件基于上游 MFG Unlock 1.3.0，菜单已完成汉化。
+进入游戏后，按菜单按键（默认 **Home**）打开 ReShade，选择 **MFG Unlock**。v1.2.5Beta 的 DLSS-G 插件基于上游 MFG Unlock 1.7.2，菜单提供中文标签、状态与选项说明；稳定版 v1.2.4 使用上游 1.3.0。
 
 ### 选择帧生成模式
 
@@ -139,6 +142,12 @@ Dynamic 的“目标输出帧率”用于设置期望的最终输出帧率。设
 
 > [!IMPORTANT]
 > **使用 Dynamic 自定义“目标输出帧率”前，请关闭游戏内和 NVIDIA 驱动中的垂直同步（VSync），并检查 G-SYNC 等显示同步设置。VSync 生效时，Dynamic 会跟随显示器当前启用的刷新率，忽略自定义目标输出帧率。** 单独开启 G-SYNC 不等于启用 VSync；当前刷新率也不一定是显示器支持的最大刷新率。
+
+### Beta 的运行库与模型设置
+
+v1.2.5Beta 按 Streamline ≥ 2.14.1、DLSS-G ≥ 310.9.1 检查公开 Dynamic 接口的版本资格，还需运行库明确报告支持。高版本不因版本号直接被排除，但私有倍率控制、关闭和观测仍需单独适配；未知接口不会强行修改。当前适配范围以菜单提示为准，不保证所有驱动与组件组合均可用。
+
+Beta 的画质页提供 **DLSS 超分辨率模型预设**与**DLSS 光线重建模型预设**。支持的游戏可在运行中应用；部分直接创建 DLSS 的游戏需要改变输出分辨率或重新启动后才会重新创建。NVIDIA App 中的模型覆盖优先于这些设置。模型预设与帧生成倍率是不同选项。
 
 ### 倍率状态与其他选项
 

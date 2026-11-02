@@ -15,18 +15,18 @@ $batch=@"
 @echo off
 setlocal DisableDelayedExpansion
 call "$vc" x64
-if errorlevel 1 exit /b 1
+if not "%errorlevel%"=="0" exit /b %errorlevel%
 cd /d "$out"
 rc /nologo /fo companion.res "$source/addon.rc"
-if errorlevel 1 exit /b 1
+if not "%errorlevel%"=="0" exit /b %errorlevel%
 cl /nologo /std:c++20 /EHsc /MT /O2 /DNOMINMAX /utf-8 /LD /I"$deps/external/Detours/include" /I"$deps/external/reshade" "$source/addon.cpp" companion.res "$deps/external/Detours/lib.X64/detours.lib" user32.lib /link /OUT:wuwa-dynamicmax.addon64 /Brepro
-if errorlevel 1 exit /b 1
+if not "%errorlevel%"=="0" exit /b %errorlevel%
 cl /nologo /std:c++20 /EHsc /MT /O2 /DNOMINMAX /utf-8 /I"$deps/external/Detours/include" "$source/tests/dynamiclive_tests.cpp" "$deps/external/Detours/lib.X64/detours.lib" /Fe:dynamiclive_tests.exe
-if errorlevel 1 exit /b 1
+if not "%errorlevel%"=="0" exit /b %errorlevel%
 dynamiclive_tests.exe $testArgs
-if errorlevel 1 exit /b 1
+if not "%errorlevel%"=="0" exit /b %errorlevel%
 cl /nologo /std:c++20 /EHsc /MT /O2 /DNOMINMAX /utf-8 /I"$deps/external/Detours/include" /I"$deps/external/reshade" "$source/tests/config_wiring_tests.cpp" "$deps/external/Detours/lib.X64/detours.lib" user32.lib /Fe:config_wiring_tests.exe
-if errorlevel 1 exit /b 1
+if not "%errorlevel%"=="0" exit /b %errorlevel%
 config_wiring_tests.exe
 exit /b %errorlevel%
 "@
@@ -35,4 +35,6 @@ $path=Join-Path $out 'build.cmd'
 & $env:ComSpec /d /c ('"'+$path+'"') 2>&1 | Tee-Object (Join-Path $out 'build.log')
 if($LASTEXITCODE -ne 0){throw 'Companion build or tests failed'}
 & "$source/Test-NativeCursor.ps1" -DependencyDirectory $deps -OutputDirectory (Join-Path $out 'cursor-tests')
+& (Join-Path $source 'Test-NgxAliasDiscovery.ps1') -OutputDirectory (Join-Path $out 'ngx-alias-tests')
+if($LASTEXITCODE -ne 0){throw 'NGX alias module discovery tests failed'}
 Get-FileHash (Join-Path $out 'wuwa-dynamicmax.addon64')

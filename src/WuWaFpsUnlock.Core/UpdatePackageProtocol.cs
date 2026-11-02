@@ -52,7 +52,7 @@ public static class UpdatePackageProtocol
         if(actual.Count!=0||RequiredFiles.Any(x=>!declared.Contains(x)))throw new InvalidDataException("更新包存在未声明文件或缺少必需文件。");
         return manifest;
     }
-    public static bool IsVersion(string? value)=>value is not null&&Regex.IsMatch(value,@"^\d+\.\d+\.\d+(?:RC\d*)?$");
+    public static bool IsVersion(string? value)=>value is not null&&Regex.IsMatch(value,@"^\d+\.\d+\.\d+(?:(?:Beta|RC)\d*)?$");
     public static void RejectLink(string path){if((File.GetAttributes(path)&FileAttributes.ReparsePoint)!=0)throw new InvalidDataException("更新路径禁止链接："+path);}
     public static void ValidatePath(string path)
     {

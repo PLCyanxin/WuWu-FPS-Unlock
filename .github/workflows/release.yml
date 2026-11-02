@@ -1,6 +1,12 @@
 name: Publish portable release
 on:
   workflow_dispatch:
+    inputs:
+      prerelease:
+        description: '标为预发布（启动器不会自动推送此版本）'
+        type: boolean
+        required: false
+        default: false
   push:
     tags: ['v*']
 permissions:
@@ -20,7 +26,7 @@ jobs:
         run: |
           $props=[xml](Get-Content Directory.Build.props -Raw)
           $version=[string]$props.Project.PropertyGroup.InformationalVersion
-          if ($version -notmatch '^\d+\.\d+\.\d+(?:RC\d*)?$') { throw 'Invalid release version' }
+          if ($version -notmatch '^\d+\.\d+\.\d+(?:(?:Beta|RC)\d*)?$') { throw 'Invalid release version' }
           $tag="v$version"
           if ($env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -ne $tag) { throw 'Tag and product version differ' }
           if (!(Test-Path "docs/RELEASE_$tag.md")) { throw 'Release notes missing' }
@@ -110,8 +116,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Draft creation failed' }
           gh release upload $tag "WuWaFPSUnlock-$version-win-x64.zip" "WuWaFPSUnlock-$version-update.zip" SHA256SUMS.txt --repo $env:GITHUB_REPOSITORY --clobber
           if ($LASTEXITCODE -ne 0) { throw 'Asset upload failed; draft retained' }
-          if ($version -match 'RC') {
-            gh release edit $tag --repo $env:GITHUB_REPOSITORY --draft=false --prerelease
+          if ($version -match 'Beta' -or '${{ inputs.prerelease }}' -eq 'true') {
+            gh release edit $tag --repo $env:GITHUB_REPOSITORY --draft=false --prerelease --latest=false
           } else {
             gh release edit $tag --repo $env:GITHUB_REPOSITORY --draft=false --prerelease=false --latest
           }

@@ -16,7 +16,7 @@ __declspec(noinline) void FakeNative(void* context,void* memory){
 }
 live::NativeFn volatile entry=&FakeNative; volatile unsigned completed=0;
 __declspec(noinline) void Invoke(Snapshot& snapshot,void* context=nullptr){entry(context,&snapshot);completed=completed+1;}
-unsigned checks=0;void Check(bool value,const char* name){if(!value)throw std::runtime_error(name);++checks;std::cout<<"PASS "<<name<<'\n';}
+unsigned checks=0;void Check(bool value,const char* name){if(!value){std::cerr<<"FAIL "<<name<<std::endl;throw std::runtime_error(name);}++checks;std::cout<<"PASS "<<name<<'\n';}
 void* validatorReturn=nullptr;unsigned validateCalls=0;bool rejectFrame=false,changeChoiceDuringValidation=false;
 __declspec(noinline) bool FakeValidate(void* ctx,void* memory,void* third,void* fourth) {
  if(!validatorReturn)validatorReturn=_ReturnAddress();++validateCalls;
@@ -50,7 +50,10 @@ int wmain(int argc,wchar_t** argv){
  live::AutoInstall(addon,dynamic);Check(live::auto_checks==60,"bounded discovery does not continuously retry");
 
  if(argc==2){
-  Check(live::HashFile(argv[1])==live::kHash,"reference bytes exact SHA (never executed)");
+  const auto* profile=live::SelectProfile(live::HashFile(argv[1]));
+  Check(profile!=nullptr,"reference bytes select exact supported ABI (never executed)");
+  if(!profile)return 2;
+  live::nativeProfile.store(profile);
   std::ifstream file(std::filesystem::path(argv[1]),std::ios::binary);std::vector<char> raw((std::istreambuf_iterator<char>(file)),{});
   auto dos=reinterpret_cast<IMAGE_DOS_HEADER*>(raw.data());auto nt=reinterpret_cast<IMAGE_NT_HEADERS64*>(raw.data()+dos->e_lfanew);
   // Test-only data reconstruction of an already hash-verified file, not a loader.
@@ -60,12 +63,13 @@ int wmain(int argc,wchar_t** argv){
   auto module=reinterpret_cast<HMODULE>(image.data());
   const ULONG_PTR cb1=reinterpret_cast<ULONG_PTR>(image.data())+0x40830,cb2=reinterpret_cast<ULONG_PTR>(image.data())+0x40870;
   std::memcpy(image.data()+0x77858,&cb1,sizeof cb1);std::memcpy(image.data()+0x77988,&cb2,sizeof cb2);
-  const ULONG_PTR producer=reinterpret_cast<ULONG_PTR>(image.data())+0x4d5c0;std::memcpy(image.data()+0x79d98,&producer,sizeof producer);
+  const ULONG_PTR producer=reinterpret_cast<ULONG_PTR>(image.data())+profile->producer;std::memcpy(image.data()+0x79d98,&producer,sizeof producer);
   Check(live::Anchors(module),"exact reference instruction anchors accepted as DATA");
   for(unsigned rva:{0x77858u,0x77988u,0x79d98u}){image[rva]^=1;Check(!live::Anchors(module),"redirected callback vtable rejected");image[rva]^=1;}
-  for(auto anchor:live::anchors){image[anchor.rva]^=1;Check(!live::Anchors(module),"modified loaded chain anchor rejected");image[anchor.rva]^=1;}
+  for(size_t i=0;i<profile->count;++i){auto anchor=profile->checks[i];image[anchor.rva]^=1;Check(!live::Anchors(module),"modified loaded chain anchor rejected");image[anchor.rva]^=1;}
+   live::activeCaller=profile->caller;live::activeValidatorCaller=profile->validatorCaller;
  }else std::cout<<"Reference image DATA audit skipped (optional path not supplied).\n";
- addon=false;live::fixed_enabled=false;Check(!live::TryInstall(addon,dynamic)&&std::string_view(live::status.load()).find("not mapped")!=std::string_view::npos,"ordinary Off reaches install checks with Dynamic checkbox disabled");addon=true;live::fixed_enabled=true;
+ addon=false;live::fixed_enabled=false;Check(!live::TryInstall(addon,dynamic)&&!live::installed.load(),"ordinary Off reaches install checks with Dynamic checkbox disabled");addon=true;live::fixed_enabled=true;
  Check(!live::TryInstall(addon,dynamic)&&!live::installed,"no Streamline module: no hook");
  Check(!live::Anchors(GetModuleHandleW(nullptr)),"unrelated executable fails image anchors");
  wchar_t own[MAX_PATH];GetModuleFileNameW(nullptr,own,MAX_PATH);Check(live::HashFile(own)!=live::kHash,"own fixture fails exact file hash");
@@ -100,7 +104,7 @@ int wmain(int argc,wchar_t** argv){
  fail_at=0;
  // Independent ordinary Off via the real shared-validation wrapper and Detours.
  Snapshot validationInitial(3,1);InvokeValidate(validationInitial);
- live::owner=reinterpret_cast<HMODULE>(reinterpret_cast<ULONG_PTR>(validatorReturn)-live::kValidateReturn);
+ live::owner=reinterpret_cast<HMODULE>(reinterpret_cast<ULONG_PTR>(validatorReturn)-live::activeValidatorCaller);
  live::original_validate=&FakeValidate;
  Check(live::Attach(reinterpret_cast<void**>(&live::original_validate),reinterpret_cast<void*>(&live::WrappedValidate),{}),"real Detours shared validator fixture");
  live::enabled=true;addon=false;
@@ -146,7 +150,7 @@ int wmain(int argc,wchar_t** argv){
  cohort.clear();enumeration=stage=aborts=0;scan_mode=0;fail_at=4;
  void* second=reinterpret_cast<void*>(&FakeValidate);
  Check(!live::AttachStable(&target,reinterpret_cast<void*>(&live::Wrapped),nullptr,cohort,fake,Scan,Validate,&second,reinterpret_cast<void*>(&live::WrappedValidate))&&aborts==1,"second hook failure aborts pair atomically");fail_at=0;
- Snapshot initial;Invoke(initial);live::owner=reinterpret_cast<HMODULE>(reinterpret_cast<ULONG_PTR>(return_address)-live::kReturn);
+ Snapshot initial;Invoke(initial);live::owner=reinterpret_cast<HMODULE>(reinterpret_cast<ULONG_PTR>(return_address)-live::activeCaller);
  live::original=&FakeNative;live::addon_enabled=&addon;live::dynamic_enabled=&dynamic;
  Check(live::Attach(reinterpret_cast<void**>(&live::original),reinterpret_cast<void*>(&live::Wrapped),{}),"real Detours on self-built native fixture");live::enabled=true;
  for(int requested:{4,0,2,0,3,4,6,0,-1,6}){Snapshot f;live::requested=requested;unsigned before=calls;Invoke(f);Check(f.cap()==live::Limit(3,requested)&&calls==before+1,"fresh frame change 4-2-3-4-6-0, one native call");Snapshot queued=f;Check(queued.cap()==f.cap(),"copied frame retains same RSYNC/NGX cap model");

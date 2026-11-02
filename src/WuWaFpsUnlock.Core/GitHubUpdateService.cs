@@ -114,14 +114,17 @@ public sealed class GitHubUpdateService(HttpClient http)
         string expected=$"https://github.com/{Repository}/releases/download/{Uri.EscapeDataString(tag)}/{Uri.EscapeDataString(name)}";
         if(!uri.IsAbsoluteUri||uri.AbsoluteUri!=expected)throw new InvalidDataException("更新资产不属于固定仓库的发布。");
     }
-    private static (BigInteger A,BigInteger B,BigInteger C,BigInteger? Rc) ParseVersion(string value)
+    private static (BigInteger A,BigInteger B,BigInteger C,int Stage,BigInteger Revision) ParseVersion(string value)
     {
         if(!UpdatePackageProtocol.IsVersion(value))throw new InvalidDataException("版本格式无效。");
-        var parts=value.Split("RC");var numbers=parts[0].Split('.');return(BigInteger.Parse(numbers[0]),BigInteger.Parse(numbers[1]),BigInteger.Parse(numbers[2]),parts.Length==1?null:parts[1].Length==0?BigInteger.One:BigInteger.Parse(parts[1]));
+        var match=Regex.Match(value,@"^(\d+)\.(\d+)\.(\d+)(?:(Beta|RC)(\d*))?$");
+        int stage=match.Groups[4].Value switch {"Beta"=>0,"RC"=>1,_=>2};
+        var revision=stage==2?BigInteger.Zero:match.Groups[5].Length==0?BigInteger.One:BigInteger.Parse(match.Groups[5].Value);
+        return(BigInteger.Parse(match.Groups[1].Value),BigInteger.Parse(match.Groups[2].Value),BigInteger.Parse(match.Groups[3].Value),stage,revision);
     }
     public static int CompareVersions(string left,string right)
     {
         var a=ParseVersion(left);var b=ParseVersion(right);int n=a.A.CompareTo(b.A);if(n!=0)return n;n=a.B.CompareTo(b.B);if(n!=0)return n;n=a.C.CompareTo(b.C);if(n!=0)return n;
-        if(a.Rc is null)return b.Rc is null?0:1;if(b.Rc is null)return -1;return a.Rc.Value.CompareTo(b.Rc.Value);
+        n=a.Stage.CompareTo(b.Stage);return n!=0?n:a.Revision.CompareTo(b.Revision);
     }
 }

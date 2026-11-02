@@ -1,8 +1,8 @@
 {
   "file": "wuwa-dynamicmax.addon64",
-  "version": "1.0.0",
-  "length": 202752,
-  "sha256": "da8e41f6c52c1abba96d9559d4a82f869f0d6ddc1863aa9f88f570a6b19c8345",
+  "version": "1.0.0.19",
+  "length": 215040,
+  "sha256": "90a7b871bb68494bb4c7cd51653832b1dff02788d7067725e075b5deb87701e3",
   "source": "tools/DynamicController",
   "license": "MIT",
   "buildScript": "tools/DynamicController/Build.ps1",
@@ -31,11 +31,11 @@
     },
     {
       "path": "tools/DynamicController/addon.rc",
-      "sha256": "1180a69802e483a61bcd879c195eb76ff6e35f7d4e2e8972af4fc0d450aebc2c"
+      "sha256": "64b8c1cd944d3e18ea10b9fb3e53b537d9fd08463d40cc928f008ca55cf2716e"
     },
     {
       "path": "tools/DynamicController/Build.ps1",
-      "sha256": "b176f01de3b14c194dc231ca86d4a1f3da17ed576e7334f21b6314b0318b8cd9"
+      "sha256": "0f3a4a7bc5ddc4879ee48aee3bef2dc8670fd8eda9f2736a0c51fc4cb095f886"
     },
     {
       "path": "tools/DynamicController/cursor_hooks.hpp",
@@ -43,7 +43,11 @@
     },
     {
       "path": "tools/DynamicController/dynamiclive.hpp",
-      "sha256": "04d745ff661883014d60c7277d4a2c9ba9142473384bc7cc0fc699401ace6b14"
+      "sha256": "021ac06ec51777f82b403bc378ce2aee0547af1c99bfc629a5c2b7a9648cba41"
+    },
+    {
+      "path": "tools/DynamicController/dynamiclive_21416.inc",
+      "sha256": "3985dfd241137bef1085e78bf0834964296bb87fe9227ccef8b11b119d6e7830"
     },
     {
       "path": "tools/DynamicController/dynamiclive_anchors.inc",
@@ -54,13 +58,44 @@
       "sha256": "c67f30a60a7a96a46a1de68e81d30c79dface38bdf78740ded5be7c24544363a"
     },
     {
+      "path": "tools/DynamicController/dynamiclive_module_discovery.hpp",
+      "sha256": "05de673a17b3ebe5f76d5b3fc5a4a6b18ce0049712c33aadd580f2bacd48fe7e"
+    },
+    {
       "path": "tools/DynamicController/menu_docking.hpp",
       "sha256": "c5cdc01a093586fa968d632032132b7c5eac1304ee1ffcaaf2b2994b8a5c450c"
     },
     {
       "path": "tools/DynamicController/native_cursor.hpp",
       "sha256": "dc0714916fa0cea86f21efe595a339b33e8090464c6d48dde471f2cfe6a306b3"
+    },
+    {
+      "path": "tools/DynamicController/native_cursor_tests.cpp",
+      "sha256": "17c28363314bcfd68db2aa4c75b2f4ce719c39a4f0ab864601c357a5c73dd711"
+    },
+    {
+      "path": "tools/DynamicController/Test-MenuDocking.ps1",
+      "sha256": "730dcc865464fd98e3ba12b34601031bc3022bf1bff1c6149b43dbdf8248000e"
+    },
+    {
+      "path": "tools/DynamicController/Test-NativeCursor.ps1",
+      "sha256": "86e5a62cfeb4a44c5eea58d1ff76cb8e709d02e3d5bad9b12906ee46ebf2757d"
+    },
+    {
+      "path": "tools/DynamicController/Test-NgxAliasDiscovery.ps1",
+      "sha256": "1164258f2662ce54bd499da7b9302b8140d984ef086010c429e116fd113b1a1f"
     }
   ],
-  "sourceHashEncoding": "UTF-8 with normalized LF"
+  "sourceHashEncoding": "UTF-8 with normalized LF",
+  "supportedRuntimeProfiles": [
+    {
+      "streamline": "2.14.1",
+      "sha256": "F4A6B2B14DCC0B1485989E430D3B4E3A44AC1800B92BA1AD74F476E64FB2B09C"
+    },
+    {
+      "streamline": "2.14.16",
+      "sha256": "3ED9538DF724993BEA8A050195A6A78B9C8C8A566D5B05ADE477AAB3C390E90F",
+      "validation": "offline instructions, negative mutations and synthetic behavior only; real game pending"
+    }
+  ]
 }

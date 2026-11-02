@@ -1,7 +1,7 @@
 param([Parameter(Mandatory)][string]$Version,[string]$BaselineZip,[string]$BaselineSha256)
 $ErrorActionPreference='Stop'
 $repo=Split-Path $PSScriptRoot -Parent
-if($Version -notmatch '^\d+\.\d+\.\d+(?:RC\d*)?$'){throw 'Invalid release version'}
+if($Version -notmatch '^\d+\.\d+\.\d+(?:(?:Beta|RC)\d*)?$'){throw 'Invalid release version'}
 $baseline=Get-Content -LiteralPath (Join-Path $PSScriptRoot 'release-baseline.json') -Raw | ConvertFrom-Json
 if(!$BaselineZip){
     gh release download $baseline.tag --repo $baseline.repository --pattern $baseline.asset --dir baseline

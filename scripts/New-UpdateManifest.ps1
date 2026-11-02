@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory)][string]$Version
 )
 $ErrorActionPreference='Stop'
-if($Version -notmatch '^\d+\.\d+\.\d+(?:RC\d*)?$'){throw 'Use a three-part product version, optionally followed by RC or RC<number>.'}
+if($Version -notmatch '^\d+\.\d+\.\d+(?:(?:Beta|RC)\d*)?$'){throw 'Use a three-part product version, optionally followed by Beta or RC and a revision number.'}
 $root=(Resolve-Path -LiteralPath $PackageDirectory).Path
 $required=@('更新.exe','update-payload/WuWaFpsUnlock.exe','update-payload/components/fps/ww_plugin_base.dll','update-payload/components/PROVENANCE.json','update-payload/payload/files/addon/renodx-mfgunlock.addon64','update-payload/payload/addon-source.json')
 foreach($name in $required){if(!(Test-Path -LiteralPath (Join-Path $root $name) -PathType Leaf)){throw "Missing required package file: $name"}}

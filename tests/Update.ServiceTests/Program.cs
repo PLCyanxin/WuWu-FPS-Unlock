@@ -26,6 +26,26 @@ GitHubUpdateService Service(byte[] zip,string? sums=null,string? list=null)=>new
 object Release(string tag,bool draft=false,bool prerelease=false)=>new{tag_name=tag,draft,prerelease,body="plain notes",assets=new[]{new{name=$"WuWaFPSUnlock-{tag[1..]}-update.zip",browser_download_url=Asset(tag,$"WuWaFPSUnlock-{tag[1..]}-update.zip")},new{name="SHA256SUMS.txt",browser_download_url=Asset(tag,"SHA256SUMS.txt")}}};
 try
 {
+ await Test("Beta < RC < formal at equal numeric version",()=>{
+  Require(GitHubUpdateService.CompareVersions("1.2.5RC","1.2.5Beta")>0);
+  Require(GitHubUpdateService.CompareVersions("1.2.5","1.2.5RC")>0);
+  Require(GitHubUpdateService.CompareVersions("1.2.5Beta10","1.2.5Beta2")>0);
+  Require(GitHubUpdateService.CompareVersions("1.2.5Beta","1.2.5Beta1")==0);
+  Require(GitHubUpdateService.CompareVersions("1.2.5RC","1.2.5RC1")==0);
+  Require(GitHubUpdateService.CompareVersions("1.2.5Beta","1.2.4")>0);
+  Require(GitHubUpdateService.CompareVersions("1.2.6Beta","1.2.5")>0);
+  return Task.CompletedTask;
+ });
+ await Test("Beta discovers same-number RC only when formally published",async()=>{
+  var found=await Service([],list:JsonSerializer.Serialize(new[]{Release("v1.2.5RC")})).CheckAsync("1.2.5Beta");
+  Require(found?.Version=="1.2.5RC");
+  Require(await Service([],list:JsonSerializer.Serialize(new[]{Release("v1.2.5RC",prerelease:true)})).CheckAsync("1.2.5Beta") is null);
+  Require(await Service([],list:JsonSerializer.Serialize(new[]{Release("v1.2.5RC",draft:true)})).CheckAsync("1.2.5Beta") is null);
+ });
+ await Test("Beta never downgrades and prefers final when both releases exist",async()=>{
+  Require(await Service([],list:JsonSerializer.Serialize(new[]{Release("v1.2.4")})).CheckAsync("1.2.5Beta") is null);
+  Require((await Service([],list:JsonSerializer.Serialize(new[]{Release("v1.2.5RC"),Release("v1.2.5")})).CheckAsync("1.2.5Beta"))?.Version=="1.2.5");
+ });
  await Test("formal outranks RC, RC2 outranks RC1 and numbers outrank text",()=>{Require(GitHubUpdateService.CompareVersions("1.1.1","1.1.1RC")>0);Require(GitHubUpdateService.CompareVersions("1.1.1RC2","1.1.1RC1")>0);Require(GitHubUpdateService.CompareVersions("1.10.0RC","1.9.9")>0);return Task.CompletedTask;});
  await Test("release list excludes prereleases and drafts, chooses greatest stable",async()=>{var list=JsonSerializer.Serialize(new[]{Release("v1.2.0RC",prerelease:true),Release("v9.0.0",draft:true),Release("v1.1.1")});Require((await Service([],list:list).CheckAsync("1.0.0"))?.Version=="1.1.1");});
  await Test("RC-named stable release remains eligible",async()=>Require((await Service([],list:JsonSerializer.Serialize(new[]{Release("v1.2.0RC",prerelease:false)})).CheckAsync("1.1.1"))?.Version=="1.2.0RC"));
@@ -67,6 +87,18 @@ try
    byte[] zip=await File.ReadAllBytesAsync(args[1]);
    string exe=await Service(zip).StageAsync(release,root);
    Require(File.Exists(exe));UpdatePackageProtocol.ValidateDirectory(Path.GetDirectoryName(exe)!,release.Version);
+  });
+ }
+ if(args.Length==2&&args[0]=="--beta-upgrade-package")
+ {
+  await Test("actual frozen RC package downloads and validates from Beta current version",async()=>{
+   byte[] zip=await File.ReadAllBytesAsync(args[1]);
+   const string rcTag="v1.2.5RC",rcFile="WuWaFPSUnlock-1.2.5RC-update.zip";
+   string list=JsonSerializer.Serialize(new[]{Release(rcTag)});
+   var svc=new GitHubUpdateService(new HttpClient(new FixtureHandler(uri=>uri.Host=="api.github.com"?Encoding.UTF8.GetBytes(list):uri.AbsolutePath.EndsWith("SHA256SUMS.txt")?Encoding.UTF8.GetBytes($"{Hash(zip)}  {rcFile}\n"):zip)));
+   var found=await svc.CheckAsync("1.2.5Beta");Require(found?.Version=="1.2.5RC");
+   string exe=await svc.StageAsync(found!,root);Require(File.Exists(exe));
+   UpdatePackageProtocol.ValidateDirectory(Path.GetDirectoryName(exe)!,"1.2.5RC");
   });
  }
  Console.WriteLine($"{passed}/{passed} passed. Fake HTTP only; no updater or game execution.");
