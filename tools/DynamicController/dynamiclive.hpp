@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <cstring>
 #include "dynamiclive_config.hpp"
+#include "dynamiclive_module_discovery.hpp"
 #pragma comment(lib, "bcrypt.lib")
 namespace mfgunlock::dynamiclive {
 constexpr unsigned kEntry=0x464a0, kReturn=0x47275;
@@ -21,6 +22,7 @@ using NativeFn=void(*)(void*,void*);
 using ValidateFn=bool(*)(void*,void*,void*,void*);
 constexpr unsigned kValidateEntry=0x4bbc0,kValidateReturn=0x476f4;
 inline ValidateFn original_validate=nullptr;
+inline unsigned activeCaller=kReturn,activeValidatorCaller=kValidateReturn;
 inline std::atomic_bool fixed_enabled{true};
 inline std::atomic_bool generation_off{false};
 // Unified game-default mode observes accepted frames without imposing a limit.
@@ -106,7 +108,7 @@ __declspec(noinline) inline void Wrapped(void* context,void* snapshot) {
  if(enabled.load(std::memory_order_acquire)&&addon_enabled&&dynamic_enabled&&
     addon_enabled->load(std::memory_order_relaxed)&&dynamic_enabled->load(std::memory_order_relaxed)){
   int value=requested.load(std::memory_order_relaxed);
-  if(reinterpret_cast<ULONG_PTR>(caller)!=reinterpret_cast<ULONG_PTR>(owner)+kReturn||!StackPolicy(snapshot,value,sample)){
+  if(reinterpret_cast<ULONG_PTR>(caller)!=reinterpret_cast<ULONG_PTR>(owner)+activeCaller||!StackPolicy(snapshot,value,sample)){
    enabled.store(false,std::memory_order_release);invalid.store(true); // retain safe trampoline
   }else {submitOff=value==0;}
  }
@@ -149,7 +151,7 @@ __declspec(noinline) inline bool WrappedValidate(void* context,void* snapshot,vo
  if(enabled.load(std::memory_order_acquire)) {
   const bool off=generation_off.load(std::memory_order_relaxed);
   const bool allowGeneration=fixed_enabled.load(std::memory_order_relaxed)&&!off;
-  if(reinterpret_cast<ULONG_PTR>(caller)!=reinterpret_cast<ULONG_PTR>(owner)+kValidateReturn||!StackFixedOff(snapshot,allowGeneration,off)) {
+  if(reinterpret_cast<ULONG_PTR>(caller)!=reinterpret_cast<ULONG_PTR>(owner)+activeValidatorCaller||!StackFixedOff(snapshot,allowGeneration,off)) {
    enabled.store(false,std::memory_order_release);invalid.store(true);ui_frame.store(0);
   } else {
    // Preserve the input snapshot without retaining the caller's stack pointer.
@@ -186,7 +188,24 @@ struct Bytes {unsigned rva;const unsigned char* bytes;size_t size;};
 // Generated from the SHA-pinned file. Entry + native caller + cap consumption +
 // snapshot copy + Evaluate forwarding anchors all must still match loaded code.
 #include "dynamiclive_anchors.inc"
+namespace profile21416 {
+#include "dynamiclive_21416.inc"
+}
+struct NativeProfile {
+ const char* hash; unsigned entry,caller,validator,validatorCaller,producer;
+ const Bytes* checks; size_t count;
+};
+inline constexpr NativeProfile legacyProfile{kHash,kEntry,kReturn,kValidateEntry,kValidateReturn,0x4d5c0,anchors,std::size(anchors)};
+inline constexpr NativeProfile extendedProfile{"3ED9538DF724993BEA8A050195A6A78B9C8C8A566D5B05ADE477AAB3C390E90F",0x464b0,0x47285,0x4bca0,0x47704,0x4d6a0,profile21416::anchors,std::size(profile21416::anchors)};
+inline std::atomic<const NativeProfile*> nativeProfile{&legacyProfile};
+inline const NativeProfile* SelectProfile(const std::string& hash) {
+ if(hash==legacyProfile.hash)return &legacyProfile;
+ if(hash==extendedProfile.hash)return &extendedProfile;
+ return nullptr;
+}
+
 inline bool Anchors(HMODULE module) {
+ const auto* profile=nativeProfile.load(std::memory_order_acquire);
  __try{
   auto base=reinterpret_cast<const unsigned char*>(module);
   auto dos=reinterpret_cast<const IMAGE_DOS_HEADER*>(base);
@@ -196,8 +215,8 @@ inline bool Anchors(HMODULE module) {
   if(nt->OptionalHeader.SizeOfImage<0x79da0)return false;
   if(*reinterpret_cast<const ULONG_PTR*>(base+0x77858)!=reinterpret_cast<ULONG_PTR>(base)+0x40830||
      *reinterpret_cast<const ULONG_PTR*>(base+0x77988)!=reinterpret_cast<ULONG_PTR>(base)+0x40870||
-     *reinterpret_cast<const ULONG_PTR*>(base+0x79d98)!=reinterpret_cast<ULONG_PTR>(base)+0x4d5c0)return false;
-  for(const auto& a:anchors){if(a.rva+a.size>nt->OptionalHeader.SizeOfImage||std::memcmp(base+a.rva,a.bytes,a.size))return false;}
+     *reinterpret_cast<const ULONG_PTR*>(base+0x79d98)!=reinterpret_cast<ULONG_PTR>(base)+profile->producer)return false;
+  for(size_t i=0;i<profile->count;++i){const auto& a=profile->checks[i];if(a.rva+a.size>nt->OptionalHeader.SizeOfImage||std::memcmp(base+a.rva,a.bytes,a.size))return false;}
   return true;
  }__except(EXCEPTION_EXECUTE_HANDLER){return false;}
 }
@@ -258,13 +277,15 @@ inline bool TryInstall(const std::atomic_bool& addon,const std::atomic_bool& dyn
  if(installing.test_and_set())return false;
  struct Reset{~Reset(){installing.clear();}} reset;
  if(installed.load())return !invalid.load(); // another installer may have finished before our guard
- HMODULE module=nullptr; GetModuleHandleExW(0,L"sl.dlss_g.dll",&module);
+ bool alias=false, ambiguous=false; HMODULE module=discovery::AcquireLoaded(&alias,&ambiguous);
  struct Release{HMODULE m;~Release(){if(m)FreeLibrary(m);}} release{module};
- if(!module){status="Unavailable: sl.dlss_g.dll not mapped; native behavior unchanged";return false;}
+ if(!module){status=ambiguous?"Multiple Streamline modules mapped; private native ABI uncertain, no patch":"Streamline not found in mapped-module enumeration; native behavior unchanged";return false;}
  wchar_t path[32768];DWORD n=GetModuleFileNameW(module,path,32768);
  HANDLE file=n&&n<32768?CreateFileW(path,GENERIC_READ,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr):INVALID_HANDLE_VALUE;
  struct FileRelease{HANDLE h;~FileRelease(){if(h!=INVALID_HANDLE_VALUE)CloseHandle(h);}} file_release{file};
- if(!n||n>=32768||HashHandle(file)!=kHash||!Anchors(module)){status="Unsupported file hash or loaded code; native behavior unchanged";return false;}
+ const auto* candidate=SelectProfile(HashHandle(file));
+ if(candidate)nativeProfile.store(candidate,std::memory_order_release);
+ if(!n||n>=32768||!candidate||!Anchors(module)){status=alias?"NGX alias mapped but Dynamic160 private ABI is not approved; unchanged":"Unsupported file hash or loaded code; native behavior unchanged";return false;}
  // Retain cached callbacks for process lifetime; no hot detach/reinstall races.
  HMODULE pinned=nullptr;
  if(!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS|GET_MODULE_HANDLE_EX_FLAG_PIN,reinterpret_cast<LPCWSTR>(module),&pinned)||
@@ -272,8 +293,9 @@ inline bool TryInstall(const std::atomic_bool& addon,const std::atomic_bool& dyn
   status="Cannot retain adapter modules; native behavior unchanged";return false;
  }
  std::vector<HANDLE> threads;threads.reserve(4096);bool ok;
- owner=module;original=reinterpret_cast<NativeFn>(reinterpret_cast<char*>(module)+kEntry);
- original_validate=reinterpret_cast<ValidateFn>(reinterpret_cast<char*>(module)+kValidateEntry);
+ owner=module;activeCaller=candidate->caller;activeValidatorCaller=candidate->validatorCaller;
+ original=reinterpret_cast<NativeFn>(reinterpret_cast<char*>(module)+candidate->entry);
+ original_validate=reinterpret_cast<ValidateFn>(reinterpret_cast<char*>(module)+candidate->validator);
  addon_enabled=&addon;dynamic_enabled=&dynamic;
  ok=AttachStable(reinterpret_cast<void**>(&original),reinterpret_cast<void*>(&Wrapped),module,threads,{},Threads,Anchors,reinterpret_cast<void**>(&original_validate),reinterpret_cast<void*>(&WrappedValidate));
  for(auto h:threads)CloseHandle(h);
@@ -289,10 +311,19 @@ inline void AutoInstall(const std::atomic_bool& addon,const std::atomic_bool& dy
  if(installed.load()||auto_finished.load()||(!addon.load()&&fixed_enabled.load()&&!observation_enabled.load())||!dynamic.load())return;
  auto now=GetTickCount64(),due=next_auto_check.load();
  if(now<due||!next_auto_check.compare_exchange_strong(due,now+1000))return;
- if(GetModuleHandleW(L"sl.dlss_g.dll")){
-  if(!auto_finished.exchange(true))TryInstall(addon,dynamic);
+ bool alias=false, ambiguous=false;
+ HMODULE mapped=discovery::AcquireLoaded(&alias,&ambiguous);
+ if(mapped)FreeLibrary(mapped);
+ // An NGX OTA alias is a mapped Streamline DLL. Only the audited exact SHA
+ // and all original instruction anchors can ever authorize the private hook.
+ // Keep bounded retries for a temporary wrapper which may unload and reload.
+ if(mapped&&TryInstall(addon,dynamic)){
+  auto_finished.store(true);
  }else if(auto_checks.fetch_add(1)+1>=60){
-  auto_finished.store(true);status="Streamline not found in bounded startup checks; use manual retry";
+  auto_finished.store(true);
+  status=ambiguous?"Multiple Streamline modules mapped; cannot choose native Hook safely":
+         mapped?"Streamline mapped but Dynamic160 private ABI not audited; use manual retry":
+                "Streamline not found in bounded startup checks; use manual retry";
  }
 }
 } // namespace mfgunlock::dynamiclive
